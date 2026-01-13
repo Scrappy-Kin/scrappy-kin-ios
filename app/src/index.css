@@ -1,0 +1,23 @@
+:root {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  font-family: 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background: var(--app-background);
+}
+
+.page-content {
+  --background: var(--app-background);
+}
+
+.offline-shell {
+  padding: 24px;
+  text-align: left;
+}
+
+.offline-shell h1 {
+  font-size: 28px;
+  margin-bottom: 12px;
+}
