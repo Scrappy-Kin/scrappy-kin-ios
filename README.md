@@ -12,3 +12,11 @@ Phase A (iOS-only) repo for the Scrappy Kin consumer app.
 - `app/` - React + TypeScript UI (Capacitor host)
 - `docs/` - Product and scope docs
 - `scripts/` - Local tooling scripts
+
+## Licensing & Governance
+
+- Code licensed under AGPLv3
+- Contributions accepted under AGPL via DCO (sign-off required)
+- Brand assets excluded from the open-source license
+- Bundled reference data is included under AGPL
+- Commercial licensing available by separate agreement
