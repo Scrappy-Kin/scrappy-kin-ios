@@ -12,14 +12,27 @@ import {
   IonToolbar,
 } from '@ionic/react'
 import { useEffect, useState } from 'react'
+import { connectGmail, getGmailStatus } from '../services/googleAuth'
 import { getLogOptIn, logEvent } from '../services/logStore'
 
 export default function Home() {
   const [logOptIn, setLogOptIn] = useState(false)
+  const [gmailConnected, setGmailConnected] = useState(false)
 
   useEffect(() => {
     getLogOptIn().then(setLogOptIn)
+    getGmailStatus().then((status) => setGmailConnected(status.connected))
   }, [])
+
+  async function handleConnectGmail() {
+    try {
+      await connectGmail()
+      const status = await getGmailStatus()
+      setGmailConnected(status.connected)
+    } catch (error) {
+      alert((error as Error).message ?? 'Gmail connection failed.')
+    }
+  }
 
   async function handleSendAll() {
     await logEvent('send_all_requested', { status: 'pending' })
@@ -40,11 +53,18 @@ export default function Home() {
           </IonCardHeader>
           <IonCardContent>
             <p>Send deletion requests to email-based brokers.</p>
+            {!gmailConnected && (
+              <IonButton expand="block" onClick={handleConnectGmail}>
+                Connect Gmail
+              </IonButton>
+            )}
             <IonButton expand="block" onClick={handleSendAll}>
               Send all requests
             </IonButton>
             <IonText color="medium">
-              <p>Gmail send-only. No inbox access.</p>
+              <p>
+                Gmail send-only. No inbox access. {gmailConnected ? 'Connected.' : 'Not connected.'}
+              </p>
             </IonText>
           </IonCardContent>
         </IonCard>
