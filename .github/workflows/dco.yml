@@ -1,0 +1,38 @@
+name: DCO Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  dco:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify DCO sign-off
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          git fetch origin "$BASE_REF" --depth=1
+          commits=$(git rev-list "origin/$BASE_REF"..HEAD)
+          if [ -z "$commits" ]; then
+            echo "No commits to check."
+            exit 0
+          fi
+          missing=0
+          for sha in $commits; do
+            if ! git show -s --format=%B "$sha" | grep -qi '^Signed-off-by:'; then
+              echo "Missing Signed-off-by in commit $sha"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "DCO check failed: all commits must include Signed-off-by."
+            exit 1
+          fi
+          echo "DCO check passed."
