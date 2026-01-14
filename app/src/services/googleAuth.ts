@@ -1,6 +1,6 @@
 import { App } from '@capacitor/app'
 import { Browser } from '@capacitor/browser'
-import { Capacitor } from '@capacitor/core'
+import { Capacitor, type PluginListenerHandle } from '@capacitor/core'
 import { getEncrypted, removeEncrypted, setEncrypted } from './secureStore'
 import { OAUTH_TIMEOUT_MS } from '../config/constants'
 import { generateCodeChallenge, generateCodeVerifier, generateState } from './pkce'
@@ -37,30 +37,35 @@ async function waitForOAuthRedirect(state: string) {
       reject(new Error('OAuth timed out. Please try again.'))
     }, OAUTH_TIMEOUT_MS)
 
-    const handler = App.addListener('appUrlOpen', (data) => {
-      if (!data?.url) {
-        return
-      }
-      let url: URL
-      try {
-        url = new URL(data.url)
-      } catch {
-        return
-      }
-      const code = url.searchParams.get('code')
-      const returnedState = url.searchParams.get('state')
-      if (!code || !returnedState) return
-      if (returnedState !== state) {
+    let handler: PluginListenerHandle | null = null
+    const setupListener = async () => {
+      handler = await App.addListener('appUrlOpen', (data) => {
+        if (!data?.url) {
+          return
+        }
+        let url: URL
+        try {
+          url = new URL(data.url)
+        } catch {
+          return
+        }
+        const code = url.searchParams.get('code')
+        const returnedState = url.searchParams.get('state')
+        if (!code || !returnedState) return
+        if (returnedState !== state) {
+          clearTimeout(timeout)
+          handler?.remove()
+          reject(new Error('OAuth state mismatch. Please try again.'))
+          return
+        }
+        Browser.close().catch(() => undefined)
         clearTimeout(timeout)
-        handler.remove()
-        reject(new Error('OAuth state mismatch. Please try again.'))
-        return
-      }
-      Browser.close().catch(() => undefined)
-      clearTimeout(timeout)
-      handler.remove()
-      resolve(code)
-    })
+        handler?.remove()
+        resolve(code)
+      })
+    }
+
+    setupListener().catch(reject)
   })
 }
 

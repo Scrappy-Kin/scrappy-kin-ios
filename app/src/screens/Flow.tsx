@@ -10,6 +10,7 @@ import {
   IonText,
   useIonViewWillEnter,
 } from '@ionic/react'
+import type { ReactElement } from 'react'
 import { useState } from 'react'
 import { useHistory } from 'react-router-dom'
 import AppHeader from '../components/AppHeader'
@@ -30,7 +31,7 @@ const emptyProfile: UserProfile = {
 type Step = {
   id: string
   title: string
-  render: () => JSX.Element
+  render: () => ReactElement
   canContinue?: boolean
 }
 
@@ -197,7 +198,7 @@ export default function Flow() {
             <pre className="email-preview">{buildDeletionSubject()}</pre>
             <p>Body:</p>
             <pre className="email-preview">
-              {buildDeletionBody({ name: 'Broker', contactEmail: '' }, profileDraft)}
+              {buildDeletionBody({ id: 'preview', name: 'Broker', contactEmail: '' }, profileDraft)}
             </pre>
           </IonCardContent>
         </IonCard>
@@ -222,11 +223,11 @@ export default function Flow() {
     },
     {
       id: 'ready',
-      title: 'Ready to send',
+      title: 'Ready to claw back',
       render: () => (
         <IonCard className="section-card">
           <IonCardContent>
-            <p>When you are ready, send the requests.</p>
+            <p>Ready to take back your privacy?</p>
             <IonButton expand="block" onClick={() => history.push('/home')}>
               Send now
             </IonButton>
