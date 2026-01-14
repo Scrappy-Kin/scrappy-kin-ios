@@ -26,3 +26,14 @@ pnpm-debug.log*
 
 # Misc
 *.log
+
+# Private documentation
+docs/specs/
+docs/strategy/
+
+# IDE-specific agent skills
+.windsurf/
+
+# Agent instruction files
+CLAUDE.md
+AGENTS.md
