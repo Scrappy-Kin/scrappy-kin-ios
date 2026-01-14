@@ -1,4 +1,5 @@
 import type { Broker } from './brokerStore'
+import { SEND_DELAY_MS } from '../config/constants'
 import { buildDeletionBody, buildDeletionSubject } from './emailTemplate'
 import { sendEmail } from './gmailSend'
 import { getUserProfile } from './userProfile'
@@ -72,7 +73,7 @@ export async function sendAll(brokers: Broker[], brokerIds: string[], onProgress
       onProgress?.(summary)
     }
 
-    await delay(1000)
+    await delay(SEND_DELAY_MS)
   }
 
   return summary

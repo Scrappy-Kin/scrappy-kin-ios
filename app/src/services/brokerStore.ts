@@ -1,4 +1,4 @@
-import brokersData from '../assets/broker-lists/email-only-brokers.v1.0.0.json'
+import brokersData from '../assets/broker-lists/email-only-brokers.v1.0.1.json'
 import { getEncrypted, setEncrypted } from './secureStore'
 
 export type Broker = {
@@ -7,6 +7,7 @@ export type Broker = {
   domain?: string
   contactEmail: string
   tier?: string
+  childCompanies?: string[]
 }
 
 const SELECTED_KEY = 'selected_brokers'

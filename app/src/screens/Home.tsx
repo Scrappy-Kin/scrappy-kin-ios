@@ -5,30 +5,45 @@ import {
   IonCardHeader,
   IonCardTitle,
   IonContent,
-  IonHeader,
   IonPage,
   IonText,
-  IonTitle,
-  IonToolbar,
 } from '@ionic/react'
 import { useEffect, useState } from 'react'
+import { useHistory } from 'react-router-dom'
+import AppHeader from '../components/AppHeader'
 import { connectGmail, getGmailStatus } from '../services/googleAuth'
 import { getSelectedBrokerIds, loadBrokers } from '../services/brokerStore'
 import { getLogOptIn, logEvent } from '../services/logStore'
 import { getQueue, summarizeQueue } from '../services/queueStore'
 import { retryFailed, sendAll } from '../services/sendQueue'
+import { getUserProfile } from '../services/userProfile'
+import { useIonViewWillEnter } from '@ionic/react'
 
 export default function Home() {
+  const history = useHistory()
   const [logOptIn, setLogOptIn] = useState(false)
   const [gmailConnected, setGmailConnected] = useState(false)
   const [summary, setSummary] = useState({ sent: 0, failed: 0, pending: 0, total: 0 })
   const [isSending, setIsSending] = useState(false)
+  const [profileReady, setProfileReady] = useState(false)
 
   useEffect(() => {
     getLogOptIn().then(setLogOptIn)
-    getGmailStatus().then((status) => setGmailConnected(status.connected))
-    getQueue().then((queue) => setSummary(summarizeQueue(queue)))
+    refreshStatus()
   }, [])
+
+  async function refreshStatus() {
+    const status = await getGmailStatus()
+    setGmailConnected(status.connected)
+    const queue = await getQueue()
+    setSummary(summarizeQueue(queue))
+    const profile = await getUserProfile()
+    setProfileReady(Boolean(profile))
+  }
+
+  useIonViewWillEnter(() => {
+    refreshStatus()
+  })
 
   async function handleConnectGmail() {
     try {
@@ -73,11 +88,7 @@ export default function Home() {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Scrappy Kin</IonTitle>
-        </IonToolbar>
-      </IonHeader>
+      <AppHeader title="Scrappy Kin" />
       <IonContent className="page-content">
         <IonCard>
           <IonCardHeader>
@@ -85,6 +96,9 @@ export default function Home() {
           </IonCardHeader>
           <IonCardContent>
             <p>Send deletion requests to email-based brokers.</p>
+            <IonButton expand="block" fill="outline" onClick={() => history.push('/flow')}>
+              Start guided setup
+            </IonButton>
             {!gmailConnected && (
               <IonButton expand="block" onClick={handleConnectGmail}>
                 Connect Gmail
@@ -107,6 +121,7 @@ export default function Home() {
               <p>
                 Gmail send-only. No inbox access. {gmailConnected ? 'Connected.' : 'Not connected.'}
               </p>
+              <p>{profileReady ? 'Profile saved.' : 'Profile not set.'}</p>
               <p>
                 Sent: {summary.sent} · Failed: {summary.failed} · Pending: {summary.pending}
               </p>

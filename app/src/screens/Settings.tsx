@@ -1,18 +1,16 @@
 import {
   IonContent,
-  IonHeader,
   IonItem,
   IonLabel,
   IonList,
   IonNote,
   IonPage,
-  IonTitle,
   IonToggle,
-  IonToolbar,
 } from '@ionic/react'
 import { Filesystem, Directory } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
 import { useEffect, useState } from 'react'
+import AppHeader from '../components/AppHeader'
 import {
   exportLogsAsText,
   getLogOptIn,
@@ -87,11 +85,7 @@ export default function Settings() {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Settings</IonTitle>
-        </IonToolbar>
-      </IonHeader>
+      <AppHeader title="Settings" />
       <IonContent className="page-content">
         <IonList>
           <IonItem>

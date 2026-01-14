@@ -24,7 +24,10 @@
     "contactEmail": "privacy@gravyanalytics.com",
     "tier": "mega",
     "inTop30": true,
-    "verifiedResolutions": 1
+    "verifiedResolutions": 1,
+    "childCompanies": [
+      "Venntel"
+    ]
   },
   {
     "id": "spokeo-com",
@@ -130,15 +133,6 @@
     "name": "Seamless Contacts, Inc. d/b/a Seamless.AI or Seamless AI",
     "domain": "seamlessleads.com",
     "contactEmail": "privacy@seamlessleads.com",
-    "tier": "small",
-    "inTop30": false,
-    "verifiedResolutions": 1
-  },
-  {
-    "id": "venntel-com",
-    "name": "Venntel, Inc.",
-    "domain": "venntel.com",
-    "contactEmail": "privacy@venntel.com",
     "tier": "small",
     "inTop30": false,
     "verifiedResolutions": 1
