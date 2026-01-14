@@ -13,15 +13,21 @@ import {
 } from '@ionic/react'
 import { useEffect, useState } from 'react'
 import { connectGmail, getGmailStatus } from '../services/googleAuth'
+import { getSelectedBrokerIds, loadBrokers } from '../services/brokerStore'
 import { getLogOptIn, logEvent } from '../services/logStore'
+import { getQueue, summarizeQueue } from '../services/queueStore'
+import { retryFailed, sendAll } from '../services/sendQueue'
 
 export default function Home() {
   const [logOptIn, setLogOptIn] = useState(false)
   const [gmailConnected, setGmailConnected] = useState(false)
+  const [summary, setSummary] = useState({ sent: 0, failed: 0, pending: 0, total: 0 })
+  const [isSending, setIsSending] = useState(false)
 
   useEffect(() => {
     getLogOptIn().then(setLogOptIn)
     getGmailStatus().then((status) => setGmailConnected(status.connected))
+    getQueue().then((queue) => setSummary(summarizeQueue(queue)))
   }, [])
 
   async function handleConnectGmail() {
@@ -35,8 +41,34 @@ export default function Home() {
   }
 
   async function handleSendAll() {
-    await logEvent('send_all_requested', { status: 'pending' })
-    alert('Send-all flow will be wired next.')
+    setIsSending(true)
+    try {
+      await logEvent('send_all_requested', { status: 'pending' })
+      const brokers = await loadBrokers()
+      const selected = await getSelectedBrokerIds()
+      const targetIds = selected.length > 0 ? selected : brokers.map((broker) => broker.id)
+      const result = await sendAll(brokers, targetIds, setSummary)
+      setSummary(result)
+    } catch (error) {
+      alert((error as Error).message ?? 'Send failed.')
+    } finally {
+      setIsSending(false)
+    }
+  }
+
+  async function handleRetryFailed() {
+    setIsSending(true)
+    try {
+      const brokers = await loadBrokers()
+      const selected = await getSelectedBrokerIds()
+      const targetIds = selected.length > 0 ? selected : brokers.map((broker) => broker.id)
+      const result = await retryFailed(brokers, targetIds, setSummary)
+      setSummary(result)
+    } catch (error) {
+      alert((error as Error).message ?? 'Retry failed.')
+    } finally {
+      setIsSending(false)
+    }
   }
 
   return (
@@ -58,12 +90,25 @@ export default function Home() {
                 Connect Gmail
               </IonButton>
             )}
-            <IonButton expand="block" onClick={handleSendAll}>
-              Send all requests
+            <IonButton expand="block" onClick={handleSendAll} disabled={!gmailConnected || isSending}>
+              {isSending ? 'Sending...' : 'Send all requests'}
             </IonButton>
+            {summary.failed > 0 && (
+              <IonButton
+                expand="block"
+                fill="outline"
+                onClick={handleRetryFailed}
+                disabled={!gmailConnected || isSending}
+              >
+                Retry failed
+              </IonButton>
+            )}
             <IonText color="medium">
               <p>
                 Gmail send-only. No inbox access. {gmailConnected ? 'Connected.' : 'Not connected.'}
+              </p>
+              <p>
+                Sent: {summary.sent} · Failed: {summary.failed} · Pending: {summary.pending}
               </p>
             </IonText>
           </IonCardContent>

@@ -21,3 +21,9 @@ body {
   font-size: 28px;
   margin-bottom: 12px;
 }
+
+.broker-actions {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0 16px;
+}

@@ -1,0 +1,155 @@
+[
+  {
+    "id": "truepeoplesearch-com",
+    "name": "Truepeoplesearch",
+    "domain": "truepeoplesearch.com",
+    "contactEmail": "support@truepeoplesearch.zendesk.com",
+    "tier": "mega",
+    "inTop30": true,
+    "verifiedResolutions": 2
+  },
+  {
+    "id": "data-axle-com",
+    "name": "Data Axle, Inc. f/k/a Infogroup Inc.",
+    "domain": "data-axle.com",
+    "contactEmail": "privacyteam@data-axle.com",
+    "tier": "mega",
+    "inTop30": true,
+    "verifiedResolutions": 1
+  },
+  {
+    "id": "gravyanalytics-com",
+    "name": "Gravy Analytics, Inc.",
+    "domain": "gravyanalytics.com",
+    "contactEmail": "privacy@gravyanalytics.com",
+    "tier": "mega",
+    "inTop30": true,
+    "verifiedResolutions": 1
+  },
+  {
+    "id": "spokeo-com",
+    "name": "Spokeo",
+    "domain": "spokeo.com",
+    "contactEmail": "privacy@spokeo.com",
+    "tier": "mega",
+    "inTop30": true,
+    "verifiedResolutions": 1
+  },
+  {
+    "id": "stirista-com",
+    "name": "Stirista, LLC",
+    "domain": "stirista.com",
+    "contactEmail": "privacyinfo@stirista.com",
+    "tier": "medium",
+    "inTop30": false,
+    "verifiedResolutions": 3
+  },
+  {
+    "id": "carneydirect-com",
+    "name": "Carney Direct Marketing ",
+    "domain": "carneydirect.com",
+    "contactEmail": "info@carneydirect.com",
+    "tier": "medium",
+    "inTop30": false,
+    "verifiedResolutions": 2
+  },
+  {
+    "id": "clustrmaps-com",
+    "name": "Clustrmaps",
+    "domain": "clustrmaps.com",
+    "contactEmail": "support@clustrmaps.com",
+    "tier": "medium",
+    "inTop30": false,
+    "verifiedResolutions": 2
+  },
+  {
+    "id": "careerbuilder-com",
+    "name": "CareerBuilder, LLC",
+    "domain": "careerbuilder.com",
+    "contactEmail": "info@careerbuilder.com",
+    "tier": "small",
+    "inTop30": false,
+    "verifiedResolutions": 1
+  },
+  {
+    "id": "edvisorsmail-com",
+    "name": "edvisorsmail",
+    "domain": "edvisorsmail.com",
+    "contactEmail": "customerservice@email.edvisorsmail.com",
+    "tier": "small",
+    "inTop30": false,
+    "verifiedResolutions": 1
+  },
+  {
+    "id": "focus-usa-com",
+    "name": "Focus USA",
+    "domain": "focus-usa.com",
+    "contactEmail": "privacy@focus-usa.com",
+    "tier": "small",
+    "inTop30": false,
+    "verifiedResolutions": 1
+  },
+  {
+    "id": "giantpartners-com",
+    "name": "Giant Partners, Inc ",
+    "domain": "giantpartners.com",
+    "contactEmail": "compliance@giantpartners.com",
+    "tier": "small",
+    "inTop30": false,
+    "verifiedResolutions": 1
+  },
+  {
+    "id": "infotracer-com",
+    "name": "Infotracer",
+    "domain": "infotracer.com",
+    "contactEmail": "privacy@infotracer.com",
+    "tier": "small",
+    "inTop30": false,
+    "verifiedResolutions": 1
+  },
+  {
+    "id": "inmarket-com",
+    "name": "InMarket Media LLC",
+    "domain": "inmarket.com",
+    "contactEmail": "privacy@inmarket.com",
+    "tier": "small",
+    "inTop30": false,
+    "verifiedResolutions": 1
+  },
+  {
+    "id": "intentiq-com",
+    "name": "Intent IQ LLC",
+    "domain": "intentiq.com",
+    "contactEmail": "privacy@intentiq.com",
+    "tier": "small",
+    "inTop30": false,
+    "verifiedResolutions": 1
+  },
+  {
+    "id": "seamlessleads-com",
+    "name": "Seamless Contacts, Inc. d/b/a Seamless.AI or Seamless AI",
+    "domain": "seamlessleads.com",
+    "contactEmail": "privacy@seamlessleads.com",
+    "tier": "small",
+    "inTop30": false,
+    "verifiedResolutions": 1
+  },
+  {
+    "id": "venntel-com",
+    "name": "Venntel, Inc.",
+    "domain": "venntel.com",
+    "contactEmail": "privacy@venntel.com",
+    "tier": "small",
+    "inTop30": false,
+    "verifiedResolutions": 1
+  },
+  {
+    "id": "zoominfo-com",
+    "name": "ZoomInfo",
+    "domain": "zoominfo.com",
+    "contactEmail": "privacy@zoominfo.com",
+    "tier": "small",
+    "inTop30": false,
+    "verifiedResolutions": 1
+  }
+]
