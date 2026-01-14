@@ -1,9 +1,8 @@
+import { LOG_LIMIT } from '../config/constants'
 import { getEncrypted, setEncrypted } from './secureStore'
 
 const LOGS_KEY = 'diagnostic_logs'
 const LOG_OPT_IN_KEY = 'diagnostic_opt_in'
-const LOG_LIMIT = 50
-
 export type LogEvent = {
   timestamp: string
   event: string

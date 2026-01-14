@@ -2,6 +2,7 @@ import { App } from '@capacitor/app'
 import { Browser } from '@capacitor/browser'
 import { Capacitor } from '@capacitor/core'
 import { getEncrypted, removeEncrypted, setEncrypted } from './secureStore'
+import { OAUTH_TIMEOUT_MS } from '../config/constants'
 import { generateCodeChallenge, generateCodeVerifier, generateState } from './pkce'
 
 const CLIENT_ID =
@@ -34,7 +35,7 @@ async function waitForOAuthRedirect(state: string) {
   return new Promise<string>((resolve, reject) => {
     const timeout = setTimeout(() => {
       reject(new Error('OAuth timed out. Please try again.'))
-    }, 120000)
+    }, OAUTH_TIMEOUT_MS)
 
     const handler = App.addListener('appUrlOpen', (data) => {
       if (!data?.url) {
@@ -43,7 +44,7 @@ async function waitForOAuthRedirect(state: string) {
       let url: URL
       try {
         url = new URL(data.url)
-      } catch (error) {
+      } catch {
         return
       }
       const code = url.searchParams.get('code')
@@ -195,7 +196,7 @@ export async function getGmailStatus() {
   try {
     await getAccessToken()
     return { connected: true }
-  } catch (error) {
+  } catch {
     return { connected: false }
   }
 }

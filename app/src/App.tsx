@@ -13,6 +13,7 @@ import { IonReactRouter } from '@ionic/react-router'
 import { home, people, settings } from 'ionicons/icons'
 import { Redirect, Route } from 'react-router-dom'
 import Brokers from './screens/Brokers'
+import Flow from './screens/Flow'
 import Home from './screens/Home'
 import Settings from './screens/Settings'
 import { useOnlineStatus } from './state/useOnlineStatus'
@@ -47,6 +48,9 @@ export default function App() {
             </Route>
             <Route exact path="/home">
               {isOnline ? <Home /> : <OfflineShell />}
+            </Route>
+            <Route exact path="/flow">
+              {isOnline ? <Flow /> : <OfflineShell />}
             </Route>
             <Route exact path="/brokers">
               {isOnline ? <Brokers /> : <OfflineShell />}
