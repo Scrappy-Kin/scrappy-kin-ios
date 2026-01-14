@@ -1,12 +1,8 @@
 # Scrappy Kin iOS
 
-Phase A (iOS-only) repo for the Scrappy Kin consumer app.
+Scrappy Kin is an iOS app that helps you protect your privacy. In particular it helps you send opt-out requests to data brokers from your own Gmail account. The app keeps data on-device (never our servers) and uses Gmail only to send the emails you initiate. No analytics or tracking SDKs anywhere. This code is public so you dont have to take our word for it.
 
-## Scope (Phase A)
-- Gmail send-only via `gmail.send` scope
-- No mailbox access (no `gmail.modify`, no `gmail.readonly`)
-- No broker portal automation or autofill
-- User-initiated send-all (no background scheduling)
+Tip: if you're not a developer, share the url to this repo with an AI assitant you trust and ask it to verify that the code is what it claims to be.
 
 ## Structure
 - `app/` - React + TypeScript UI (Capacitor host)

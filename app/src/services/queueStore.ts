@@ -46,7 +46,9 @@ export async function updateQueueItem(item: QueueItem) {
 export async function resetFailedToPending() {
   const queue = await getQueue()
   const updated = queue.map((entry) =>
-    entry.status === 'failed' ? { ...entry, status: 'pending', errorCode: undefined } : entry,
+    entry.status === 'failed'
+      ? { ...entry, status: 'pending' as QueueStatus, errorCode: undefined }
+      : entry,
   )
   await setQueue(updated)
   return updated

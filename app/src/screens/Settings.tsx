@@ -1,13 +1,15 @@
 import {
+  IonButton,
   IonContent,
   IonItem,
+  IonInput,
   IonLabel,
   IonList,
   IonNote,
   IonPage,
   IonToggle,
 } from '@ionic/react'
-import { Filesystem, Directory } from '@capacitor/filesystem'
+import { Directory, Encoding, Filesystem } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
 import { useEffect, useState } from 'react'
 import AppHeader from '../components/AppHeader'
@@ -19,17 +21,56 @@ import {
 } from '../services/logStore'
 import { disconnectGmail } from '../services/googleAuth'
 import { wipeAllLocalData } from '../services/secureStore'
+import { getUserProfile, setUserProfile, type UserProfile } from '../services/userProfile'
 
 export default function Settings() {
   const [logOptIn, setOptIn] = useState(false)
+  const [profileDraft, setProfileDraft] = useState<UserProfile>({
+    fullName: '',
+    email: '',
+    city: '',
+    country: '',
+    partialPostcode: '',
+  })
+  const [profileSaved, setProfileSaved] = useState(false)
 
   useEffect(() => {
     getLogOptIn().then(setOptIn)
+    getUserProfile().then((profile) => {
+      if (profile) {
+        setProfileDraft(profile)
+        setProfileSaved(true)
+      }
+    })
   }, [])
 
   async function handleToggleLogs(enabled: boolean) {
     await setLogOptIn(enabled)
     setOptIn(enabled)
+  }
+
+  function updateProfile(next: Partial<UserProfile>) {
+    setProfileDraft((current) => ({ ...current, ...next }))
+    setProfileSaved(false)
+  }
+
+  function isProfileValid(profile: UserProfile) {
+    return Boolean(
+      profile.fullName &&
+        profile.email &&
+        profile.city &&
+        profile.country &&
+        profile.partialPostcode,
+    )
+  }
+
+  async function handleSaveProfile() {
+    if (!isProfileValid(profileDraft)) {
+      alert('Please fill in all fields.')
+      return
+    }
+    await setUserProfile(profileDraft)
+    setProfileSaved(true)
   }
 
   async function handleExportLogs() {
@@ -55,7 +96,7 @@ export default function Settings() {
       path: filename,
       data: text,
       directory: Directory.Cache,
-      encoding: 'utf8',
+      encoding: Encoding.UTF8,
     })
 
     await Share.share({
@@ -87,6 +128,59 @@ export default function Settings() {
     <IonPage>
       <AppHeader title="Settings" />
       <IonContent className="page-content">
+        <IonList>
+          <IonItem>
+            <IonLabel>
+              <h2>Profile</h2>
+              <p>Edit the info used for broker requests.</p>
+              <p>{profileSaved ? 'Saved.' : 'Not saved yet.'}</p>
+            </IonLabel>
+          </IonItem>
+          <IonItem>
+            <IonLabel position="stacked">Full name</IonLabel>
+            <IonInput
+              value={profileDraft.fullName}
+              onIonChange={(event) => updateProfile({ fullName: event.detail.value ?? '' })}
+            />
+          </IonItem>
+          <IonItem>
+            <IonLabel position="stacked">Email</IonLabel>
+            <IonInput
+              type="email"
+              value={profileDraft.email}
+              onIonChange={(event) => updateProfile({ email: event.detail.value ?? '' })}
+            />
+          </IonItem>
+          <IonItem>
+            <IonLabel position="stacked">City</IonLabel>
+            <IonInput
+              value={profileDraft.city}
+              onIonChange={(event) => updateProfile({ city: event.detail.value ?? '' })}
+            />
+          </IonItem>
+          <IonItem>
+            <IonLabel position="stacked">Country</IonLabel>
+            <IonInput
+              value={profileDraft.country}
+              onIonChange={(event) => updateProfile({ country: event.detail.value ?? '' })}
+            />
+          </IonItem>
+          <IonItem>
+            <IonLabel position="stacked">Partial postcode</IonLabel>
+            <IonInput
+              value={profileDraft.partialPostcode}
+              onIonChange={(event) =>
+                updateProfile({ partialPostcode: event.detail.value ?? '' })
+              }
+            />
+          </IonItem>
+          <IonItem lines="none">
+            <IonButton expand="block" onClick={handleSaveProfile}>
+              Save profile
+            </IonButton>
+          </IonItem>
+        </IonList>
+
         <IonList>
           <IonItem>
             <IonLabel>
