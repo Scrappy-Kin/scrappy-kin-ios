@@ -20,6 +20,10 @@ type TokenPayload = {
   expiresAt: number
 }
 
+async function storeTokens(payload: TokenPayload) {
+  await setEncrypted<TokenPayload>(TOKEN_KEY, payload)
+}
+
 function getRedirectUri() {
   const id = CLIENT_ID.replace('.apps.googleusercontent.com', '')
   const scheme = `com.googleusercontent.apps.${id}`
@@ -114,7 +118,7 @@ export async function connectGmail() {
 
   const expiresAt = Date.now() + (payload.expires_in ?? 3600) * 1000
 
-  await setEncrypted<TokenPayload>(TOKEN_KEY, {
+  await storeTokens({
     accessToken: payload.access_token,
     refreshToken: payload.refresh_token,
     expiresAt,
@@ -136,11 +140,62 @@ export async function disconnectGmail() {
   await removeEncrypted(TOKEN_KEY)
 }
 
-export async function getGmailStatus() {
+async function refreshAccessToken(refreshToken: string) {
+  const tokenParams = new URLSearchParams({
+    grant_type: 'refresh_token',
+    refresh_token: refreshToken,
+    client_id: CLIENT_ID,
+  })
+
+  const response = await fetch(TOKEN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: tokenParams.toString(),
+  })
+
+  if (!response.ok) {
+    throw new Error(`Token refresh failed (${response.status}).`)
+  }
+
+  const payload = (await response.json()) as {
+    access_token: string
+    expires_in?: number
+  }
+
+  const expiresAt = Date.now() + (payload.expires_in ?? 3600) * 1000
   const tokens = await getEncrypted<TokenPayload>(TOKEN_KEY)
-  if (!tokens?.accessToken) return { connected: false }
-  if (Date.now() > tokens.expiresAt && !tokens.refreshToken) {
+  if (!tokens?.refreshToken) {
+    throw new Error('Missing refresh token.')
+  }
+
+  await storeTokens({
+    accessToken: payload.access_token,
+    refreshToken: tokens.refreshToken,
+    expiresAt,
+  })
+
+  return payload.access_token
+}
+
+export async function getAccessToken() {
+  const tokens = await getEncrypted<TokenPayload>(TOKEN_KEY)
+  if (!tokens?.accessToken) {
+    throw new Error('Gmail not connected.')
+  }
+  if (Date.now() < tokens.expiresAt) {
+    return tokens.accessToken
+  }
+  if (!tokens.refreshToken) {
+    throw new Error('Gmail session expired. Please reconnect.')
+  }
+  return refreshAccessToken(tokens.refreshToken)
+}
+
+export async function getGmailStatus() {
+  try {
+    await getAccessToken()
+    return { connected: true }
+  } catch (error) {
     return { connected: false }
   }
-  return { connected: true }
 }
