@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client'
 import { setupIonicReact } from '@ionic/react'
 import App from './App.tsx'
 import './index.css'
+import './theme/tokens.css'
+import './theme/typography.css'
 import './styles/theme.css'
 
 import '@ionic/react/css/core.css'

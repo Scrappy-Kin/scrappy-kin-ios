@@ -30,6 +30,7 @@ pnpm-debug.log*
 # Private documentation
 docs/specs/
 docs/strategy/
+docs/planning/
 
 # IDE-specific agent skills
 .windsurf/
