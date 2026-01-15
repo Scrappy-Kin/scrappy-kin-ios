@@ -1,22 +1,5 @@
-:root {
-  color-scheme: light;
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --radius-1: 10px;
-  --surface-1: #ffffff;
-  --font-size-xl: 28px;
-  --header-background: var(--surface-1);
-  --header-border: rgba(0, 0, 0, 0.08);
-}
-
 body {
   margin: 0;
-  font-family: 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   background: var(--app-background);
 }
 
@@ -31,7 +14,7 @@ body {
 }
 
 .offline-shell h1 {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-2xl);
   margin-bottom: var(--space-3);
 }
 
@@ -43,6 +26,7 @@ body {
 
 .section-card {
   --background: var(--surface-1);
+  border: 1px solid var(--border-1);
   border-radius: var(--radius-1);
   margin-bottom: var(--space-4);
 }
@@ -62,13 +46,14 @@ body {
 
 .email-preview {
   background: var(--surface-1);
+  border: 1px solid var(--border-1);
   border-radius: var(--radius-1);
   padding: var(--space-3);
   white-space: pre-wrap;
 }
 
 .app-header {
-  --background: var(--header-background);
-  --border-color: var(--header-border);
+  --background: var(--surface-1);
+  --border-color: var(--border-1);
   --border-width: 0 0 1px 0;
 }

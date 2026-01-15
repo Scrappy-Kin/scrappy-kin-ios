@@ -1,0 +1,104 @@
+.harness-content {
+  --background: var(--app-background);
+}
+
+.harness-shell {
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-6);
+}
+
+.harness-header {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.harness-nav {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.harness-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-2);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-1);
+}
+
+.harness-section {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.type-stack {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.type-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.type-meta {
+  color: var(--text-3);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+}
+
+.surface-grid {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.surface-row {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.surface-swatch {
+  border-radius: var(--radius-2);
+  border: 1px solid var(--border-1);
+  min-height: 90px;
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: var(--surface-1);
+}
+
+.surface-swatch--app {
+  background: var(--app-background);
+}
+
+.surface-swatch--surface-1 {
+  background: var(--surface-1);
+}
+
+.surface-swatch--surface-2 {
+  background: var(--surface-2);
+}
+
+.surface-swatch--surface-3 {
+  background: var(--surface-3);
+}
+
+.surface-swatch--elevated {
+  background: var(--surface-1);
+  box-shadow: var(--shadow-1);
+}
+
+.surface-meta {
+  color: var(--text-3);
+  font-size: var(--font-size-xs);
+}
+
+.harness-link {
+  color: var(--brand-1);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+}

@@ -17,6 +17,9 @@ import Flow from './screens/Flow'
 import Home from './screens/Home'
 import Settings from './screens/Settings'
 import { useOnlineStatus } from './state/useOnlineStatus'
+import HarnessHome from './ui/harness/HarnessHome'
+import Surfaces from './ui/harness/Surfaces'
+import Typography from './ui/harness/Typography'
 
 function OfflineShell() {
   return (
@@ -57,6 +60,15 @@ export default function App() {
             </Route>
             <Route exact path="/settings">
               <Settings />
+            </Route>
+            <Route exact path="/ui-harness">
+              <HarnessHome />
+            </Route>
+            <Route exact path="/ui-harness/typography">
+              <Typography />
+            </Route>
+            <Route exact path="/ui-harness/surfaces">
+              <Surfaces />
             </Route>
           </IonRouterOutlet>
           <IonTabBar slot="bottom">
