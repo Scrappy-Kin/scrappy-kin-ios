@@ -1,1 +1,4 @@
 CAPACITOR_DEBUG = true
+PRODUCT_BUNDLE_IDENTIFIER = com.scrappykin.ios.dev
+PRODUCT_NAME = "Scrappy Kin (Dev)"
+INFOPLIST_KEY_CFBundleDisplayName = "Scrappy Kin (Dev)"

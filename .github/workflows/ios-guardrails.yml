@@ -1,0 +1,16 @@
+name: ios-guardrails
+
+on:
+  pull_request:
+  push:
+    branches:
+      - "**"
+
+jobs:
+  verify-ios-config:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Verify iOS config
+        run: scripts/verify-ios-config.sh
