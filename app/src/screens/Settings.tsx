@@ -13,9 +13,12 @@ import { Directory, Encoding, Filesystem } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
 import { useEffect, useState } from 'react'
 import AppHeader from '../components/AppHeader'
+import { BUILD_MODE, BUILD_SHA, BUILD_TIME, IS_DEV_BUILD } from '../config/buildInfo'
 import {
   exportLogsAsText,
+  getDevLogOptIn,
   getLogOptIn,
+  setDevLogOptIn,
   setLogOptIn,
   wipeLogs,
 } from '../services/logStore'
@@ -25,6 +28,7 @@ import { getUserProfile, setUserProfile, type UserProfile } from '../services/us
 
 export default function Settings() {
   const [logOptIn, setOptIn] = useState(false)
+  const [devLogOptIn, setDevLogOptInState] = useState(false)
   const [profileDraft, setProfileDraft] = useState<UserProfile>({
     fullName: '',
     email: '',
@@ -36,6 +40,9 @@ export default function Settings() {
 
   useEffect(() => {
     getLogOptIn().then(setOptIn)
+    if (IS_DEV_BUILD) {
+      getDevLogOptIn().then(setDevLogOptInState)
+    }
     getUserProfile().then((profile) => {
       if (profile) {
         setProfileDraft(profile)
@@ -47,6 +54,11 @@ export default function Settings() {
   async function handleToggleLogs(enabled: boolean) {
     await setLogOptIn(enabled)
     setOptIn(enabled)
+  }
+
+  async function handleToggleDevLogs(enabled: boolean) {
+    await setDevLogOptIn(enabled)
+    setDevLogOptInState(enabled)
   }
 
   function updateProfile(next: Partial<UserProfile>) {
@@ -212,6 +224,45 @@ export default function Settings() {
             <IonNote>
               Diagnostics never send automatically. Copy or download and email manually if needed.
             </IonNote>
+          </IonItem>
+        </IonList>
+
+        {IS_DEV_BUILD && (
+          <IonList>
+            <IonItem>
+              <IonLabel>
+                <h2>Dev diagnostics</h2>
+                <p>Debug-only toggle for richer local diagnostics.</p>
+              </IonLabel>
+              <IonToggle
+                checked={devLogOptIn}
+                onIonChange={(event) => handleToggleDevLogs(event.detail.checked)}
+              />
+            </IonItem>
+            <IonItem lines="none">
+              <IonNote>Only available in Debug builds. Data stays on-device.</IonNote>
+            </IonItem>
+          </IonList>
+        )}
+
+        <IonList>
+          <IonItem>
+            <IonLabel>
+              <h2>Build</h2>
+              <p>Use this when reporting issues.</p>
+            </IonLabel>
+          </IonItem>
+          <IonItem>
+            <IonLabel>Build ID</IonLabel>
+            <IonNote slot="end">{BUILD_SHA}</IonNote>
+          </IonItem>
+          <IonItem>
+            <IonLabel>Build time (UTC)</IonLabel>
+            <IonNote slot="end">{BUILD_TIME}</IonNote>
+          </IonItem>
+          <IonItem lines="none">
+            <IonLabel>Build mode</IonLabel>
+            <IonNote slot="end">{BUILD_MODE}</IonNote>
           </IonItem>
         </IonList>
 

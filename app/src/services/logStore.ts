@@ -3,6 +3,8 @@ import { getEncrypted, setEncrypted } from './secureStore'
 
 const LOGS_KEY = 'diagnostic_logs'
 const LOG_OPT_IN_KEY = 'diagnostic_opt_in'
+const DEV_LOG_OPT_IN_KEY = 'diagnostic_dev_opt_in'
+const isDevBuild = import.meta.env.DEV
 export type LogEvent = {
   timestamp: string
   event: string
@@ -20,9 +22,20 @@ export async function setLogOptIn(enabled: boolean) {
   await setEncrypted(LOG_OPT_IN_KEY, enabled)
 }
 
+export async function getDevLogOptIn() {
+  const stored = await getEncrypted<boolean>(DEV_LOG_OPT_IN_KEY)
+  return stored ?? false
+}
+
+export async function setDevLogOptIn(enabled: boolean) {
+  if (!isDevBuild) return
+  await setEncrypted(DEV_LOG_OPT_IN_KEY, enabled)
+}
+
 export async function logEvent(event: string, details: Partial<LogEvent> = {}) {
   const optIn = await getLogOptIn()
-  if (!optIn) return
+  const devOptIn = isDevBuild ? await getDevLogOptIn() : false
+  if (!optIn && !devOptIn) return
 
   const existing = (await getEncrypted<LogEvent[]>(LOGS_KEY)) ?? []
   const next: LogEvent[] = [
