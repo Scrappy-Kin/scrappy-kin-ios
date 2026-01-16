@@ -14,3 +14,5 @@ jobs:
         uses: actions/checkout@v4
       - name: Verify iOS config
         run: scripts/verify-ios-config.sh
+      - name: Verify log schema
+        run: scripts/check-log-schema.js

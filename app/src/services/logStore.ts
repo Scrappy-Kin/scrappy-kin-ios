@@ -1,5 +1,6 @@
 import { LOG_LIMIT } from '../config/constants'
 import { getEncrypted, setEncrypted } from './secureStore'
+import { sanitizeLogEvent } from './logSchema'
 
 const LOGS_KEY = 'diagnostic_logs'
 const LOG_OPT_IN_KEY = 'diagnostic_opt_in'
@@ -65,15 +66,21 @@ export async function logEvent(event: string, details: Partial<LogEvent> = {}) {
   const optIn = optInStatus.enabled
   const devOptIn = isDevBuild ? await getDevLogOptIn() : false
   if (!optIn && !devOptIn) return
+  const sanitized = sanitizeLogEvent(event, {
+    status: details.status,
+    brokerHash: details.brokerHash,
+    metadata: details.metadata,
+  })
+  if (!sanitized) return
 
   const existing = (await getEncrypted<LogEvent[]>(LOGS_KEY)) ?? []
   const next: LogEvent[] = [
     {
       timestamp: new Date().toISOString(),
-      event,
-      status: details.status,
-      brokerHash: details.brokerHash,
-      metadata: details.metadata,
+      event: sanitized.event,
+      status: sanitized.status,
+      brokerHash: sanitized.brokerHash,
+      metadata: sanitized.metadata,
     },
     ...existing,
   ].slice(0, LOG_LIMIT)
