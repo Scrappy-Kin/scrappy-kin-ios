@@ -1,4 +1,6 @@
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react'
+import AppHeading from '../primitives/AppHeading'
+import AppText from '../primitives/AppText'
 import './harness.css'
 
 export default function Typography() {
@@ -9,11 +11,11 @@ export default function Typography() {
           <IonTitle>Typography</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent className="harness-content">
-        <div className="harness-shell">
-          <section className="harness-section">
+      <IonContent className="app-content">
+        <div className="app-shell">
+          <section className="app-section">
             <div className="type-caption-tight">Headings</div>
-            <div className="harness-card type-stack">
+            <div className="app-card type-stack">
               <div className="type-row">
                 <div className="type-caption-tight">Hero</div>
                 <div className="type-hero">Trust starts with clarity.</div>
@@ -29,9 +31,38 @@ export default function Typography() {
             </div>
           </section>
 
-          <section className="harness-section">
+          <section className="app-section">
+            <div className="type-caption-tight">Primitives</div>
+            <div className="app-card type-stack">
+              <div className="type-row">
+                <div className="type-caption-tight">AppHeading</div>
+                <AppHeading variant="h1">Hero heading (h1)</AppHeading>
+                <AppHeading variant="h2">Lead heading (h2)</AppHeading>
+                <AppHeading variant="h3">Section heading (h3)</AppHeading>
+              </div>
+              <div className="type-row">
+                <div className="type-caption-tight">AppText variants</div>
+                <AppText variant="body">Body text for primary reading.</AppText>
+                <AppText variant="caption">Caption text for metadata.</AppText>
+                <AppText variant="label">Label text for small UI markers.</AppText>
+                <AppText variant="muted" tone="muted">
+                  Muted text for secondary emphasis.
+                </AppText>
+              </div>
+              <div className="type-row">
+                <div className="type-caption-tight">AppText tone + truncate</div>
+                <AppText tone="danger">Danger tone for critical warnings.</AppText>
+                <AppText truncate>
+                  Single-line label (truncate): This line should end with an ellipsis if
+                  it does not fit.
+                </AppText>
+              </div>
+            </div>
+          </section>
+
+          <section className="app-section">
             <div className="type-caption-tight">Body</div>
-            <div className="harness-card type-stack">
+            <div className="app-card type-stack">
               <div className="type-row">
                 <div className="type-caption-tight">Body</div>
                 <div className="type-body">
@@ -47,9 +78,9 @@ export default function Typography() {
             </div>
           </section>
 
-          <section className="harness-section">
+          <section className="app-section">
             <div className="type-caption-tight">Caption</div>
-            <div className="harness-card type-stack">
+            <div className="app-card type-stack">
               <div className="type-row">
                 <div className="type-caption-tight">Caption</div>
                 <div className="type-caption">Last sync: 2 minutes ago</div>
@@ -61,9 +92,9 @@ export default function Typography() {
             </div>
           </section>
 
-          <section className="harness-section">
+          <section className="app-section">
             <div className="type-caption-tight">In Situ</div>
-            <div className="harness-card type-stack">
+            <div className="app-card type-stack">
               <div className="type-hero">A privacy co-op, not a black box.</div>
               <div className="type-lead">Auditability over automation.</div>
               <div className="type-body">
