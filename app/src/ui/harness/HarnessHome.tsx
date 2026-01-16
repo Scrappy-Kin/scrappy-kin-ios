@@ -13,7 +13,7 @@ export default function HarnessHome() {
       <IonContent className="harness-content">
         <div className="harness-shell">
           <section className="harness-header">
-            <div className="type-title">Scrappy Kin UI System</div>
+            <div className="type-lead">Scrappy Kin UI System</div>
             <div className="type-body">
               Explore tokens in isolation before applying primitives.
             </div>
