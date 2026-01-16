@@ -1,45 +1,62 @@
-.harness-content {
+.app-content {
   --background: var(--app-background);
+  width: 100%;
 }
 
-.harness-shell {
+.app-shell {
   display: grid;
   gap: var(--space-6);
   padding: var(--space-6);
+  width: 100%;
+  max-width: 100%;
 }
 
-.harness-header {
+.app-shell,
+.app-shell * {
+  box-sizing: border-box;
+}
+
+.app-section-header {
   display: grid;
   gap: var(--space-2);
 }
 
-.harness-nav {
+.app-nav {
   display: grid;
   gap: var(--space-3);
 }
 
-.harness-card {
+.app-card {
   background: var(--surface-1);
   border: 1px solid var(--border-1);
   border-radius: var(--radius-2);
   padding: var(--space-4);
   box-shadow: var(--shadow-1);
+  max-width: 100%;
+  min-width: 0;
 }
 
-.harness-section {
+.app-section {
   display: grid;
   gap: var(--space-3);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .type-stack {
   display: grid;
   gap: var(--space-2);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .type-row {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .type-lead + .type-body {
@@ -62,11 +79,11 @@
 .surface-row {
   display: grid;
   gap: var(--space-2);
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
 }
 
 .surface-row--backgrounds {
-  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .surface-swatch--span-two {
@@ -82,6 +99,7 @@
   flex-direction: column;
   justify-content: space-between;
   background: var(--surface-1);
+  max-width: 100%;
 }
 
 .surface-swatch--app {
@@ -103,7 +121,7 @@
 }
 
 
-.harness-link {
+.app-link {
   color: var(--brand-1);
   text-decoration: none;
   font-weight: var(--font-weight-medium);

@@ -33,6 +33,10 @@ Primitives (App*)
 export type TextVariant = "body" | "caption" | "label" | "muted";
 export type HeadingVariant = "h1" | "h2" | "h3";
 
+// Mapping to type utilities:
+// h1 -> type-hero, h2 -> type-lead, h3 -> type-section-heading
+// label -> type-caption-tight, muted -> type-caption + tone="muted"
+
 export interface AppTextProps {
   variant?: TextVariant;
   tone?: "default" | "muted" | "danger";

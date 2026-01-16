@@ -10,20 +10,20 @@ export default function HarnessHome() {
           <IonTitle>UI Harness</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent className="harness-content">
-        <div className="harness-shell">
-          <section className="harness-header">
+      <IonContent className="app-content">
+        <div className="app-shell">
+          <section className="app-section-header">
             <div className="type-lead">Scrappy Kin UI System</div>
             <div className="type-body">
               Explore tokens in isolation before applying primitives.
             </div>
           </section>
 
-          <section className="harness-card harness-nav">
-            <Link className="harness-link" to="/ui-harness/typography">
+          <section className="app-card app-nav">
+            <Link className="app-link" to="/ui-harness/typography">
               Typography
             </Link>
-            <Link className="harness-link" to="/ui-harness/surfaces">
+            <Link className="app-link" to="/ui-harness/surfaces">
               Surfaces
             </Link>
           </section>

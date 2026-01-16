@@ -9,11 +9,11 @@ export default function Surfaces() {
           <IonTitle>Surfaces</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent className="harness-content">
-        <div className="harness-shell">
-          <section className="harness-section">
+      <IonContent className="app-content">
+        <div className="app-shell">
+          <section className="app-section">
             <div className="type-caption-tight">Backgrounds</div>
-            <div className="harness-card surface-grid">
+            <div className="app-card surface-grid">
               <div className="surface-row surface-row--backgrounds">
                 <div className="surface-swatch surface-swatch--app surface-swatch--span-two">
                   <div className="type-body-strong">App background</div>
@@ -31,9 +31,9 @@ export default function Surfaces() {
             </div>
           </section>
 
-          <section className="harness-section">
+          <section className="app-section">
             <div className="type-caption-tight">Ink</div>
-            <div className="harness-card surface-grid">
+            <div className="app-card surface-grid">
               <div className="surface-row">
                 <div className="surface-swatch surface-swatch--surface-1">
                   <div className="type-body-strong">Ink</div>
@@ -50,9 +50,9 @@ export default function Surfaces() {
             </div>
           </section>
 
-          <section className="harness-section">
+          <section className="app-section">
             <div className="type-caption-tight">Borders</div>
-            <div className="harness-card surface-grid">
+            <div className="app-card surface-grid">
               <div className="surface-row">
                 <div className="surface-swatch surface-swatch--surface-1">
                   <div className="type-body-strong">Border 1</div>
@@ -66,9 +66,9 @@ export default function Surfaces() {
             </div>
           </section>
 
-          <section className="harness-section">
+          <section className="app-section">
             <div className="type-caption-tight">Elevation</div>
-            <div className="harness-card surface-grid">
+            <div className="app-card surface-grid">
               <div className="surface-row">
                 <div className="surface-swatch surface-swatch--elevated">
                   <div className="type-body-strong">Elevation</div>

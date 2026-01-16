@@ -1,0 +1,32 @@
+.app-text {
+  display: block;
+  margin: 0;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+.app-heading {
+  margin: 0;
+}
+
+.app-text__content {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+.app-text--truncate .app-text__content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-text--muted {
+  color: var(--text-2);
+}
+
+.app-text--danger {
+  color: var(--ion-color-danger);
+}
