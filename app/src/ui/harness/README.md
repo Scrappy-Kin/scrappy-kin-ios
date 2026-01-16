@@ -1,6 +1,6 @@
 # UI Harness
 
-Purpose: review tokens + typography before primitives land.
+Purpose: review tokens, typography, and primitives in isolation.
 
 Run locally:
 

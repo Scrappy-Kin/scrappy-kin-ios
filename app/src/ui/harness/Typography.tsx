@@ -1,4 +1,6 @@
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react'
+import { IonContent, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar } from '@ionic/react'
+import { add, arrowForward } from 'ionicons/icons'
+import AppButton from '../primitives/AppButton'
 import AppHeading from '../primitives/AppHeading'
 import AppText from '../primitives/AppText'
 import './harness.css'
@@ -56,6 +58,23 @@ export default function Typography() {
                   Single-line label (truncate): This line should end with an ellipsis if
                   it does not fit.
                 </AppText>
+              </div>
+              <div className="type-row">
+                <div className="type-caption-tight">AppButton variants</div>
+                <div className="type-stack">
+                  <AppButton>Primary</AppButton>
+                  <AppButton variant="secondary">Secondary</AppButton>
+                  <AppButton variant="destructive">Destructive</AppButton>
+                  <AppButton variant="ghost">Ghost</AppButton>
+                </div>
+              </div>
+              <div className="type-row">
+                <div className="type-caption-tight">AppButton sizes + icons</div>
+                <div className="type-stack">
+                  <AppButton size="sm" iconStart={<IonIcon icon={add} aria-hidden=\"true\" />}>Small</AppButton>
+                  <AppButton size="md" iconEnd={<IonIcon icon={arrowForward} aria-hidden=\"true\" />}>Medium</AppButton>
+                  <AppButton size="lg" loading>Large (loading)</AppButton>
+                </div>
               </div>
             </div>
           </section>

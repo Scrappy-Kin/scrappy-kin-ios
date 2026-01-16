@@ -1,0 +1,53 @@
+.app-button {
+  --border-radius: var(--radius-2);
+  text-transform: none;
+  font-weight: var(--font-weight-medium);
+}
+
+.app-button--sm {
+  --padding-start: var(--space-3);
+  --padding-end: var(--space-3);
+  --padding-top: var(--space-2);
+  --padding-bottom: var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.app-button--md {
+  --padding-start: var(--space-4);
+  --padding-end: var(--space-4);
+  --padding-top: var(--space-3);
+  --padding-bottom: var(--space-3);
+  font-size: var(--font-size-md);
+}
+
+.app-button--lg {
+  --padding-start: var(--space-5);
+  --padding-end: var(--space-5);
+  --padding-top: var(--space-4);
+  --padding-bottom: var(--space-4);
+  font-size: var(--font-size-lg);
+}
+
+.app-button__label {
+  display: inline-flex;
+  align-items: center;
+}
+
+.app-button__icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.app-button__icon--start {
+  margin-right: var(--space-2);
+}
+
+.app-button__icon--end {
+  margin-left: var(--space-2);
+}
+
+.app-button__spinner {
+  width: 16px;
+  height: 16px;
+  margin-right: var(--space-2);
+}
