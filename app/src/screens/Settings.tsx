@@ -11,13 +11,13 @@ import {
 } from '@ionic/react'
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import AppHeader from '../components/AppHeader'
 import { BUILD_MODE, BUILD_SHA, BUILD_TIME, IS_DEV_BUILD } from '../config/buildInfo'
 import {
   exportLogsAsText,
   getDevLogOptIn,
-  getLogOptIn,
+  getLogOptInStatus,
   setDevLogOptIn,
   setLogOptIn,
   wipeLogs,
@@ -28,6 +28,7 @@ import { getUserProfile, setUserProfile, type UserProfile } from '../services/us
 
 export default function Settings() {
   const [logOptIn, setOptIn] = useState(false)
+  const [logOptInExpiresAt, setLogOptInExpiresAt] = useState('')
   const [devLogOptIn, setDevLogOptInState] = useState(false)
   const [profileDraft, setProfileDraft] = useState<UserProfile>({
     fullName: '',
@@ -39,7 +40,7 @@ export default function Settings() {
   const [profileSaved, setProfileSaved] = useState(false)
 
   useEffect(() => {
-    getLogOptIn().then(setOptIn)
+    refreshLogOptIn()
     if (IS_DEV_BUILD) {
       getDevLogOptIn().then(setDevLogOptInState)
     }
@@ -51,9 +52,23 @@ export default function Settings() {
     })
   }, [])
 
+  useEffect(() => {
+    if (!logOptIn || !logOptInExpiresAt) return
+    const interval = window.setInterval(() => {
+      refreshLogOptIn()
+    }, 30000)
+    return () => window.clearInterval(interval)
+  }, [logOptIn, logOptInExpiresAt])
+
   async function handleToggleLogs(enabled: boolean) {
     await setLogOptIn(enabled)
-    setOptIn(enabled)
+    await refreshLogOptIn()
+  }
+
+  async function refreshLogOptIn() {
+    const status = await getLogOptInStatus()
+    setOptIn(status.enabled)
+    setLogOptInExpiresAt(status.expiresAt)
   }
 
   async function handleToggleDevLogs(enabled: boolean) {
@@ -84,6 +99,14 @@ export default function Settings() {
     await setUserProfile(profileDraft)
     setProfileSaved(true)
   }
+
+  const logOptInRemaining = useMemo(() => {
+    if (!logOptIn || !logOptInExpiresAt) return ''
+    const remainingMs = Date.parse(logOptInExpiresAt) - Date.now()
+    if (!Number.isFinite(remainingMs) || remainingMs <= 0) return 'Expired'
+    const minutes = Math.max(1, Math.ceil(remainingMs / 60000))
+    return `${minutes} min remaining`
+  }, [logOptIn, logOptInExpiresAt])
 
   async function handleExportLogs() {
     const text = await exportLogsAsText()
@@ -202,8 +225,8 @@ export default function Settings() {
                 include your personal info and never leave your device automatically.
               </p>
               <p>
-                If you choose to export them, you can review the plain-text file and email it to
-                support@scrappykin.com.
+                When enabled, diagnostics capture for 15 minutes. Export is manual: review the
+                plain-text file and email it to support@scrappykin.com.
               </p>
             </IonLabel>
             <IonToggle
@@ -211,6 +234,11 @@ export default function Settings() {
               onIonChange={(event) => handleToggleLogs(event.detail.checked)}
             />
           </IonItem>
+          {logOptIn && logOptInRemaining && (
+            <IonItem lines="none">
+              <IonNote>Diagnostics capture: {logOptInRemaining}.</IonNote>
+            </IonItem>
+          )}
           <IonItem button onClick={handleExportLogs}>
             <IonLabel>Export diagnostics (plain text)</IonLabel>
           </IonItem>
@@ -222,7 +250,7 @@ export default function Settings() {
           </IonItem>
           <IonItem lines="none">
             <IonNote>
-              Diagnostics never send automatically. Copy or download and email manually if needed.
+              Diagnostics never send automatically. Export and send manually if needed.
             </IonNote>
           </IonItem>
         </IonList>
