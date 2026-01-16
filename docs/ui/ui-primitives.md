@@ -64,6 +64,7 @@ export interface AppButtonProps {
   iconEnd?: React.ReactNode;
   children: React.ReactNode;
 }
+// Mapping: primary -> solid, secondary -> outline, destructive -> danger, ghost -> clear
 ```
 
 3) Surface + Card (prevents “random boxes everywhere”)

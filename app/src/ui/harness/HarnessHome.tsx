@@ -14,9 +14,7 @@ export default function HarnessHome() {
         <div className="app-shell">
           <section className="app-section-header">
             <div className="type-lead">Scrappy Kin UI System</div>
-            <div className="type-body">
-              Explore tokens in isolation before applying primitives.
-            </div>
+            <div className="type-body">Review tokens and primitives in isolation.</div>
           </section>
 
           <section className="app-card app-nav">
