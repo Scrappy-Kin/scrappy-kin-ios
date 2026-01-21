@@ -1,0 +1,48 @@
+.app-surface {
+  background: var(--neutral-50);
+  border: 1px solid var(--neutral-900-12);
+  border-radius: var(--radius-2);
+  padding: var(--space-4);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.app-surface--compact {
+  padding: var(--space-3);
+}
+
+.app-card {
+  background: var(--neutral-50);
+  border: 1px solid var(--neutral-900-12);
+  border-radius: var(--radius-2);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-1);
+  display: grid;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.app-card--with-header {
+  padding-top: var(--space-2);
+}
+
+.app-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.app-card__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.app-card__body {
+  display: grid;
+  gap: var(--space-2);
+}

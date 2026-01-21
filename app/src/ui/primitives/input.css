@@ -1,0 +1,39 @@
+.app-input {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.app-form-stack {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.app-input__control {
+  --padding-start: var(--space-3);
+  --padding-end: var(--space-3);
+  --padding-top: var(--space-2);
+  --padding-bottom: var(--space-2);
+  --placeholder-color: var(--secondary);
+  --color: var(--primary);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-md);
+  border: 1px solid var(--neutral-900-12);
+  border-radius: var(--radius-2);
+  background: var(--neutral-50);
+  width: 100%;
+}
+
+.app-input__control.ion-focused {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+.app-input--error .app-input__control {
+  border-color: var(--danger);
+}
+
+.app-input--error .app-input__control.ion-focused {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 1px var(--danger);
+}

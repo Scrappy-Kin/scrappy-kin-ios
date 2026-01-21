@@ -1,147 +1,68 @@
-# UI System (Scrappy Kin) — Source of Truth in Code
+# UI System — Ownership and Hierarchy
 
-Purpose: define the shared UI language used across harness, primitives, and screens.
+Purpose: define who owns what in the UI stack so screens stay consistent and boring.
 
-This repo uses Ionic React for iOS-first trust UX. We optimize for:
-- Consistency over novelty
-- Evidence over assurances
-- Fast iteration via harness-first development
+TL;DR
+- Tokens define values. Utilities expose values. Primitives own intent. Patterns compose primitives.
+- The harness is production UI shown in isolation (no harness-only styles).
+- Screens never import `Ion*`; they compose `App*` only.
 
-## Non-negotiables (hard rules)
+## Scope and relationship
+- This doc defines the hierarchy and non-negotiables.
+- Token details live in `docs/ui/ui-tokens.md`.
+- Primitive catalog lives in `docs/ui/ui-primitives.md`.
+- Pattern catalog lives in `docs/ui/ui-patterns.md`.
 
+## Hierarchy (source of truth)
+1) **Tokens** (`src/theme/tokens.css`)
+   - Named values only (color, space, radius, shadow).
+2) **Utilities** (`src/theme/typography.css`, `src/theme/utilities.css`)
+   - Descriptive classes only (size/weight/text/bg/border).
+3) **Primitives** (`src/ui/primitives/`)
+   - Own intent. Map intent -> utilities.
+4) **Patterns** (`src/ui/patterns/`)
+   - Compose primitives into trust UX blocks.
+5) **Screens** (`src/screens/`)
+   - Composition only. No new styling.
+
+## Non-negotiables
 1) **Harness before opinion**
-   - All visual work must be demonstrable in the UI Harness before it lands in screens.  [oai_citation:0‡SKILL.md](sediment://file_00000000448471f5a77eace1d2471dd3)
+2) **Harness equals production**
+   - No harness-only classes or one-off styles.
+3) **Primitives own intent**
+   - Utilities are descriptive only.
+4) **Screens never touch `Ion*`**
+   - Screens use `App*` primitives only.
+5) **No raw values in screens**
+   - No hex colors, no ad hoc px.
+6) **Cards are optional, not default**
+   - Use cards for distinct objects, summaries, or previews only.
 
-2) **Observation before iteration**
-   - If we can’t clearly see the effect, build a bridge (harness page, screenshot output) before iterating.  [oai_citation:1‡SKILL.md](sediment://file_00000000448471f5a77eace1d2471dd3)
+## Execution loop (for any UI work)
+1) Clarify target in 1–2 sentences.
+2) Update harness first (visible evidence).
+3) Iterate in small batches; delete temporary work.
+4) Capture screenshots when asking for review.
 
-3) **Small batches**
-   - Work in micro-chunks (2–5 steps). Long sequences guarantee drift.  [oai_citation:2‡SKILL.md](sediment://file_00000000448471f5a77eace1d2471dd3)
+## Review evidence required
+- Harness route and screenshot(s) for the change.
+- A short (<10 lines) change summary with why.
 
-4) **No mess**
-   - Temporary scaffolding must be removed before merge.  [oai_citation:3‡SKILL.md](sediment://file_00000000448471f5a77eace1d2471dd3)
+## Pause points
+- Token value changes (taste calls).
+- New primitives or patterns.
+- Harness looks off and fix is unclear.
 
-5) **Trust-critical UI uses progressive, on-demand depth**
-   - Inline disclosures by default; bottom sheets for deeper reading; inspectable artifacts wherever possible.  [oai_citation:4‡Progressive, On-Demand Depth -- UI Best Practices.md](sediment://file_000000005fdc71f5bce99d4d9a9efb09)
+## Harness structure
+- `/ui-harness/tokens` — tokens + utilities
+- `/ui-harness/primitives` — App* variants and states
+- `/ui-harness/patterns` — trust patterns
 
-## Harness parity
-- The harness is production UI shown in isolation.
-- No harness-only classes or one-off styles; if it exists in the harness, it must be valid in production.
+## Known gotchas (keep us honest)
+- CSS import order matters: load Ionic CSS first, then tokens/utilities/theme.
+- Use palette tokens + property utilities (no role tokens like `--surface-*`).
+- Prefer global intent mapping over scoped overrides; change intent once, not per component.
 
-## Vocabulary
-
-- **Tokens**: named design decisions (color/space/type/radius).
-- **Primitives (App*)**: reusable components that wrap Ionic and encode our rules.
-- **Patterns**: compositional trust blocks (inline disclosure, inspectable artifact, read-more sheet).
-- **Screens**: assemble primitives + patterns only. No styling invention.
-
-## Repo structure
-
-- `src/theme/`
-  - `tokens.css` — design tokens (CSS variables)
-  - `typography.css` — typography scale + global type rules
-- `src/ui/harness/` — UI Harness routes/pages (the review surface)
-- `src/ui/primitives/` — App* primitives (wrappers around Ion*)
-- `src/ui/patterns/` — trust patterns used across onboarding + settings
-- `src/screens/` — actual screens (composition-only)
-
-## Token rules (must follow)
-
-- No raw values in screens:
-  - No hex colors (`#...`)
-  - No ad hoc `px` spacing
-  - No `font-family` declarations
-- Components may only use:
-  - CSS variables from `tokens.css` via `var(--...)`
-  - classes defined inside the primitive/pattern stylesheet
-- If a needed token is missing:
-  - propose the token name + intent
-  - add it in `tokens.css`
-  - then use it
-
-### Token MVP set (current)
-
-Color:
-- `--app-background`
-- `--surface-1`, `--surface-2`
-- `--text-1`, `--text-2`
-- `--border-1`, `--border-2`
-- `--brand-1` (plus `-rgb`, `-contrast`, `-shade`, `-tint`)
-- `--shadow-1`
-
-Spacing:
-- `--space-1` through `--space-10`
-
-Shape:
-- `--radius-1`, `--radius-2`, `--radius-round`
-
-## Typography utilities (MVP)
-- `type-hero`: primary hero statement (1 per screen)
-- `type-lead`: supporting lead under the hero
-- `type-section-heading`: section header within a screen
-- `type-body`: default body copy
-- `type-body-strong`: emphasized body copy
-- `type-caption`: secondary metadata
-- `type-caption-tight`: micro labels, uppercase
-
-## Ink usage
-- `--text-1`: primary copy and headings
-- `--text-2`: secondary copy and supporting labels
-
-## Primitive rules (App* components)
-
-- Screens must not import `Ion*` directly.
-- Screens must not add new layout/styling decisions.
-- All component states must be captured in the harness:
-  - default, disabled, loading, error (where relevant)
-
-### We intentionally do NOT use:
-- Full-screen webviews for trust content  [oai_citation:5‡Progressive, On-Demand Depth -- UI Best Practices.md](sediment://file_000000005fdc71f5bce99d4d9a9efb09)
-- Tooltips for anything >1 sentence  [oai_citation:6‡Progressive, On-Demand Depth -- UI Best Practices.md](sediment://file_000000005fdc71f5bce99d4d9a9efb09)
-- Modals (we use AppSheet + inline disclosures)
-
-## Trust patterns (must follow)
-
-We follow "Progressive, On-Demand Depth":
-
-1) **Inline expandable disclosures** (default)
-   - collapsed state must stand alone; expansion adds proof, not meaning  [oai_citation:7‡Progressive, On-Demand Depth -- UI Best Practices.md](sediment://file_000000005fdc71f5bce99d4d9a9efb09)
-
-2) **Bottom sheets for depth**
-   - reading only, dismissible, never required to proceed  [oai_citation:8‡Progressive, On-Demand Depth -- UI Best Practices.md](sediment://file_000000005fdc71f5bce99d4d9a9efb09)
-
-3) **Inspectable artifacts**
-   - artifact first, explanation secondary; must show exactly what will be used/sent  [oai_citation:9‡Progressive, On-Demand Depth -- UI Best Practices.md](sediment://file_000000005fdc71f5bce99d4d9a9efb09)
-
-4) **Contextual micro-links**
-   - text links > icons; opens inline or sheet  [oai_citation:10‡Progressive, On-Demand Depth -- UI Best Practices.md](sediment://file_000000005fdc71f5bce99d4d9a9efb09)
-
-5) **Trust/About hub**
-   - library, not prerequisite  [oai_citation:11‡Progressive, On-Demand Depth -- UI Best Practices.md](sediment://file_000000005fdc71f5bce99d4d9a9efb09)
-
-Copy rules:
-- Prefer constraints over assurances ("We cannot access X")  [oai_citation:12‡Progressive, On-Demand Depth -- UI Best Practices.md](sediment://file_000000005fdc71f5bce99d4d9a9efb09)
-- Plain language first; technical detail on demand  [oai_citation:13‡Progressive, On-Demand Depth -- UI Best Practices.md](sediment://file_000000005fdc71f5bce99d4d9a9efb09)
-
-## The review loop (how work gets merged)
-
-Every UI task must include:
-- Context (1–2 lines)
-- Action (copy-pasteable)
-- Expected result
-- What to do if it fails  [oai_citation:14‡SKILL.md](sediment://file_00000000448471f5a77eace1d2471dd3)
-
-### Pause points (when to loop Jon in)
-
-Loop Jon when:
-- tokens/typography need value changes (taste calls)
-- a new primitive or pattern is proposed
-- the harness looks "off" but the fix is unclear
-
-Do NOT loop Jon to validate routine wiring. Founder attention is for judgment calls.  [oai_citation:15‡SKILL.md](sediment://file_00000000448471f5a77eace1d2471dd3)
-
-### Evidence required for review
-
-Because agents can’t see the UI, every PR must include:
-- a simulator screenshot of the relevant harness page(s)
-- a short (<10 lines) summary of what changed and why  [oai_citation:16‡SKILL.md](sediment://file_00000000448471f5a77eace1d2471dd3)
+## Success tests
+- A new agent can name the correct layer in <30 seconds.
+- Harness pages mirror the hierarchy without one-off styling.

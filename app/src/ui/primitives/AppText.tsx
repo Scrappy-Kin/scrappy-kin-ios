@@ -2,39 +2,36 @@ import { IonText } from '@ionic/react'
 import type { ReactNode } from 'react'
 import './typography.css'
 
-type TextVariant = 'body' | 'caption' | 'label' | 'muted'
-type TextTone = 'default' | 'muted' | 'danger'
+type TextIntent = 'body' | 'supporting' | 'caption' | 'label'
+type TextTone = 'default' | 'danger'
 
 type AppTextProps = {
-  variant?: TextVariant
+  intent?: TextIntent
+  emphasis?: boolean
   tone?: TextTone
   truncate?: boolean
   children: ReactNode
 }
 
-const variantClassMap: Record<TextVariant, string> = {
-  body: 'type-body',
-  caption: 'type-caption',
-  label: 'type-caption-tight',
-  muted: 'type-caption',
-}
-
-const toneClassMap: Record<TextTone, string | null> = {
-  default: null,
-  muted: 'app-text--muted',
-  danger: 'app-text--danger',
+const intentClassMap: Record<TextIntent, string> = {
+  body: 't-base lh-md w-400 text-primary',
+  supporting: 't-base lh-md w-400 text-secondary',
+  caption: 't-sm lh-sm w-400 text-secondary',
+  label: 't-sm lh-sm w-500 text-secondary uc ls-wide',
 }
 
 export default function AppText({
-  variant = 'body',
+  intent = 'body',
+  emphasis = false,
   tone = 'default',
   truncate = false,
   children,
 }: AppTextProps) {
   const classes = [
     'app-text',
-    variantClassMap[variant],
-    toneClassMap[tone],
+    intentClassMap[intent],
+    emphasis ? 'w-500' : null,
+    tone === 'danger' ? 'text-danger' : null,
     truncate ? 'app-text--truncate' : null,
   ]
     .filter(Boolean)

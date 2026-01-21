@@ -1,0 +1,10 @@
+.app-sheet::part(content) {
+  border-radius: var(--radius-2) var(--radius-2) 0 0;
+  box-shadow: var(--shadow-1);
+}
+
+.app-sheet__content {
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+}

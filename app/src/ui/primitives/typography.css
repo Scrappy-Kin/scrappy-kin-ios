@@ -22,11 +22,3 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-.app-text--muted {
-  color: var(--text-2);
-}
-
-.app-text--danger {
-  color: var(--ion-color-danger);
-}

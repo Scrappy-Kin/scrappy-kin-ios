@@ -1,0 +1,17 @@
+.app-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.app-toggle__content {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.app-toggle--disabled {
+  opacity: 0.6;
+}

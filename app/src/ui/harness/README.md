@@ -1,6 +1,6 @@
 # UI Harness
 
-Purpose: review tokens, typography, and primitives in isolation.
+Purpose: review tokens, typography, primitives, and patterns in isolation.
 
 Run locally:
 
@@ -12,7 +12,8 @@ npm run dev
 
 Open:
 - `http://localhost:5173/ui-harness`
-- `http://localhost:5173/ui-harness/typography`
-- `http://localhost:5173/ui-harness/surfaces`
+- `http://localhost:5173/ui-harness/tokens` (Tokens)
+- `http://localhost:5173/ui-harness/primitives`
+- `http://localhost:5173/ui-harness/patterns`
 
 Screenshots live in `app/src/ui/harness/screenshots/`.
