@@ -1,0 +1,15 @@
+.app-icon {
+  display: inline-flex;
+}
+
+.app-icon--sm {
+  font-size: 16px;
+}
+
+.app-icon--md {
+  font-size: 20px;
+}
+
+.app-icon--lg {
+  font-size: 28px;
+}

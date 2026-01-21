@@ -1,0 +1,37 @@
+.app-disclosure {
+  border: 1px solid var(--neutral-900-12);
+  border-radius: var(--radius-2);
+  background: var(--neutral-50);
+  padding: var(--space-3) var(--space-4);
+  width: 100%;
+  max-width: 100%;
+}
+
+.app-disclosure__summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  cursor: pointer;
+}
+
+.app-disclosure__summary::-webkit-details-marker {
+  display: none;
+}
+
+.app-disclosure__chevron {
+  font-size: 18px;
+  color: var(--secondary);
+  transition: transform 0.2s ease;
+}
+
+.app-disclosure[open] .app-disclosure__chevron {
+  transform: rotate(180deg);
+}
+
+.app-disclosure__content {
+  margin-top: var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+}

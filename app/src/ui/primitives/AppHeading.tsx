@@ -1,20 +1,20 @@
 import type { ReactNode } from 'react'
 import './typography.css'
 
-type HeadingVariant = 'h1' | 'h2' | 'h3'
+type HeadingIntent = 'hero' | 'lead' | 'section'
 
 type AppHeadingProps = {
-  variant: HeadingVariant
+  intent: HeadingIntent
   children: ReactNode
 }
 
-const headingClassMap: Record<HeadingVariant, string> = {
-  h1: 'type-hero',
-  h2: 'type-lead',
-  h3: 'type-section-heading',
+const headingMap: Record<HeadingIntent, { tag: 'h1' | 'h2' | 'h3'; classes: string }> = {
+  hero: { tag: 'h1', classes: 't-3xl lh-3xl w-600 ls-tight text-primary' },
+  lead: { tag: 'h2', classes: 't-lg lh-lg w-400 text-primary' },
+  section: { tag: 'h3', classes: 't-xl lh-xl w-600 text-primary' },
 }
 
-export default function AppHeading({ variant, children }: AppHeadingProps) {
-  const Tag = variant
-  return <Tag className={`app-heading ${headingClassMap[variant]}`}>{children}</Tag>
+export default function AppHeading({ intent, children }: AppHeadingProps) {
+  const { tag: Tag, classes } = headingMap[intent]
+  return <Tag className={`app-heading ${classes}`}>{children}</Tag>
 }

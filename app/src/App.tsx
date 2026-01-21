@@ -18,8 +18,9 @@ import Home from './screens/Home'
 import Settings from './screens/Settings'
 import { useOnlineStatus } from './state/useOnlineStatus'
 import HarnessHome from './ui/harness/HarnessHome'
-import Surfaces from './ui/harness/Surfaces'
-import Typography from './ui/harness/Typography'
+import Patterns from './ui/harness/Patterns'
+import Primitives from './ui/harness/Primitives'
+import Tokens from './ui/harness/Tokens'
 
 function OfflineShell() {
   return (
@@ -64,11 +65,14 @@ export default function App() {
             <Route exact path="/ui-harness">
               <HarnessHome />
             </Route>
-            <Route exact path="/ui-harness/typography">
-              <Typography />
+            <Route exact path="/ui-harness/tokens">
+              <Tokens />
             </Route>
-            <Route exact path="/ui-harness/surfaces">
-              <Surfaces />
+            <Route exact path="/ui-harness/primitives">
+              <Primitives />
+            </Route>
+            <Route exact path="/ui-harness/patterns">
+              <Patterns />
             </Route>
           </IonRouterOutlet>
           <IonTabBar slot="bottom">

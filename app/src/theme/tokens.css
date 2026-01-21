@@ -15,22 +15,29 @@
   --radius-2: 16px;
   --radius-round: 999px;
 
-  --app-background: #f6f4f0;
-  --surface-1: #ffffff;
-  --surface-2: #fbf9f4;
-
-  --text-1: #1d1b19;
-  --text-2: #5a5651;
-
-  --border-1: rgba(29, 27, 25, 0.12);
-  --border-2: rgba(29, 27, 25, 0.2);
+  --neutral-0: #ffffff;
+  --neutral-50: #fbf9f4;
+  --neutral-700: #5a5651;
+  --neutral-900: #1d1b19;
+  --neutral-900-12: rgba(29, 27, 25, 0.12);
+  --neutral-900-20: rgba(29, 27, 25, 0.2);
 
   --shadow-1: 0 10px 26px rgba(18, 16, 14, 0.08);
 
-  --brand-1: #1c4a47;
-  --brand-1-rgb: 28, 74, 71;
-  --brand-1-contrast: #ffffff;
-  --brand-1-contrast-rgb: 255, 255, 255;
-  --brand-1-shade: #193f3c;
-  --brand-1-tint: #335c58;
+  --primary: var(--neutral-900);
+  --primary-rgb: 29, 27, 25;
+  --primary-contrast: #ffffff;
+  --primary-contrast-rgb: 255, 255, 255;
+  --primary-shade: #181614;
+  --primary-tint: #332f2c;
+
+  --secondary: var(--neutral-700);
+  --secondary-rgb: 90, 86, 81;
+
+  --danger: #c5000f;
+  --danger-rgb: 197, 0, 15;
+  --danger-contrast: #ffffff;
+  --danger-contrast-rgb: 255, 255, 255;
+  --danger-shade: #ad000d;
+  --danger-tint: #cb1a27;
 }

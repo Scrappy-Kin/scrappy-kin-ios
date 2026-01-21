@@ -1,8 +1,15 @@
 :root {
-  --ion-color-primary: var(--brand-1);
-  --ion-color-primary-rgb: var(--brand-1-rgb);
-  --ion-color-primary-contrast: var(--brand-1-contrast);
-  --ion-color-primary-contrast-rgb: var(--brand-1-contrast-rgb);
-  --ion-color-primary-shade: var(--brand-1-shade);
-  --ion-color-primary-tint: var(--brand-1-tint);
+  --ion-color-primary: var(--primary);
+  --ion-color-primary-rgb: var(--primary-rgb);
+  --ion-color-primary-contrast: var(--primary-contrast);
+  --ion-color-primary-contrast-rgb: var(--primary-contrast-rgb);
+  --ion-color-primary-shade: var(--primary-shade);
+  --ion-color-primary-tint: var(--primary-tint);
+
+  --ion-color-danger: var(--danger);
+  --ion-color-danger-rgb: var(--danger-rgb);
+  --ion-color-danger-contrast: var(--danger-contrast);
+  --ion-color-danger-contrast-rgb: var(--danger-contrast-rgb);
+  --ion-color-danger-shade: var(--danger-shade);
+  --ion-color-danger-tint: var(--danger-tint);
 }
