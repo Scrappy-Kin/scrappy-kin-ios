@@ -1,0 +1,24 @@
+.app-sticky-action {
+  position: sticky;
+  top: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  z-index: 1;
+}
+
+.app-sticky-action ion-button {
+  margin: 0;
+}
+
+.app-sticky-action .app-button {
+  --background: var(--neutral-50);
+  --background-hover: var(--neutral-100);
+  --background-activated: var(--neutral-100);
+  --border-color: var(--neutral-900-20);
+}
+
+.app-sticky-action .app-button::part(native) {
+  background: var(--neutral-50);
+  box-shadow: var(--shadow-1);
+}

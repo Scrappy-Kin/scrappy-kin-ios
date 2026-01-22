@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import './button.css'
 
 type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'ghost'
-type ButtonSize = 'sm' | 'md' | 'lg'
+type ButtonSize = 'xs' | 'sm' | 'md' | 'lg'
 
 type AppButtonProps = {
   variant?: ButtonVariant

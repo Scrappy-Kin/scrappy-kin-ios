@@ -17,7 +17,7 @@ TL;DR
 ```ts
 export type Tone = "neutral" | "primary" | "danger";
 export type Density = "default" | "compact";
-export type Size = "sm" | "md" | "lg";
+export type Size = "xs" | "sm" | "md" | "lg";
 ```
 
 ## Primitives
@@ -58,6 +58,14 @@ export interface AppButtonProps {
   children: React.ReactNode;
 }
 // Mapping: primary -> solid, secondary -> outline, destructive -> danger, ghost -> clear
+```
+
+### Sticky action
+
+```ts
+export interface AppStickyActionProps {
+  children: React.ReactNode;
+}
 ```
 
 ### Surface + Card
