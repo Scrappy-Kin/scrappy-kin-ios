@@ -61,6 +61,17 @@ body {
   white-space: pre-wrap;
 }
 
+.flow-prompt {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.flow-prompt__body .app-text__content {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .app-link {
   color: var(--primary);
   text-decoration: underline;

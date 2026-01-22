@@ -19,6 +19,7 @@ import AppToggle from '../primitives/AppToggle'
 import AppToast from '../primitives/AppToast'
 import AppTextarea from '../primitives/AppTextarea'
 import AppText from '../primitives/AppText'
+import AppStickyAction from '../primitives/AppStickyAction'
 import './harness.css'
 
 export default function Primitives() {
@@ -76,6 +77,9 @@ export default function Primitives() {
               <AppButton variant="ghost">Ghost</AppButton>
               <AppIconButton icon={chevronBack} ariaLabel="Back" size="lg" />
               <div className="app-stack">
+                <AppButton size="xs" iconStart={<IonIcon icon={add} aria-hidden="true" />}>
+                  X-small
+                </AppButton>
                 <AppButton size="sm" iconStart={<IonIcon icon={add} aria-hidden="true" />}>
                   Small
                 </AppButton>
@@ -300,6 +304,22 @@ export default function Primitives() {
               variant="success"
               message="Saved locally."
             />
+          </section>
+
+          <section className="app-section">
+            <div className="t-xs lh-xs w-500 text-secondary uc ls-wide">AppStickyAction</div>
+            <div className="app-stack">
+              <div className="flow-prompt">
+                <AppStickyAction>
+                  <AppButton size="xs" variant="secondary">
+                    Sticky action
+                  </AppButton>
+                </AppStickyAction>
+                <AppText intent="body">
+                  Scroll the prompt block to confirm the button stays visible.
+                </AppText>
+              </div>
+            </div>
           </section>
 
           <section className="app-section">

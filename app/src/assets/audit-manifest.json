@@ -1,7 +1,7 @@
 {
   "repo": "https://github.com/Scrappy-Kin/scrappy-kin-ios",
-  "sha": "3b6665432a6d7c711c9bec12ce23a0356bc938ca",
-  "generated_at": "2026-01-22T00:44:32.117Z",
+  "sha": "7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92",
+  "generated_at": "2026-01-22T16:24:52.600Z",
   "key_files": [
     {
       "path": "app/src/services/googleAuth.ts",
@@ -16,37 +16,226 @@
       "purpose": "Queueing and dispatch logic for outbound emails."
     },
     {
-      "path": "app/src/services/emailTemplate.ts",
-      "purpose": "Opt-out email template and fields."
+      "path": "app/src/services/secureStore.ts",
+      "purpose": "Encrypted storage for credentials and user data."
     },
     {
-      "path": "app/src/services/secureStore.ts",
-      "purpose": "Secure storage for credentials/tokens."
+      "path": "app/src/services/userProfile.ts",
+      "purpose": "User profile storage and retrieval."
+    },
+    {
+      "path": "app/src/services/queueStore.ts",
+      "purpose": "Local queue persistence for outbound emails."
+    },
+    {
+      "path": "app/src/services/brokerStore.ts",
+      "purpose": "Broker data loading and selection storage."
+    },
+    {
+      "path": "app/src/services/emailTemplate.ts",
+      "purpose": "Opt-out email template and merge fields."
+    },
+    {
+      "path": "app/src/services/logStore.ts",
+      "purpose": "Diagnostics storage and export behavior."
+    },
+    {
+      "path": "app/package.json",
+      "purpose": "Dependencies (analytics/SDKs) and tooling."
     }
   ],
   "raw_urls": [
     {
       "path": "app/src/services/googleAuth.ts",
-      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/3b6665432a6d7c711c9bec12ce23a0356bc938ca/app/src/services/googleAuth.ts"
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/googleAuth.ts"
     },
     {
       "path": "app/src/services/gmailSend.ts",
-      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/3b6665432a6d7c711c9bec12ce23a0356bc938ca/app/src/services/gmailSend.ts"
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/gmailSend.ts"
     },
     {
       "path": "app/src/services/sendQueue.ts",
-      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/3b6665432a6d7c711c9bec12ce23a0356bc938ca/app/src/services/sendQueue.ts"
-    },
-    {
-      "path": "app/src/services/emailTemplate.ts",
-      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/3b6665432a6d7c711c9bec12ce23a0356bc938ca/app/src/services/emailTemplate.ts"
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/sendQueue.ts"
     },
     {
       "path": "app/src/services/secureStore.ts",
-      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/3b6665432a6d7c711c9bec12ce23a0356bc938ca/app/src/services/secureStore.ts"
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/secureStore.ts"
+    },
+    {
+      "path": "app/src/services/userProfile.ts",
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/userProfile.ts"
+    },
+    {
+      "path": "app/src/services/queueStore.ts",
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/queueStore.ts"
+    },
+    {
+      "path": "app/src/services/brokerStore.ts",
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/brokerStore.ts"
+    },
+    {
+      "path": "app/src/services/emailTemplate.ts",
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/emailTemplate.ts"
+    },
+    {
+      "path": "app/src/services/logStore.ts",
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/logStore.ts"
+    },
+    {
+      "path": "app/package.json",
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/package.json"
+    },
+    {
+      "path": "app/src/screens/Settings.tsx",
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/screens/Settings.tsx"
+    },
+    {
+      "path": "app/src/services/logSchema.ts",
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/logSchema.ts"
+    },
+    {
+      "path": "app/src/services/pkce.ts",
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/pkce.ts"
+    },
+    {
+      "path": "app/capacitor.config.ts",
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/capacitor.config.ts"
+    },
+    {
+      "path": "app/src/assets/broker-lists/email-only-brokers.v1.0.1.json",
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/assets/broker-lists/email-only-brokers.v1.0.1.json"
+    },
+    {
+      "path": "app/src/App.tsx",
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/App.tsx"
+    },
+    {
+      "path": "app/src/main.tsx",
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/main.tsx"
+    },
+    {
+      "path": "app/src/screens/Flow.tsx",
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/screens/Flow.tsx"
+    },
+    {
+      "path": "app/src/screens/Brokers.tsx",
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/screens/Brokers.tsx"
+    },
+    {
+      "path": "app/src/screens/Home.tsx",
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/screens/Home.tsx"
     }
   ],
+  "audit_links": {
+    "must": [
+      {
+        "path": "app/src/services/googleAuth.ts",
+        "purpose": "Gmail OAuth flow, scopes, and token handling.",
+        "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/googleAuth.ts"
+      },
+      {
+        "path": "app/src/services/gmailSend.ts",
+        "purpose": "Send opt-out emails via Gmail API.",
+        "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/gmailSend.ts"
+      },
+      {
+        "path": "app/src/services/sendQueue.ts",
+        "purpose": "Queueing and dispatch logic for outbound emails.",
+        "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/sendQueue.ts"
+      },
+      {
+        "path": "app/src/services/secureStore.ts",
+        "purpose": "Encrypted storage for credentials and user data.",
+        "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/secureStore.ts"
+      },
+      {
+        "path": "app/src/services/userProfile.ts",
+        "purpose": "User profile storage and retrieval.",
+        "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/userProfile.ts"
+      },
+      {
+        "path": "app/src/services/queueStore.ts",
+        "purpose": "Local queue persistence for outbound emails.",
+        "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/queueStore.ts"
+      },
+      {
+        "path": "app/src/services/brokerStore.ts",
+        "purpose": "Broker data loading and selection storage.",
+        "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/brokerStore.ts"
+      },
+      {
+        "path": "app/src/services/emailTemplate.ts",
+        "purpose": "Opt-out email template and merge fields.",
+        "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/emailTemplate.ts"
+      },
+      {
+        "path": "app/src/services/logStore.ts",
+        "purpose": "Diagnostics storage and export behavior.",
+        "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/logStore.ts"
+      },
+      {
+        "path": "app/package.json",
+        "purpose": "Dependencies (analytics/SDKs) and tooling.",
+        "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/package.json"
+      }
+    ],
+    "great": [
+      {
+        "path": "app/src/screens/Settings.tsx",
+        "purpose": "Log export, data wipe, and Gmail disconnect flows.",
+        "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/screens/Settings.tsx"
+      },
+      {
+        "path": "app/src/services/logSchema.ts",
+        "purpose": "Diagnostics schema and metadata constraints.",
+        "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/logSchema.ts"
+      },
+      {
+        "path": "app/src/services/pkce.ts",
+        "purpose": "PKCE helper functions.",
+        "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/pkce.ts"
+      },
+      {
+        "path": "app/capacitor.config.ts",
+        "purpose": "Capacitor app configuration.",
+        "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/capacitor.config.ts"
+      },
+      {
+        "path": "app/src/assets/broker-lists/email-only-brokers.v1.0.1.json",
+        "purpose": "Bundled broker list reference data.",
+        "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/assets/broker-lists/email-only-brokers.v1.0.1.json"
+      }
+    ],
+    "nice": [
+      {
+        "path": "app/src/App.tsx",
+        "purpose": "Routes, offline gating, and harness routes.",
+        "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/App.tsx"
+      },
+      {
+        "path": "app/src/main.tsx",
+        "purpose": "App bootstrap and theme imports.",
+        "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/main.tsx"
+      },
+      {
+        "path": "app/src/screens/Flow.tsx",
+        "purpose": "Primary onboarding flow and audit prompt UI.",
+        "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/screens/Flow.tsx"
+      },
+      {
+        "path": "app/src/screens/Brokers.tsx",
+        "purpose": "Broker selection UI and tier grouping.",
+        "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/screens/Brokers.tsx"
+      },
+      {
+        "path": "app/src/screens/Home.tsx",
+        "purpose": "Home screen content and quick actions.",
+        "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/screens/Home.tsx"
+      }
+    ]
+  },
   "coverage": {
     "note": "Key files only; this list is not exhaustive."
-  }
+  },
+  "prompt_text": "# Scrappy Kin — Independent Consumer-Side Code Audit (AI Prompt)\nYou are an **independent, user-side technical auditor**. Your job is to determine what this app can do with user data, using **only verifiable code evidence you can directly fetch**.\n## Quick navigation (for humans)\n- If you are not technical: **scroll to SECTION 6 (Plain-Language Summary + “Can it do this?” table)**.\n- The earlier sections are a **technical receipt** that makes the summary trustworthy.\n---\n## Rules (non-negotiable)\n1) **Evidence only.** Use only code you can fetch in this run. Do not use README/marketing text as evidence.\n2) **No guessing.** No “probably/likely/appears”. If not provable from fetched code, mark **Unknown**.\n3) **No invisible negatives.** You cannot claim “it does NOT do X” unless you can justify it via **explicit evidence** (e.g., missing scopes + no relevant API usage in audited files) and you must phrase it as:\n   - “No evidence of X in the code we audited” (not “impossible”).\n4) **Hard scope.** Audit ONLY:\n   - the repo tree **if you can browse it**, and\n   - the raw URLs listed below (authoritative file contents).\n   If tree browsing fails, treat the tree as **unavailable** and do not speculate about other files.\n5) **Every claim needs proof.** Any factual statement must cite:\n   - file path + function (or top-level const), and\n   - a direct code quote (≤2 lines).\n6) **Plain-language sections must be derived from the Evidence Ledger only.** No new facts.\n---\n## SECTION 0 — Access & Fetch Log (Required)\nState exactly what you could access:\n- Repo tree browsing: Success/Failure (and what you saw, if anything)\n- For each raw URL below: Success/Failure\nIf any raw file fails to fetch, continue auditing the rest, but mark impacted areas **Unknown**.\n---\n## SECTION 1 — Evidence Ledger (Source of truth)\nProduce a numbered list of facts. Each item MUST include:\n- **Claim** (one sentence, factual)\n- **Location** (file path + function/const)\n- **Evidence** (≤2 lines quoted)\nNo interpretation here.\n---\n## SECTION 2 — Access (What the app can access)\nDerived from ledger only. Cover:\n- Permissions/scopes (e.g., Gmail scope)\n- Device/platform capabilities used (if visible)\n- What user data fields are referenced for composing messages\nEach bullet must cite ledger item numbers.\n---\n## SECTION 3 — Storage (On-device)\nDerived from ledger only.\nList every storage mechanism + exact keys/prefixes/paths and what is stored.\nIf encryption is used, name the algorithm ONLY if explicitly shown.\n---\n## SECTION 4 — Network Transmission Inventory (Table)\nDerived from ledger only.\nOne row per network call (including wrapper + call sites if present):\n| File | Function | Destination host | Full URL | Method | Auth mechanism | Headers (keys only) | Body/query fields (keys only) | What user data is included | Proof (ledger #) |\nRules:\n- If URL is constructed dynamically, show the base + how it’s constructed (ledger-backed).\n- If payload content can’t be determined, write **Unknown**.\n---\n## SECTION 5 — Gmail Authorization (only if present)\nDerived from ledger only. Explain in plain language later, but here capture facts:\n- OAuth flow (as implemented)\n- Scopes\n- Token storage/refresh/revoke\n- Redirect handling\nLedger-backed.\n---\n## SECTION 6 — Plain-Language Summary (for non-technical humans)\nUse very plain words. Avoid jargon like “OAuth”, “PKCE”, “Bearer token”. If unavoidable, explain in one short parenthetical.\n### 6.1 TL;DR (8 bullets max)\nWrite as “This app CAN…” / “This app DOESN’T appear to…” / “Unknown because we couldn’t see…”\nEvery bullet must reference ledger item numbers in brackets like [L3, L7].\n### 6.2 “Can it do this?” table (keep it simple)\n| Question | Answer (✅ Yes / ❌ No evidence / ⚠️ Unknown) | What it means (one sentence) | Proof |\nInclude at least these questions:\n- Can it read my emails?\n- Can it send emails for me?\n- Can it upload my data to Scrappy Kin servers?\n- Can it share data with third parties (analytics/crash tools)?\n- Can it track me across apps/websites?\n- Can it store my personal info on my phone?\n- Can it store my Gmail permission tokens on my phone?\n**Important phrasing rule for negatives:** prefer “❌ No evidence in audited code” over absolute “No”.\n### 6.3 Two examples of good plain language (follow this style)\n- ✅ Good: “It can send emails for you, because it calls Gmail’s ‘send message’ address.”\n- ❌ Bad: “It uses OAuth2 with PKCE and a Bearer token to access the Gmail API.”\n---\n## SECTION 7 — Gaps, limits, and confidence (non-scary)\nWrite:\n- What you audited (tree? which raw files?)\n- What you could NOT access\n- What that means in plain language: “We can’t rule out X elsewhere because we did not see the full code.”\n- If repo tree browsing succeeded: briefly explain whether the provided raw links seem to cover the major risk surfaces (auth, networking, storage, logging), WITHOUT claiming full coverage.\n---\n## Audit target\nRepository: https://github.com/Scrappy-Kin/scrappy-kin-ios\nPinned commit (SHA): 7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92\n### Raw files to audit (authoritative)\nMust see:\n- https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/googleAuth.ts\n- https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/gmailSend.ts\n- https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/sendQueue.ts\n- https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/secureStore.ts\n- https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/userProfile.ts\n- https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/queueStore.ts\n- https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/brokerStore.ts\n- https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/emailTemplate.ts\n- https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/logStore.ts\n- https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/package.json\n\nGreat to see:\n- https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/screens/Settings.tsx\n- https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/logSchema.ts\n- https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/services/pkce.ts\n- https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/capacitor.config.ts\n- https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/assets/broker-lists/email-only-brokers.v1.0.1.json\n\nNice to see:\n- https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/App.tsx\n- https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/main.tsx\n- https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/screens/Flow.tsx\n- https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/screens/Brokers.tsx\n- https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/7b3b625b0ccc4d8a1fe4cdc1ab4d3a8b00d8be92/app/src/screens/Home.tsx\nScope: Key files only; this list is not exhaustive."
 }
