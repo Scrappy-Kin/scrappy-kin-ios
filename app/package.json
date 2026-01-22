@@ -8,6 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "audit:manifest": "node ../scripts/generate-audit-manifest.js",
+    "audit:manifest:check": "node ../scripts/generate-audit-manifest.js --check",
     "health-check": "npm run lint && npm audit && npx madge --circular src/ && npx depcheck --ignores=@capacitor/ios"
   },
   "dependencies": {

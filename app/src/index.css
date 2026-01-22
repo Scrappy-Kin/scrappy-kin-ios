@@ -5,7 +5,10 @@ body {
 
 .page-content {
   --background: var(--neutral-0);
-  padding: var(--space-6);
+  --padding-start: var(--page-padding);
+  --padding-end: var(--page-padding);
+  --padding-top: var(--page-padding-top);
+  --padding-bottom: var(--page-padding);
 }
 
 .offline-shell {
@@ -34,8 +37,45 @@ body {
 .flow-actions {
   display: flex;
   gap: var(--space-2);
-  justify-content: space-between;
+  justify-content: stretch;
   margin-top: var(--space-4);
+}
+
+.flow-stack {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.flow-context {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.flow-metrics {
+  display: grid;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+
+.flow-template .app-text__content {
+  white-space: pre-wrap;
+}
+
+.app-link {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: var(--font-weight-medium);
+}
+
+.app-link--external {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.app-link__icon {
+  display: inline-flex;
 }
 
 .form-stack {

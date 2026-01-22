@@ -48,6 +48,7 @@
   display: grid;
   gap: var(--space-1);
   min-width: 0;
+  flex: 1;
 }
 
 .app-list__title {
@@ -62,6 +63,12 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.app-list__left {
+  display: inline-flex;
+  align-items: center;
   flex-shrink: 0;
 }
 

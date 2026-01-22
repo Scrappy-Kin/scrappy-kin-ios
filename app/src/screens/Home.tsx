@@ -1,16 +1,10 @@
-import {
-  IonButton,
-  IonCard,
-  IonCardContent,
-  IonCardHeader,
-  IonCardTitle,
-  IonContent,
-  IonPage,
-  IonText,
-} from '@ionic/react'
+import { IonContent, IonPage } from '@ionic/react'
 import { useEffect, useState } from 'react'
 import { useHistory } from 'react-router-dom'
 import AppHeader from '../components/AppHeader'
+import AppButton from '../ui/primitives/AppButton'
+import AppCard from '../ui/primitives/AppCard'
+import AppText from '../ui/primitives/AppText'
 import { connectGmail, getGmailStatus } from '../services/googleAuth'
 import { getSelectedBrokerIds, loadBrokers } from '../services/brokerStore'
 import { getLogOptIn, logEvent } from '../services/logStore'
@@ -90,57 +84,42 @@ export default function Home() {
     <IonPage>
       <AppHeader title="Scrappy Kin" />
       <IonContent className="page-content">
-        <IonCard>
-          <IonCardHeader>
-            <IonCardTitle>Phase A</IonCardTitle>
-          </IonCardHeader>
-          <IonCardContent>
-            <p>Send deletion requests to email-based brokers.</p>
-            <IonButton expand="block" fill="outline" onClick={() => history.push('/flow')}>
-              Start guided setup
-            </IonButton>
-            {!gmailConnected && (
-              <IonButton expand="block" onClick={handleConnectGmail}>
-                Connect Gmail
-              </IonButton>
-            )}
-            <IonButton expand="block" onClick={handleSendAll} disabled={!gmailConnected || isSending}>
-              {isSending ? 'Sending...' : 'Send all requests'}
-            </IonButton>
-            {summary.failed > 0 && (
-              <IonButton
-                expand="block"
-                fill="outline"
-                onClick={handleRetryFailed}
-                disabled={!gmailConnected || isSending}
-              >
-                Retry failed
-              </IonButton>
-            )}
-            <IonText color="medium">
-              <p>
-                Gmail send-only. No inbox access. {gmailConnected ? 'Connected.' : 'Not connected.'}
-              </p>
-              <p>{profileReady ? 'Profile saved.' : 'Profile not set.'}</p>
-              <p>
-                Sent: {summary.sent} · Failed: {summary.failed} · Pending: {summary.pending}
-              </p>
-            </IonText>
-          </IonCardContent>
-        </IonCard>
+        <AppCard title="Phase A">
+          <AppText intent="body">Send deletion requests to email-based brokers.</AppText>
+          <AppButton variant="secondary" onClick={() => history.push('/flow')}>
+            Start guided setup
+          </AppButton>
+          {!gmailConnected && (
+            <AppButton onClick={handleConnectGmail}>Connect Gmail</AppButton>
+          )}
+          <AppButton onClick={handleSendAll} disabled={!gmailConnected || isSending}>
+            {isSending ? 'Sending...' : 'Send all requests'}
+          </AppButton>
+          {summary.failed > 0 && (
+            <AppButton
+              variant="secondary"
+              onClick={handleRetryFailed}
+              disabled={!gmailConnected || isSending}
+            >
+              Retry failed
+            </AppButton>
+          )}
+          <AppText intent="supporting">
+            Gmail send-only. No inbox access. {gmailConnected ? 'Connected.' : 'Not connected.'}
+          </AppText>
+          <AppText intent="supporting">
+            {profileReady ? 'Profile saved.' : 'Profile not set.'}
+          </AppText>
+          <AppText intent="supporting">
+            Sent: {summary.sent} · Failed: {summary.failed} · Pending: {summary.pending}
+          </AppText>
+        </AppCard>
 
-        <IonCard>
-          <IonCardHeader>
-            <IonCardTitle>Privacy stance</IonCardTitle>
-          </IonCardHeader>
-          <IonCardContent>
-            <ul>
-              <li>All data stays on your device or in your Gmail account.</li>
-              <li>No analytics or tracking.</li>
-              <li>Logs are {logOptIn ? 'on' : 'off'} and stored locally only.</li>
-            </ul>
-          </IonCardContent>
-        </IonCard>
+        <AppCard title="Privacy stance">
+          <AppText intent="body">All data stays on your device or in your Gmail account.</AppText>
+          <AppText intent="body">No analytics or tracking.</AppText>
+          <AppText intent="body">Logs are {logOptIn ? 'on' : 'off'} and stored locally only.</AppText>
+        </AppCard>
       </IonContent>
     </IonPage>
   )
