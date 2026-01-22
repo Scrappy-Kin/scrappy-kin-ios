@@ -10,6 +10,7 @@ type AppButtonProps = {
   size?: ButtonSize
   disabled?: boolean
   loading?: boolean
+  fullWidth?: boolean
   onClick?: () => void
   iconStart?: ReactNode
   iconEnd?: ReactNode
@@ -28,19 +29,23 @@ export default function AppButton({
   size = 'md',
   disabled = false,
   loading = false,
+  fullWidth = false,
   onClick,
   iconStart,
   iconEnd,
   children,
 }: AppButtonProps) {
   const { color, fill } = variantStyles[variant]
-  const classes = ['app-button', `app-button--${size}`].join(' ')
+  const classes = ['app-button', `app-button--${size}`, fullWidth ? 'app-button--full' : '']
+    .filter(Boolean)
+    .join(' ')
 
   return (
     <IonButton
       className={classes}
       color={color}
       fill={fill}
+      expand={fullWidth ? 'block' : undefined}
       disabled={disabled || loading}
       onClick={onClick}
       aria-busy={loading}

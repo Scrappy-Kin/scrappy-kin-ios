@@ -1,11 +1,13 @@
 import { IonContent, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar } from '@ionic/react'
-import { add, alertCircle, arrowForward, home, informationCircle } from 'ionicons/icons'
+import { add, alertCircle, arrowForward, chevronBack, home, informationCircle } from 'ionicons/icons'
 import { useState } from 'react'
 import AppButton from '../primitives/AppButton'
 import AppCard from '../primitives/AppCard'
 import AppHeading from '../primitives/AppHeading'
+import AppCheckbox from '../primitives/AppCheckbox'
 import AppInput from '../primitives/AppInput'
 import AppIcon from '../primitives/AppIcon'
+import AppIconButton from '../primitives/AppIconButton'
 import AppList from '../primitives/AppList'
 import AppListRow from '../primitives/AppListRow'
 import AppNotice from '../primitives/AppNotice'
@@ -72,6 +74,7 @@ export default function Primitives() {
               <AppButton variant="secondary">Secondary</AppButton>
               <AppButton variant="destructive">Destructive</AppButton>
               <AppButton variant="ghost">Ghost</AppButton>
+              <AppIconButton icon={chevronBack} ariaLabel="Back" size="lg" />
               <div className="app-stack">
                 <AppButton size="sm" iconStart={<IonIcon icon={add} aria-hidden="true" />}>
                   Small
@@ -124,6 +127,11 @@ export default function Primitives() {
                 title="Primary row"
                 description="Supporting detail for this row."
                 right={<AppText intent="caption">Default</AppText>}
+              />
+              <AppListRow
+                title="Selectable row"
+                description="Left slot holds selection controls."
+                left={<AppCheckbox checked={true} onChange={() => undefined} />}
               />
               <AppListRow
                 title="Clickable row"
@@ -333,6 +341,7 @@ export default function Primitives() {
               </div>
             </div>
           </section>
+
         </div>
       </IonContent>
     </IonPage>

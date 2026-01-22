@@ -1,0 +1,52 @@
+{
+  "repo": "https://github.com/Scrappy-Kin/scrappy-kin-ios",
+  "sha": "3b6665432a6d7c711c9bec12ce23a0356bc938ca",
+  "generated_at": "2026-01-22T00:44:32.117Z",
+  "key_files": [
+    {
+      "path": "app/src/services/googleAuth.ts",
+      "purpose": "Gmail OAuth flow, scopes, and token handling."
+    },
+    {
+      "path": "app/src/services/gmailSend.ts",
+      "purpose": "Send opt-out emails via Gmail API."
+    },
+    {
+      "path": "app/src/services/sendQueue.ts",
+      "purpose": "Queueing and dispatch logic for outbound emails."
+    },
+    {
+      "path": "app/src/services/emailTemplate.ts",
+      "purpose": "Opt-out email template and fields."
+    },
+    {
+      "path": "app/src/services/secureStore.ts",
+      "purpose": "Secure storage for credentials/tokens."
+    }
+  ],
+  "raw_urls": [
+    {
+      "path": "app/src/services/googleAuth.ts",
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/3b6665432a6d7c711c9bec12ce23a0356bc938ca/app/src/services/googleAuth.ts"
+    },
+    {
+      "path": "app/src/services/gmailSend.ts",
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/3b6665432a6d7c711c9bec12ce23a0356bc938ca/app/src/services/gmailSend.ts"
+    },
+    {
+      "path": "app/src/services/sendQueue.ts",
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/3b6665432a6d7c711c9bec12ce23a0356bc938ca/app/src/services/sendQueue.ts"
+    },
+    {
+      "path": "app/src/services/emailTemplate.ts",
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/3b6665432a6d7c711c9bec12ce23a0356bc938ca/app/src/services/emailTemplate.ts"
+    },
+    {
+      "path": "app/src/services/secureStore.ts",
+      "url": "https://raw.githubusercontent.com/Scrappy-Kin/scrappy-kin-ios/3b6665432a6d7c711c9bec12ce23a0356bc938ca/app/src/services/secureStore.ts"
+    }
+  ],
+  "coverage": {
+    "note": "Key files only; this list is not exhaustive."
+  }
+}

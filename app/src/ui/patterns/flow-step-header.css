@@ -1,0 +1,15 @@
+.flow-step-header {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.flow-step-header__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.flow-step-header__row > span {
+  flex: 0 0 auto;
+}

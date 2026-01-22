@@ -1,14 +1,4 @@
-import {
-  IonButton,
-  IonContent,
-  IonItem,
-  IonInput,
-  IonLabel,
-  IonList,
-  IonNote,
-  IonPage,
-  IonToggle,
-} from '@ionic/react'
+import { IonContent, IonPage } from '@ionic/react'
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
 import { useEffect, useMemo, useState } from 'react'
@@ -25,6 +15,13 @@ import {
 import { disconnectGmail } from '../services/googleAuth'
 import { wipeAllLocalData } from '../services/secureStore'
 import { getUserProfile, setUserProfile, type UserProfile } from '../services/userProfile'
+import AppButton from '../ui/primitives/AppButton'
+import AppCard from '../ui/primitives/AppCard'
+import AppInput from '../ui/primitives/AppInput'
+import AppList from '../ui/primitives/AppList'
+import AppListRow from '../ui/primitives/AppListRow'
+import AppText from '../ui/primitives/AppText'
+import AppToggle from '../ui/primitives/AppToggle'
 
 export default function Settings() {
   const [logOptIn, setOptIn] = useState(false)
@@ -163,145 +160,102 @@ export default function Settings() {
     <IonPage>
       <AppHeader title="Settings" />
       <IonContent className="page-content">
-        <IonList>
-          <IonItem>
-            <IonLabel>
-              <h2>Profile</h2>
-              <p>Edit the info used for broker requests.</p>
-              <p>{profileSaved ? 'Saved.' : 'Not saved yet.'}</p>
-            </IonLabel>
-          </IonItem>
-          <IonItem>
-            <IonLabel position="stacked">Full name</IonLabel>
-            <IonInput
-              value={profileDraft.fullName}
-              onIonChange={(event) => updateProfile({ fullName: event.detail.value ?? '' })}
-            />
-          </IonItem>
-          <IonItem>
-            <IonLabel position="stacked">Email</IonLabel>
-            <IonInput
-              type="email"
-              value={profileDraft.email}
-              onIonChange={(event) => updateProfile({ email: event.detail.value ?? '' })}
-            />
-          </IonItem>
-          <IonItem>
-            <IonLabel position="stacked">City</IonLabel>
-            <IonInput
-              value={profileDraft.city}
-              onIonChange={(event) => updateProfile({ city: event.detail.value ?? '' })}
-            />
-          </IonItem>
-          <IonItem>
-            <IonLabel position="stacked">Country</IonLabel>
-            <IonInput
-              value={profileDraft.country}
-              onIonChange={(event) => updateProfile({ country: event.detail.value ?? '' })}
-            />
-          </IonItem>
-          <IonItem>
-            <IonLabel position="stacked">Partial postcode</IonLabel>
-            <IonInput
-              value={profileDraft.partialPostcode}
-              onIonChange={(event) =>
-                updateProfile({ partialPostcode: event.detail.value ?? '' })
-              }
-            />
-          </IonItem>
-          <IonItem lines="none">
-            <IonButton expand="block" onClick={handleSaveProfile}>
-              Save profile
-            </IonButton>
-          </IonItem>
-        </IonList>
+        <AppCard title="Profile">
+          <AppText intent="supporting">Edit the info used for broker requests.</AppText>
+          <AppText intent="supporting">{profileSaved ? 'Saved.' : 'Not saved yet.'}</AppText>
+          <AppInput
+            label="Full name"
+            value={profileDraft.fullName}
+            onChange={(value) => updateProfile({ fullName: value })}
+          />
+          <AppInput
+            label="Email"
+            value={profileDraft.email}
+            onChange={(value) => updateProfile({ email: value })}
+            inputMode="email"
+          />
+          <AppInput
+            label="City"
+            value={profileDraft.city}
+            onChange={(value) => updateProfile({ city: value })}
+          />
+          <AppInput
+            label="Country"
+            value={profileDraft.country}
+            onChange={(value) => updateProfile({ country: value })}
+          />
+          <AppInput
+            label="Partial postcode"
+            value={profileDraft.partialPostcode}
+            onChange={(value) => updateProfile({ partialPostcode: value })}
+          />
+          <AppButton onClick={handleSaveProfile}>Save profile</AppButton>
+        </AppCard>
 
-        <IonList>
-          <IonItem>
-            <IonLabel>
-              <h2>Diagnostics</h2>
-              <p>
-                Diagnostics are short, local logs that help us troubleshoot bugs. They never
-                include your personal info and never leave your device automatically.
-              </p>
-              <p>
-                When enabled, diagnostics capture for 15 minutes. Export is manual: review the
-                plain-text file and email it to support@scrappykin.com.
-              </p>
-            </IonLabel>
-            <IonToggle
-              checked={logOptIn}
-              onIonChange={(event) => handleToggleLogs(event.detail.checked)}
-            />
-          </IonItem>
-          {logOptIn && logOptInRemaining && (
-            <IonItem lines="none">
-              <IonNote>Diagnostics capture: {logOptInRemaining}.</IonNote>
-            </IonItem>
-          )}
-          <IonItem button onClick={handleExportLogs}>
-            <IonLabel>Export diagnostics (plain text)</IonLabel>
-          </IonItem>
-          <IonItem button onClick={handleDownloadLogs}>
-            <IonLabel>Download diagnostics file</IonLabel>
-          </IonItem>
-          <IonItem button onClick={handleWipeLogs}>
-            <IonLabel>Wipe diagnostics</IonLabel>
-          </IonItem>
-          <IonItem lines="none">
-            <IonNote>
-              Diagnostics never send automatically. Export and send manually if needed.
-            </IonNote>
-          </IonItem>
-        </IonList>
+        <AppCard title="Diagnostics">
+          <AppText intent="body">
+            Diagnostics are short, local logs that help us troubleshoot bugs. They never include
+            your personal info and never leave your device automatically.
+          </AppText>
+          <AppText intent="supporting">
+            When enabled, diagnostics capture for 15 minutes. Export is manual: review the
+            plain-text file and email it to support@scrappykin.com.
+          </AppText>
+          <AppToggle
+            label="Enable diagnostics"
+            description="Capture local logs for 15 minutes."
+            checked={logOptIn}
+            onChange={handleToggleLogs}
+          />
+          {logOptIn && logOptInRemaining ? (
+            <AppText intent="supporting">Diagnostics capture: {logOptInRemaining}.</AppText>
+          ) : null}
+        </AppCard>
+
+        <AppList header="Diagnostics actions">
+          <AppListRow title="Export diagnostics (plain text)" onClick={handleExportLogs} />
+          <AppListRow title="Download diagnostics file" onClick={handleDownloadLogs} />
+          <AppListRow title="Wipe diagnostics" onClick={handleWipeLogs} tone="danger" />
+        </AppList>
+        <AppText intent="supporting">
+          Diagnostics never send automatically. Export and send manually if needed.
+        </AppText>
 
         {IS_DEV_BUILD && (
-          <IonList>
-            <IonItem>
-              <IonLabel>
-                <h2>Dev diagnostics</h2>
-                <p>Debug-only toggle for richer local diagnostics.</p>
-              </IonLabel>
-              <IonToggle
-                checked={devLogOptIn}
-                onIonChange={(event) => handleToggleDevLogs(event.detail.checked)}
-              />
-            </IonItem>
-            <IonItem lines="none">
-              <IonNote>Only available in Debug builds. Data stays on-device.</IonNote>
-            </IonItem>
-          </IonList>
+          <AppCard title="Dev diagnostics">
+            <AppText intent="supporting">Debug-only toggle for richer local diagnostics.</AppText>
+            <AppToggle
+              label="Enable dev diagnostics"
+              description="Only available in Debug builds. Data stays on-device."
+              checked={devLogOptIn}
+              onChange={handleToggleDevLogs}
+            />
+          </AppCard>
         )}
 
-        <IonList>
-          <IonItem>
-            <IonLabel>
-              <h2>Build</h2>
-              <p>Use this when reporting issues.</p>
-            </IonLabel>
-          </IonItem>
-          <IonItem>
-            <IonLabel>Build ID</IonLabel>
-            <IonNote slot="end">{BUILD_SHA}</IonNote>
-          </IonItem>
-          <IonItem>
-            <IonLabel>Build time (UTC)</IonLabel>
-            <IonNote slot="end">{BUILD_TIME}</IonNote>
-          </IonItem>
-          <IonItem lines="none">
-            <IonLabel>Build mode</IonLabel>
-            <IonNote slot="end">{BUILD_MODE}</IonNote>
-          </IonItem>
-        </IonList>
+        <AppList header="Build">
+          <AppListRow
+            title="Build ID"
+            right={<AppText intent="caption">{BUILD_SHA}</AppText>}
+          />
+          <AppListRow
+            title="Build time (UTC)"
+            right={<AppText intent="caption">{BUILD_TIME}</AppText>}
+          />
+          <AppListRow
+            title="Build mode"
+            right={<AppText intent="caption">{BUILD_MODE}</AppText>}
+          />
+        </AppList>
 
-        <IonList>
-          <IonItem button onClick={handleDisconnect}>
-            <IonLabel>Disconnect Gmail</IonLabel>
-          </IonItem>
-          <IonItem button onClick={handleWipeAll}>
-            <IonLabel>Delete all local data</IonLabel>
-          </IonItem>
-        </IonList>
+        <AppList header="Account">
+          <AppListRow title="Disconnect Gmail" onClick={handleDisconnect} />
+          <AppListRow
+            title="Delete all local data"
+            onClick={handleWipeAll}
+            tone="danger"
+          />
+        </AppList>
       </IonContent>
     </IonPage>
   )

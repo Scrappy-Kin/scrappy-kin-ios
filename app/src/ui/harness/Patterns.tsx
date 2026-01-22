@@ -4,6 +4,7 @@ import AppText from '../primitives/AppText'
 import InlineTrustClaim from '../patterns/InlineTrustClaim'
 import ReadMoreSheetLink from '../patterns/ReadMoreSheetLink'
 import InspectableArtifact from '../patterns/InspectableArtifact'
+import FlowStepHeader from '../patterns/FlowStepHeader'
 import './harness.css'
 
 export default function Patterns() {
@@ -76,6 +77,16 @@ export default function Patterns() {
                   <AppText intent="supporting">Explanation is secondary context.</AppText>
                 </>
               }
+            />
+          </section>
+
+          <section className="app-section">
+            <AppHeading intent="section">FlowStepHeader</AppHeading>
+            <FlowStepHeader
+              current={2}
+              total={6}
+              label="Step 2 of 6"
+              onBack={() => {}}
             />
           </section>
         </div>

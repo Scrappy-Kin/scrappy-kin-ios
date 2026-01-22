@@ -51,3 +51,7 @@
   height: 16px;
   margin-right: var(--space-2);
 }
+
+.app-button--full {
+  width: 100%;
+}

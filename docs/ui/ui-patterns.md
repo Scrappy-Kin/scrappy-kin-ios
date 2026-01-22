@@ -20,6 +20,7 @@ TL;DR
 - No full-screen webviews for trust content.
 - No tooltips for anything >1 sentence.
 - No modal dialogs for trust reading (use sheets).
+ - Flow chrome should be subtle; avoid heavy headers.
 
 ### InlineTrustClaim
 
@@ -50,6 +51,18 @@ export interface InspectableArtifactProps {
   viewLabel?: string;
   artifact: React.ReactNode;
   explanation?: React.ReactNode;
+}
+```
+
+### FlowStepHeader
+
+```ts
+export interface FlowStepHeaderProps {
+  current: number;
+  total: number;
+  onBack?: () => void;
+  backDisabled?: boolean;
+  label?: string;
 }
 ```
 

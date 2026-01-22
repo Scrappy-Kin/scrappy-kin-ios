@@ -27,10 +27,14 @@ pnpm-debug.log*
 # Misc
 *.log
 
-# Private documentation
+# Internal documentation
 docs/specs/
 docs/strategy/
 docs/planning/
+docs/library/
+!docs/planning/
+!docs/planning/active/
+!docs/planning/active/*.md
 
 # IDE-specific agent skills
 .windsurf/

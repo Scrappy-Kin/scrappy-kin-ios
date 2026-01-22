@@ -1,13 +1,6 @@
 import {
-  IonButton,
-  IonCheckbox,
   IonContent,
-  IonItem,
-  IonItemDivider,
-  IonLabel,
-  IonList,
   IonPage,
-  IonText,
 } from '@ionic/react'
 import { useEffect, useMemo, useState } from 'react'
 import {
@@ -17,6 +10,11 @@ import {
   type Broker,
 } from '../services/brokerStore'
 import AppHeader from '../components/AppHeader'
+import AppCheckbox from '../ui/primitives/AppCheckbox'
+import AppButton from '../ui/primitives/AppButton'
+import AppList from '../ui/primitives/AppList'
+import AppListRow from '../ui/primitives/AppListRow'
+import AppText from '../ui/primitives/AppText'
 
 const TIER_ORDER = ['mega', 'medium', 'small', 'other'] as const
 
@@ -75,41 +73,38 @@ export default function Brokers() {
     <IonPage>
       <AppHeader title="Brokers" />
       <IonContent className="page-content">
-        <IonText color="medium">
-          <p>{brokers.length} brokers available.</p>
-        </IonText>
+        <AppText intent="supporting">{brokers.length} brokers available.</AppText>
         <div className="broker-actions">
-          <IonButton size="small" onClick={selectAll}>
+          <AppButton size="sm" onClick={selectAll}>
             Select all
-          </IonButton>
-          <IonButton size="small" fill="outline" onClick={clearAll}>
+          </AppButton>
+          <AppButton size="sm" variant="secondary" onClick={clearAll}>
             Clear
-          </IonButton>
+          </AppButton>
         </div>
-        <IonList>
-          {TIER_ORDER.map((tier) =>
-            grouped[tier].length > 0 ? (
-              <div key={tier}>
-                <IonItemDivider>{TIER_LABELS[tier]}</IonItemDivider>
-                {grouped[tier].map((broker) => (
-                  <IonItem key={broker.id}>
-                    <IonCheckbox
-                      slot="start"
+        {TIER_ORDER.map((tier) =>
+          grouped[tier].length > 0 ? (
+            <AppList header={TIER_LABELS[tier]} key={tier}>
+              {grouped[tier].map((broker) => (
+                <AppListRow
+                  key={broker.id}
+                  title={broker.name}
+                  description={
+                    broker.childCompanies && broker.childCompanies.length > 0
+                      ? `Includes: ${broker.childCompanies.join(', ')}`
+                      : undefined
+                  }
+                  left={
+                    <AppCheckbox
                       checked={selected.includes(broker.id)}
-                      onIonChange={(event) => toggleBroker(broker.id, event.detail.checked)}
+                      onChange={(checked) => toggleBroker(broker.id, checked)}
                     />
-                    <IonLabel>
-                      <h2>{broker.name}</h2>
-                      {broker.childCompanies && broker.childCompanies.length > 0 && (
-                        <p>Includes: {broker.childCompanies.join(', ')}</p>
-                      )}
-                    </IonLabel>
-                  </IonItem>
-                ))}
-              </div>
-            ) : null,
-          )}
-        </IonList>
+                  }
+                />
+              ))}
+            </AppList>
+          ) : null,
+        )}
       </IonContent>
     </IonPage>
   )

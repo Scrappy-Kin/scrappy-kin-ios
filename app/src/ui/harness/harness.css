@@ -6,7 +6,7 @@
 .app-shell {
   display: grid;
   gap: var(--space-6);
-  padding: var(--space-6);
+  padding: var(--page-padding-top) var(--page-padding) var(--page-padding);
   width: 100%;
   max-width: 100%;
 }

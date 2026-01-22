@@ -12,7 +12,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Verify iOS config
         run: scripts/verify-ios-config.sh
       - name: Verify log schema
         run: scripts/check-log-schema.js
+      - name: Verify audit manifest
+        run: node scripts/generate-audit-manifest.js --check

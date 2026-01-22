@@ -51,6 +51,7 @@ export interface AppButtonProps {
   size?: Size;
   disabled?: boolean;
   loading?: boolean;
+  fullWidth?: boolean;
   onClick?: () => void;
   iconStart?: React.ReactNode;
   iconEnd?: React.ReactNode;
@@ -83,12 +84,14 @@ export interface AppListProps {
 }
 
 export interface AppListRowProps {
-  title: string;
+  title: React.ReactNode;
   description?: string;
+  left?: React.ReactNode;
   right?: React.ReactNode;
   onClick?: () => void;
   tone?: Tone;
   disabled?: boolean;
+  emphasis?: boolean;
 }
 ```
 
@@ -196,5 +199,28 @@ export interface AppIconProps {
   size?: Size;
   tone?: Tone;
   ariaLabel?: string;
+}
+```
+
+### Icon Button
+
+```ts
+export interface AppIconButtonProps {
+  icon: string;
+  ariaLabel: string;
+  size?: Size;
+  tone?: "primary" | "danger";
+  disabled?: boolean;
+  onClick?: () => void;
+}
+```
+
+### Checkbox
+
+```ts
+export interface AppCheckboxProps {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled?: boolean;
 }
 ```

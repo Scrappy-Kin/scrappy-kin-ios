@@ -5,12 +5,14 @@ import AppText from './AppText'
 import './list.css'
 
 type AppListRowProps = {
-  title: string
+  title: ReactNode
   description?: string
+  left?: ReactNode
   right?: ReactNode
   onClick?: () => void
   tone?: 'neutral' | 'primary' | 'danger'
   disabled?: boolean
+  emphasis?: boolean
 }
 
 const toneClassMap: Record<NonNullable<AppListRowProps['tone']>, string> = {
@@ -22,10 +24,12 @@ const toneClassMap: Record<NonNullable<AppListRowProps['tone']>, string> = {
 export default function AppListRow({
   title,
   description,
+  left,
   right,
   onClick,
   tone = 'neutral',
   disabled = false,
+  emphasis = true,
 }: AppListRowProps) {
   const classes = [
     'app-list__row',
@@ -37,8 +41,9 @@ export default function AppListRow({
 
   const content = (
     <>
+      {left ? <div className="app-list__left">{left}</div> : null}
       <div className="app-list__content">
-        <AppText intent="body" emphasis>
+        <AppText intent="body" emphasis={emphasis}>
           <span className={`app-list__title ${toneClassMap[tone]}`}>{title}</span>
         </AppText>
         {description ? (

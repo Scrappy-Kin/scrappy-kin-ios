@@ -1,0 +1,26 @@
+.app-icon-button {
+  --border-radius: 999px;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --button-size: var(--space-10);
+}
+
+.app-icon-button--sm {
+  --button-size: var(--space-8);
+}
+
+.app-icon-button--md {
+  --button-size: var(--space-10);
+}
+
+.app-icon-button--lg {
+  --button-size: calc(var(--space-6) * 2);
+}
+
+.app-icon-button::part(native) {
+  width: var(--button-size);
+  height: var(--button-size);
+  min-width: var(--button-size);
+}
