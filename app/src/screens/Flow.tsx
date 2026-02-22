@@ -1,5 +1,5 @@
 import { IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
-import { useState } from 'react'
+import { useState, type ReactElement, type ReactNode } from 'react'
 import { useHistory } from 'react-router-dom'
 import { getSelectedBrokerIds, loadBrokers, type Broker } from '../services/brokerStore'
 import { connectGmail, getGmailStatus } from '../services/googleAuth'
@@ -15,6 +15,7 @@ import AppListRow from '../ui/primitives/AppListRow'
 import AppSurface from '../ui/primitives/AppSurface'
 import AppText from '../ui/primitives/AppText'
 import AppToast from '../ui/primitives/AppToast'
+import AppNotice from '../ui/primitives/AppNotice'
 import FlowStepHeader from '../ui/patterns/FlowStepHeader'
 import InlineTrustClaim from '../ui/patterns/InlineTrustClaim'
 import ReadMoreSheetLink from '../ui/patterns/ReadMoreSheetLink'
@@ -198,7 +199,7 @@ const emptyProfile: UserProfile = {
 type Step = {
   id: string
   title: string
-  render: () => JSX.Element
+  render: () => ReactElement
   canContinue?: boolean
   showNext?: boolean
 }
@@ -213,6 +214,8 @@ export default function Flow() {
   const [selectedCount, setSelectedCount] = useState(0)
   const [previewBroker, setPreviewBroker] = useState<Broker | null>(null)
   const [toastOpen, setToastOpen] = useState(false)
+  const [oauthError, setOauthError] = useState<string | null>(null)
+  const [oauthInFlight, setOauthInFlight] = useState(false)
   const auditPromptText =
     (auditManifest as AuditManifest).prompt_text ?? buildAuditPrompt(auditManifest as AuditManifest)
 
@@ -238,7 +241,7 @@ export default function Flow() {
     refreshState()
   })
 
-  function renderStepContext(summary: string, sheetTitle?: string, sheetBody?: JSX.Element) {
+  function renderStepContext(summary: string, sheetTitle?: string, sheetBody?: ReactNode) {
     return (
       <div className="flow-context">
         <AppText intent="supporting">{summary}</AppText>
@@ -408,7 +411,14 @@ export default function Flow() {
               </div>
             }
           />
-          <AppButton onClick={handleConnectGmail}>Connect your Gmail account</AppButton>
+          {oauthError ? (
+            <AppNotice variant="error" title="Sign-in didn’t finish">
+              {oauthError}
+            </AppNotice>
+          ) : null}
+          <AppButton onClick={handleConnectGmail} disabled={oauthInFlight}>
+            {oauthError ? 'Retry Google sign-in' : 'Connect your Gmail account'}
+          </AppButton>
           <AppText intent="supporting">
             {gmailConnected ? 'Connected.' : 'Not connected yet.'}
           </AppText>
@@ -554,12 +564,23 @@ export default function Flow() {
 
   async function handleConnectGmail() {
     try {
+      setOauthError(null)
+      setOauthInFlight(true)
       await connectGmail()
       const status = await getGmailStatus()
       setGmailConnected(status.connected)
+      if (status.connected) {
+        const nextIndex = steps.findIndex((candidate) => candidate.id === 'profile')
+        const stepId = steps[currentIndex]?.id
+        if (nextIndex >= 0 && (stepId === 'gmail-login' || stepId === 'gmail-auth')) {
+          setCurrentIndex(nextIndex)
+        }
+      }
     } catch (error) {
-      alert((error as Error).message ?? 'Gmail connection failed.')
+      const message = (error as Error).message ?? 'Sign-in didn’t finish. Please try again.'
+      setOauthError(message)
     }
+    setOauthInFlight(false)
   }
 
   async function handleCopyAuditPrompt() {

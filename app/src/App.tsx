@@ -17,6 +17,8 @@ import Flow from './screens/Flow'
 import Home from './screens/Home'
 import Settings from './screens/Settings'
 import { useOnlineStatus } from './state/useOnlineStatus'
+import { useEffect } from 'react'
+import { clearStaleOAuthState } from './services/googleAuth'
 import HarnessHome from './ui/harness/HarnessHome'
 import Patterns from './ui/harness/Patterns'
 import Primitives from './ui/harness/Primitives'
@@ -41,6 +43,10 @@ function OfflineShell() {
 
 export default function App() {
   const isOnline = useOnlineStatus()
+
+  useEffect(() => {
+    clearStaleOAuthState().catch(() => undefined)
+  }, [])
 
   return (
     <IonApp>

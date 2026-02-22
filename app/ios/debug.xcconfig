@@ -1,4 +1,6 @@
 CAPACITOR_DEBUG = true
 PRODUCT_BUNDLE_IDENTIFIER = com.scrappykin.ios.dev
-PRODUCT_NAME = "Scrappy Kin (Dev)"
-INFOPLIST_KEY_CFBundleDisplayName = "Scrappy Kin (Dev)"
+PRODUCT_NAME = Scrappy Kin Dev
+INFOPLIST_KEY_CFBundleDisplayName = Scrappy Dev
+GOOGLE_CLIENT_ID = 914858229260-ns59pecm40udl9fi18ugrb1njlqie0m1.apps.googleusercontent.com
+GOOGLE_REDIRECT_SCHEME = com.googleusercontent.apps.914858229260-ns59pecm40udl9fi18ugrb1njlqie0m1

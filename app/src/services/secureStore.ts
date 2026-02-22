@@ -13,9 +13,13 @@ function fromBase64(data: string) {
 }
 
 async function getOrCreateKeyBytes() {
-  const existing = await SecureStoragePlugin.get({ key: KEY_NAME })
-  if (existing?.value) {
-    return fromBase64(existing.value)
+  try {
+    const existing = await SecureStoragePlugin.get({ key: KEY_NAME })
+    if (existing?.value) {
+      return fromBase64(existing.value)
+    }
+  } catch {
+    // Missing key: first run or cleared storage.
   }
 
   const keyBytes = crypto.getRandomValues(new Uint8Array(32))

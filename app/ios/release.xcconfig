@@ -1,0 +1,6 @@
+CAPACITOR_DEBUG = false
+PRODUCT_BUNDLE_IDENTIFIER = com.scrappykin.ios
+PRODUCT_NAME = "Scrappy Kin"
+INFOPLIST_KEY_CFBundleDisplayName = "Scrappy Kin"
+GOOGLE_CLIENT_ID = 304151210577-2hvg4113nd77cn8om3kppubqju7eu3sj.apps.googleusercontent.com
+GOOGLE_REDIRECT_SCHEME = com.googleusercontent.apps.304151210577-2hvg4113nd77cn8om3kppubqju7eu3sj

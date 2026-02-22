@@ -4,9 +4,8 @@ import { Capacitor, type PluginListenerHandle } from '@capacitor/core'
 import { getEncrypted, removeEncrypted, setEncrypted } from './secureStore'
 import { OAUTH_TIMEOUT_MS } from '../config/constants'
 import { generateCodeChallenge, generateCodeVerifier, generateState } from './pkce'
+import { GOOGLE_CLIENT_ID, GOOGLE_REDIRECT_URI } from '../config/oauth'
 
-const CLIENT_ID =
-  '304151210577-2hvg4113nd77cn8om3kppubqju7eu3sj.apps.googleusercontent.com'
 const TOKEN_URL = 'https://oauth2.googleapis.com/token'
 const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 const REVOKE_URL = 'https://oauth2.googleapis.com/revoke'
@@ -14,6 +13,8 @@ const SCOPE = 'https://www.googleapis.com/auth/gmail.send'
 
 const TOKEN_KEY = 'gmail_tokens'
 const OAUTH_PENDING_KEY = 'gmail_oauth_pending'
+const OAUTH_PENDING_TTL_MS = 10 * 60 * 1000
+let oauthInFlight = false
 
 type TokenPayload = {
   accessToken: string
@@ -21,25 +22,61 @@ type TokenPayload = {
   expiresAt: number
 }
 
+// Never log pending OAuth payloads.
+type PendingOAuthPayload = {
+  verifier: string
+  state: string
+  createdAt: number
+  attemptId: string
+}
+
 async function storeTokens(payload: TokenPayload) {
   await setEncrypted<TokenPayload>(TOKEN_KEY, payload)
 }
 
-function getRedirectUri() {
-  const id = CLIENT_ID.replace('.apps.googleusercontent.com', '')
-  const scheme = `com.googleusercontent.apps.${id}`
-  return `${scheme}:/oauthredirect`
+export async function clearStaleOAuthState() {
+  const pending = await getEncrypted<PendingOAuthPayload>(OAUTH_PENDING_KEY)
+  if (!pending) return
+  if (!pending.createdAt || Date.now() - pending.createdAt > OAUTH_PENDING_TTL_MS) {
+    await removeEncrypted(OAUTH_PENDING_KEY)
+  }
 }
 
 async function waitForOAuthRedirect(state: string) {
   return new Promise<string>((resolve, reject) => {
     const timeout = setTimeout(() => {
+      Browser.close().catch(() => undefined)
       reject(new Error('OAuth timed out. Please try again.'))
     }, OAUTH_TIMEOUT_MS)
 
-    let handler: PluginListenerHandle | null = null
+    let resolved = false
+    let appHandler: PluginListenerHandle | null = null
+    let browserHandler: PluginListenerHandle | null = null
+    const expectedUrl = new URL(GOOGLE_REDIRECT_URI)
+
+    const cleanup = () => {
+      clearTimeout(timeout)
+      appHandler?.remove()
+      browserHandler?.remove()
+    }
+
+    const fail = (error: Error) => {
+      if (resolved) return
+      resolved = true
+      cleanup()
+      Browser.close().catch(() => undefined)
+      reject(error)
+    }
+
+    const succeed = (code: string) => {
+      if (resolved) return
+      resolved = true
+      cleanup()
+      resolve(code)
+    }
+
     const setupListener = async () => {
-      handler = await App.addListener('appUrlOpen', (data) => {
+      appHandler = await App.addListener('appUrlOpen', (data) => {
         if (!data?.url) {
           return
         }
@@ -49,23 +86,30 @@ async function waitForOAuthRedirect(state: string) {
         } catch {
           return
         }
+        if (url.protocol !== expectedUrl.protocol || url.pathname !== expectedUrl.pathname) {
+          return
+        }
+        const oauthError = url.searchParams.get('error')
+        if (oauthError) {
+          fail(new Error('OAuth failed. Please try again.'))
+          return
+        }
         const code = url.searchParams.get('code')
         const returnedState = url.searchParams.get('state')
         if (!code || !returnedState) return
         if (returnedState !== state) {
-          clearTimeout(timeout)
-          handler?.remove()
-          reject(new Error('OAuth state mismatch. Please try again.'))
+          fail(new Error('OAuth state mismatch. Please try again.'))
           return
         }
         Browser.close().catch(() => undefined)
-        clearTimeout(timeout)
-        handler?.remove()
-        resolve(code)
+        succeed(code)
+      })
+      browserHandler = await Browser.addListener('browserFinished', () => {
+        fail(new Error('Sign-in was canceled. Please try again.'))
       })
     }
 
-    setupListener().catch(reject)
+    setupListener().catch((error) => fail(error as Error))
   })
 }
 
@@ -73,64 +117,77 @@ export async function connectGmail() {
   if (!Capacitor.isNativePlatform()) {
     throw new Error('Gmail connection requires the native iOS app.')
   }
+  if (oauthInFlight) {
+    throw new Error('Sign-in already in progress.')
+  }
 
+  oauthInFlight = true
   const verifier = generateCodeVerifier()
   const challenge = await generateCodeChallenge(verifier)
   const state = generateState()
+  const attemptId = generateState()
 
-  await setEncrypted(OAUTH_PENDING_KEY, { verifier, state })
+  try {
+    await clearStaleOAuthState()
+    await setEncrypted<PendingOAuthPayload>(OAUTH_PENDING_KEY, {
+      verifier,
+      state,
+      createdAt: Date.now(),
+      attemptId,
+    })
 
-  const redirectUri = getRedirectUri()
-  const authParams = new URLSearchParams({
-    client_id: CLIENT_ID,
-    redirect_uri: redirectUri,
-    response_type: 'code',
-    scope: SCOPE,
-    code_challenge: challenge,
-    code_challenge_method: 'S256',
-    access_type: 'offline',
-    prompt: 'consent',
-    state,
-  })
-  const url = `${AUTH_URL}?${authParams.toString()}`
+    const authParams = new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      redirect_uri: GOOGLE_REDIRECT_URI,
+      response_type: 'code',
+      scope: SCOPE,
+      code_challenge: challenge,
+      code_challenge_method: 'S256',
+      access_type: 'offline',
+      prompt: 'consent',
+      state,
+    })
+    const url = `${AUTH_URL}?${authParams.toString()}`
 
-  await Browser.open({ url })
+    await Browser.open({ url })
 
-  const code = await waitForOAuthRedirect(state)
+    const code = await waitForOAuthRedirect(state)
 
-  const tokenParams = new URLSearchParams({
-    grant_type: 'authorization_code',
-    code,
-    client_id: CLIENT_ID,
-    redirect_uri: redirectUri,
-    code_verifier: verifier,
-  })
+    const tokenParams = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      client_id: GOOGLE_CLIENT_ID,
+      redirect_uri: GOOGLE_REDIRECT_URI,
+      code_verifier: verifier,
+    })
 
-  const response = await fetch(TOKEN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: tokenParams.toString(),
-  })
+    const response = await fetch(TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: tokenParams.toString(),
+    })
 
-  if (!response.ok) {
-    throw new Error(`Token exchange failed (${response.status}).`)
+    if (!response.ok) {
+      throw new Error(`Token exchange failed (${response.status}).`)
+    }
+
+    const payload = (await response.json()) as {
+      access_token: string
+      refresh_token?: string
+      expires_in?: number
+    }
+
+    const expiresAt = Date.now() + (payload.expires_in ?? 3600) * 1000
+
+    await storeTokens({
+      accessToken: payload.access_token,
+      refreshToken: payload.refresh_token,
+      expiresAt,
+    })
+  } finally {
+    oauthInFlight = false
+    await removeEncrypted(OAUTH_PENDING_KEY)
   }
-
-  const payload = (await response.json()) as {
-    access_token: string
-    refresh_token?: string
-    expires_in?: number
-  }
-
-  const expiresAt = Date.now() + (payload.expires_in ?? 3600) * 1000
-
-  await storeTokens({
-    accessToken: payload.access_token,
-    refreshToken: payload.refresh_token,
-    expiresAt,
-  })
-
-  await removeEncrypted(OAUTH_PENDING_KEY)
 }
 
 export async function disconnectGmail() {
@@ -150,7 +207,7 @@ async function refreshAccessToken(refreshToken: string) {
   const tokenParams = new URLSearchParams({
     grant_type: 'refresh_token',
     refresh_token: refreshToken,
-    client_id: CLIENT_ID,
+    client_id: GOOGLE_CLIENT_ID,
   })
 
   const response = await fetch(TOKEN_URL, {

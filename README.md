@@ -33,3 +33,5 @@ Then run in Xcode on a simulator.
 
 OAuth note: if your Google OAuth consent screen is in Testing mode, add your
 Google account to the Test users list in Google Cloud Console.
+
+For build-time OAuth configuration (DEV vs PROD), see `docs/build-oauth.md`.
