@@ -13,7 +13,7 @@ npm run dev
 
 ```bash
 npx cap add ios
-npm run build
+npm run build:dev # or npm run build:prod
 npx cap sync ios
 ```
 
@@ -25,3 +25,5 @@ For Gmail OAuth (PKCE), register the URL scheme in the iOS project:
 - Redirect URI: `com.googleusercontent.apps.<CLIENT_ID_WITHOUT_DOMAIN>:/oauthredirect`
 
 This must match the iOS OAuth client in Google Cloud Console.
+
+See `docs/build-oauth.md` for environment mapping and guardrails.

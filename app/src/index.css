@@ -5,10 +5,10 @@ body {
 
 .page-content {
   --background: var(--neutral-0);
-  --padding-start: var(--page-padding);
-  --padding-end: var(--page-padding);
-  --padding-top: var(--page-padding-top);
-  --padding-bottom: var(--page-padding);
+  --padding-start: calc(var(--page-padding) + var(--ion-safe-area-left, 0px));
+  --padding-end: calc(var(--page-padding) + var(--ion-safe-area-right, 0px));
+  --padding-top: calc(var(--page-padding-top) + var(--ion-safe-area-top, 0px));
+  --padding-bottom: calc(var(--page-padding) + var(--ion-safe-area-bottom, 0px));
 }
 
 .offline-shell {
