@@ -27,18 +27,24 @@ pnpm-debug.log*
 # Misc
 *.log
 
-# Internal documentation
-docs/specs/
-docs/strategy/
+# Local mayor workflow (in-repo, not in git)
+.agents/
+.claude/
+THREAD_A_STATE.md
+workstreams/
+work-orders/
+deliverables/
+AGENTS.md
+CLAUDE.md
+AUDIT_PROMPT.md
+
+# Local planning / reference (not in git)
 docs/planning/
+docs/strategy/
 docs/library/
-!docs/planning/
-!docs/planning/active/
-!docs/planning/active/*.md
+docs/ui/
+governance/
+brand/
 
 # IDE-specific agent skills
 .windsurf/
-
-# Agent instruction files
-CLAUDE.md
-AGENTS.md

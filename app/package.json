@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "build:dev": "tsc -b && vite build --mode development",
     "build:prod": "tsc -b && vite build --mode production",
+    "capture:screens": "node scripts/capture-screens.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "audit:manifest": "node ../scripts/generate-audit-manifest.js",
@@ -46,6 +47,7 @@
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
     "madge": "^8.0.0",
+    "playwright": "^1.58.2",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.4"

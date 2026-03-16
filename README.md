@@ -2,18 +2,27 @@
 
 Scrappy Kin is an iOS app that helps you protect your privacy. In particular it helps you send opt-out requests to data brokers from your own Gmail account. The app keeps data on-device (never our servers) and uses Gmail only to send the emails you initiate. No analytics or tracking SDKs anywhere. This code is public so you dont have to take our word for it.
 
-Tip: if you're not a developer, use the prompt in `AUDIT_PROMPT.md` (generated from a pinned commit).
+Tip: if you're not a developer, generate the local audit prompt with:
+
+```bash
+cd app
+npm run audit:manifest
+```
+
+That writes `AUDIT_PROMPT.md` in the repo root for local review. It is intentionally not tracked in git.
 
 ## Structure
 - `app/` - React + TypeScript UI (Capacitor host)
-- `docs/` - Product and scope docs
-- `scripts/` - Local tooling scripts
+- `scripts/` - engineering scripts used by the app/tooling
+- `docs/build-oauth.md` - build-time OAuth and environment contract
+
+Local mayor workflow files (`THREAD_A_STATE.md`, `workstreams/`, `work-orders/`, `deliverables/`, `.agents/`, `.claude/`) are intentionally kept in the repo working tree but out of git.
 
 ## Licensing & Governance
 
 - Code licensed under AGPLv3
 - Contributions accepted under AGPL via DCO (sign-off required)
-- Brand assets excluded from the open-source license
+- Scrappy Kin name and visual identity are excluded from the open-source license
 - Bundled reference data is included under AGPL
 - Commercial licensing available by separate agreement
 
