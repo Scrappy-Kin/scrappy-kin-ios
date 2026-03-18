@@ -1,13 +1,15 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { chromium, devices } from 'playwright'
+import { chromium, devices, firefox } from 'playwright'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const repoRoot = path.resolve(__dirname, '..', '..')
 
 const baseUrl = process.env.CAPTURE_BASE_URL ?? 'http://127.0.0.1:4173'
+const browserName = process.env.CAPTURE_BROWSER ?? 'chromium'
+const executablePath = process.env.CAPTURE_EXECUTABLE_PATH
 const outputDir =
   process.env.CAPTURE_OUTPUT_DIR ??
   path.join(repoRoot, 'docs', 'strategy', 'local-ui-review-screens')
@@ -151,7 +153,11 @@ async function main() {
   await ensureAppIsReachable()
   await fs.mkdir(outputDir, { recursive: true })
 
-  const browser = await chromium.launch({ headless: true })
+  const browserType = browserName === 'firefox' ? firefox : chromium
+  const browser = await browserType.launch({
+    headless: true,
+    ...(executablePath ? { executablePath } : {}),
+  })
   const context = await browser.newContext({ ...device })
   const page = await context.newPage()
   const summaries = []
