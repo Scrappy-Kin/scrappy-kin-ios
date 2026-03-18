@@ -22,6 +22,16 @@ const pages = [
   { path: '/flow', file: '04-flow-step-1-welcome.png' },
 ]
 
+const seededProfile = {
+  fullName: 'Ada Lovelace',
+  email: 'ada@example.com',
+  city: 'Toronto',
+  country: 'Canada',
+  partialPostcode: 'M5V',
+}
+
+const seededBrokerIds = ['truepeoplesearch-com', 'data-axle-com']
+
 async function preparePageForCapture(page) {
   return page.evaluate((viewportHeight) => {
     const ionContent = document.querySelector('ion-content')
@@ -89,6 +99,10 @@ async function captureFlowStep(page, fileName, summaries) {
   console.log(`${fileName} <- ${page.url()}`)
 }
 
+async function captureCurrentPage(page, fileName, summaries) {
+  await captureFlowStep(page, fileName, summaries)
+}
+
 async function openFlowStep(page, nextClicks) {
   await page.setViewportSize(defaultViewport)
   await page.goto(`${baseUrl}/flow`, { waitUntil: 'networkidle' })
@@ -97,6 +111,40 @@ async function openFlowStep(page, nextClicks) {
     await page.getByRole('button', { name: 'Next' }).click()
     await page.waitForTimeout(300)
   }
+}
+
+async function wipeLocalAppState(page) {
+  await page.goto(`${baseUrl}/`, { waitUntil: 'networkidle' })
+  await page.evaluate(() => {
+    localStorage.clear()
+    sessionStorage.clear()
+  })
+}
+
+async function seedPostAuthState(page) {
+  await page.goto(`${baseUrl}/`, { waitUntil: 'networkidle' })
+  await page.evaluate(
+    async ({ profile, brokerIds }) => {
+      const secureStore = await import('/src/services/secureStore.ts')
+      await secureStore.setEncrypted('gmail_tokens', {
+        accessToken: 'mock-access-token',
+        expiresAt: Date.now() + 60 * 60 * 1000,
+      })
+      await secureStore.setEncrypted('user_profile', profile)
+      await secureStore.setEncrypted('selected_brokers', brokerIds)
+    },
+    { profile: seededProfile, brokerIds: seededBrokerIds },
+  )
+}
+
+async function mockSuccessfulGmailSend(page) {
+  await page.route('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ id: `mock-${Date.now()}` }),
+    })
+  })
 }
 
 async function main() {
@@ -109,6 +157,8 @@ async function main() {
   const summaries = []
 
   try {
+    await wipeLocalAppState(page)
+
     for (const entry of pages) {
       await captureRoute(page, entry.path, entry.file, summaries)
     }
@@ -118,6 +168,39 @@ async function main() {
 
     await openFlowStep(page, 2)
     await captureFlowStep(page, '06-flow-step-3-gmail-login.png', summaries)
+
+    await wipeLocalAppState(page)
+    await seedPostAuthState(page)
+
+    await openFlowStep(page, 3)
+    await captureFlowStep(page, '07-flow-step-4-gmail-permissions.png', summaries)
+
+    await openFlowStep(page, 4)
+    await captureFlowStep(page, '08-flow-step-5-profile.png', summaries)
+
+    await openFlowStep(page, 5)
+    await captureFlowStep(page, '09-flow-step-6-brokers.png', summaries)
+
+    await openFlowStep(page, 6)
+    await captureFlowStep(page, '10-flow-step-7-ready.png', summaries)
+
+    await page.getByRole('button', { name: 'Send now' }).click()
+    await page.waitForURL(`${baseUrl}/home`)
+    await captureCurrentPage(page, '11-home-ready-to-send.png', summaries)
+
+    await mockSuccessfulGmailSend(page)
+    await page.getByRole('button', { name: 'Send selected requests' }).click()
+    await page.waitForFunction(
+      ({ expectedSummary, expectedButton }) => {
+        const text = document.body.innerText
+        return text.includes(expectedSummary) && text.includes(expectedButton)
+      },
+      {
+        expectedSummary: 'Sent: 2 · Failed: 0 · Pending: 0',
+        expectedButton: 'Send selected requests',
+      },
+    )
+    await captureCurrentPage(page, '12-home-after-send-all.png', summaries)
 
     const manifestPath = path.join(outputDir, 'manifest.json')
     await fs.writeFile(manifestPath, JSON.stringify({ baseUrl, outputDir, captures: summaries }, null, 2))
