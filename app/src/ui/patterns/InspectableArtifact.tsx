@@ -3,8 +3,8 @@ import { useState } from 'react'
 import AppButton from '../primitives/AppButton'
 import AppCard from '../primitives/AppCard'
 import AppSheet from '../primitives/AppSheet'
-import AppSurface from '../primitives/AppSurface'
 import AppText from '../primitives/AppText'
+import ArtifactPanel from './ArtifactPanel'
 
 type InspectableArtifactProps = {
   title: string
@@ -40,7 +40,7 @@ export default function InspectableArtifact({
       }
     >
       {summary ? <AppText intent="supporting">{summary}</AppText> : null}
-      <AppSurface padding="compact">{artifact}</AppSurface>
+      <ArtifactPanel padding="compact">{artifact}</ArtifactPanel>
       {explanation ? <div className="app-stack">{explanation}</div> : null}
       {canView ? (
         <AppSheet

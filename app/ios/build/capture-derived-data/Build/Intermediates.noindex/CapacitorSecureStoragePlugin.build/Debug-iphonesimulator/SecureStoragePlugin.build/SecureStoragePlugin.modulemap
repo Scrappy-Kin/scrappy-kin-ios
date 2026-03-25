@@ -1,0 +1,4 @@
+module SecureStoragePlugin {
+header "SecureStoragePlugin-Swift.h"
+export *
+}

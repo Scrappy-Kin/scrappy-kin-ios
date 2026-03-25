@@ -11,7 +11,7 @@ import {
 } from '@ionic/react'
 import { IonReactRouter } from '@ionic/react-router'
 import { home, people, settings } from 'ionicons/icons'
-import { Redirect, Route } from 'react-router-dom'
+import { Redirect, Route, useLocation } from 'react-router-dom'
 import Brokers from './screens/Brokers'
 import Flow from './screens/Flow'
 import Home from './screens/Home'
@@ -20,9 +20,13 @@ import { useOnlineStatus } from './state/useOnlineStatus'
 import { useEffect } from 'react'
 import { clearStaleOAuthState } from './services/googleAuth'
 import HarnessHome from './ui/harness/HarnessHome'
+import ReviewBoard from './ui/harness/ReviewBoard'
 import Patterns from './ui/harness/Patterns'
 import Primitives from './ui/harness/Primitives'
 import Tokens from './ui/harness/Tokens'
+import { IS_DEV_BUILD } from './config/buildInfo'
+import AppUrlBridge from './dev/AppUrlBridge'
+import CaptureScenarioRoute from './dev/CaptureScenarioRoute'
 
 function OfflineShell() {
   return (
@@ -42,45 +46,69 @@ function OfflineShell() {
 }
 
 export default function App() {
+  return (
+    <IonApp>
+      <IonReactRouter>
+        <AppShell />
+      </IonReactRouter>
+    </IonApp>
+  )
+}
+
+function AppShell() {
   const isOnline = useOnlineStatus()
+  const location = useLocation()
+  const hideOuterTabBar =
+    location.pathname.startsWith('/ui-harness') || location.pathname.startsWith('/capture')
 
   useEffect(() => {
     clearStaleOAuthState().catch(() => undefined)
   }, [])
 
   return (
-    <IonApp>
-      <IonReactRouter>
-        <IonTabs>
-          <IonRouterOutlet>
-            <Route exact path="/">
-              <Redirect to="/home" />
-            </Route>
-            <Route exact path="/home">
-              {isOnline ? <Home /> : <OfflineShell />}
-            </Route>
-            <Route exact path="/flow">
-              {isOnline ? <Flow /> : <OfflineShell />}
-            </Route>
-            <Route exact path="/brokers">
-              {isOnline ? <Brokers /> : <OfflineShell />}
-            </Route>
-            <Route exact path="/settings">
-              <Settings />
-            </Route>
-            <Route exact path="/ui-harness">
-              <HarnessHome />
-            </Route>
-            <Route exact path="/ui-harness/tokens">
-              <Tokens />
-            </Route>
-            <Route exact path="/ui-harness/primitives">
-              <Primitives />
-            </Route>
-            <Route exact path="/ui-harness/patterns">
-              <Patterns />
-            </Route>
-          </IonRouterOutlet>
+    <>
+      {IS_DEV_BUILD ? <AppUrlBridge /> : null}
+      <IonTabs>
+        <IonRouterOutlet>
+          <Route exact path="/">
+            <Redirect to="/home" />
+          </Route>
+          <Route exact path="/home">
+            {isOnline ? <Home /> : <OfflineShell />}
+          </Route>
+          <Route exact path="/flow">
+            {isOnline ? <Flow /> : <OfflineShell />}
+          </Route>
+          <Route exact path="/brokers">
+            {isOnline ? <Brokers /> : <OfflineShell />}
+          </Route>
+          <Route exact path="/settings">
+            <Settings />
+          </Route>
+          {IS_DEV_BUILD ? (
+            <>
+              <Route exact path="/ui-harness">
+                <HarnessHome />
+              </Route>
+              <Route exact path="/ui-harness/review-board">
+                <ReviewBoard />
+              </Route>
+              <Route exact path="/ui-harness/tokens">
+                <Tokens />
+              </Route>
+              <Route exact path="/ui-harness/primitives">
+                <Primitives />
+              </Route>
+              <Route exact path="/ui-harness/patterns">
+                <Patterns />
+              </Route>
+              <Route exact path="/capture/:scenario">
+                <CaptureScenarioRoute />
+              </Route>
+            </>
+          ) : null}
+        </IonRouterOutlet>
+        {hideOuterTabBar ? null : (
           <IonTabBar slot="bottom">
             <IonTabButton tab="home" href="/home">
               <IonIcon aria-hidden="true" icon={home} />
@@ -95,8 +123,8 @@ export default function App() {
               <IonLabel>Settings</IonLabel>
             </IonTabButton>
           </IonTabBar>
-        </IonTabs>
-      </IonReactRouter>
-    </IonApp>
+        )}
+      </IonTabs>
+    </>
   )
 }

@@ -42,5 +42,5 @@ export async function sendEmail(input: SendEmailInput) {
     throw new Error(`Gmail send failed (${response.status}).`)
   }
 
-  return response.json()
+  return response.json() as Promise<{ id?: string; threadId?: string }>
 }

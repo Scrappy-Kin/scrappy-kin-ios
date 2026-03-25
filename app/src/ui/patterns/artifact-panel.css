@@ -1,0 +1,4 @@
+.artifact-panel__content {
+  display: grid;
+  gap: var(--space-3);
+}

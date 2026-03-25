@@ -48,16 +48,18 @@ export async function sendAll(brokers: Broker[], brokerIds: string[], onProgress
     }
 
     try {
-      await sendEmail({
+      const result = await sendEmail({
         to: broker.contactEmail,
-        subject: buildDeletionSubject(),
-        body: buildDeletionBody(broker, profile),
+        subject: buildDeletionSubject(item.referenceId),
+        body: buildDeletionBody(broker, profile, item.referenceId),
         replyTo: profile.email,
       })
 
       const updated = await updateQueueItem({
         ...item,
         status: 'sent',
+        gmailMessageId: result.id,
+        gmailThreadId: result.threadId,
         lastAttemptAt: new Date().toISOString(),
       })
       summary = summarizeQueue(updated)

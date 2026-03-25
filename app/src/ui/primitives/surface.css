@@ -1,5 +1,5 @@
 .app-surface {
-  background: var(--neutral-50);
+  background: var(--neutral-100);
   border: 1px solid var(--neutral-900-12);
   border-radius: var(--radius-2);
   padding: var(--space-4);

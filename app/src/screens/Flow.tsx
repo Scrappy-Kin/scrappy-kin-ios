@@ -1,199 +1,48 @@
 import { IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
+import { checkmarkCircle, closeCircle, createOutline } from 'ionicons/icons'
 import { useState, type ReactElement, type ReactNode } from 'react'
-import { useHistory } from 'react-router-dom'
-import { getSelectedBrokerIds, loadBrokers, type Broker } from '../services/brokerStore'
+import { useHistory, useLocation } from 'react-router-dom'
+import {
+  getSelectedBrokerIds,
+  loadBrokers,
+  setSelectedBrokerIds,
+  type Broker,
+} from '../services/brokerStore'
 import { connectGmail, getGmailStatus } from '../services/googleAuth'
-import { buildDeletionBody, buildDeletionSubject } from '../services/emailTemplate'
-import { getUserProfile, setUserProfile, type UserProfile } from '../services/userProfile'
-import auditManifest from '../assets/audit-manifest.json'
+import {
+  buildDeletionBody,
+  buildDeletionIntro,
+  buildDeletionOptOutItems,
+  buildDeletionRequestItems,
+  buildDeletionResponseLine,
+  buildDeletionSubject,
+  buildDeletionVerificationLine,
+} from '../services/emailTemplate'
+import { sendAll } from '../services/sendQueue'
+import { getUserProfile, type UserProfile } from '../services/userProfile'
 import AppButton from '../ui/primitives/AppButton'
-import AppCard from '../ui/primitives/AppCard'
+import AppCheckbox from '../ui/primitives/AppCheckbox'
 import AppHeading from '../ui/primitives/AppHeading'
+import AppIcon from '../ui/primitives/AppIcon'
+import AppIconButton from '../ui/primitives/AppIconButton'
 import AppInput from '../ui/primitives/AppInput'
 import AppList from '../ui/primitives/AppList'
 import AppListRow from '../ui/primitives/AppListRow'
-import AppSurface from '../ui/primitives/AppSurface'
-import AppText from '../ui/primitives/AppText'
-import AppToast from '../ui/primitives/AppToast'
 import AppNotice from '../ui/primitives/AppNotice'
+import AppText from '../ui/primitives/AppText'
+import ArtifactPanel from '../ui/patterns/ArtifactPanel'
 import FlowStepHeader from '../ui/patterns/FlowStepHeader'
 import InlineTrustClaim from '../ui/patterns/InlineTrustClaim'
 import ReadMoreSheetLink from '../ui/patterns/ReadMoreSheetLink'
-import AppIcon from '../ui/primitives/AppIcon'
-import AppStickyAction from '../ui/primitives/AppStickyAction'
-import { checkmarkCircle, closeCircle, copyOutline, openOutline } from 'ionicons/icons'
-
-type AuditManifest = {
-  repo: string
-  sha: string
-  prompt_text?: string
-  audit_links?: {
-    must?: { path: string; url: string }[]
-    great?: { path: string; url: string }[]
-    nice?: { path: string; url: string }[]
-  }
-  raw_urls: { path: string; url: string }[]
-  coverage?: { note?: string }
-}
-
-const buildAuditPrompt = (manifest: AuditManifest) => {
-  const tiers = [
-    { key: 'must', label: 'Must see' },
-    { key: 'great', label: 'Great to see' },
-    { key: 'nice', label: 'Nice to see' },
-  ] as const
-
-  const tierLines = tiers
-    .map(({ key, label }) => {
-      const entries = manifest.audit_links?.[key]
-      if (!entries?.length) return null
-      return [label + ':', ...entries.map((entry) => `- ${entry.url}`)].join('\n')
-    })
-    .filter(Boolean)
-    .join('\n\n')
-
-  const keyFileLines = tierLines || manifest.raw_urls.map((entry) => `- ${entry.url}`).join('\n')
-  const coverageNote = manifest.coverage?.note ? `\n\nScope: ${manifest.coverage.note}` : ''
-
-  return [
-    '# Scrappy Kin — Independent Consumer-Side Code Audit (AI Prompt)',
-    '',
-    'You are an **independent, user-side technical auditor**. Your job is to determine what this app can do with user data, using **only verifiable code evidence you can directly fetch**.',
-    '',
-    '## Quick navigation (for humans)',
-    '- If you are not technical: **scroll to SECTION 6 (Plain-Language Summary + “Can it do this?” table)**.',
-    '- The earlier sections are a **technical receipt** that makes the summary trustworthy.',
-    '',
-    '---',
-    '',
-    '## Rules (non-negotiable)',
-    '1) **Evidence only.** Use only code you can fetch in this run. Do not use README/marketing text as evidence.',
-    '2) **No guessing.** No “probably/likely/appears”. If not provable from fetched code, mark **Unknown**.',
-    '3) **No invisible negatives.** You cannot claim “it does NOT do X” unless you can justify it via **explicit evidence** (e.g., missing scopes + no relevant API usage in audited files) and you must phrase it as:',
-    '   - “No evidence of X in the code we audited” (not “impossible”).',
-    '4) **Hard scope.** Audit ONLY:',
-    '   - the repo tree **if you can browse it**, and',
-    '   - the raw URLs listed below (authoritative file contents).',
-    '   If tree browsing fails, treat the tree as **unavailable** and do not speculate about other files.',
-    '5) **Every claim needs proof.** Any factual statement must cite:',
-    '   - file path + function (or top-level const), and',
-    '   - a direct code quote (≤2 lines).',
-    '6) **Plain-language sections must be derived from the Evidence Ledger only.** No new facts.',
-    '',
-    '---',
-    '',
-    '## SECTION 0 — Access & Fetch Log (Required)',
-    'State exactly what you could access:',
-    '- Repo tree browsing: Success/Failure (and what you saw, if anything)',
-    '- For each raw URL below: Success/Failure',
-    '',
-    'If any raw file fails to fetch, continue auditing the rest, but mark impacted areas **Unknown**.',
-    '',
-    '---',
-    '',
-    '## SECTION 1 — Evidence Ledger (Source of truth)',
-    'Produce a numbered list of facts. Each item MUST include:',
-    '- **Claim** (one sentence, factual)',
-    '- **Location** (file path + function/const)',
-    '- **Evidence** (≤2 lines quoted)',
-    '',
-    'No interpretation here.',
-    '',
-    '---',
-    '',
-    '## SECTION 2 — Access (What the app can access)',
-    'Derived from ledger only. Cover:',
-    '- Permissions/scopes (e.g., Gmail scope)',
-    '- Device/platform capabilities used (if visible)',
-    '- What user data fields are referenced for composing messages',
-    '',
-    'Each bullet must cite ledger item numbers.',
-    '',
-    '---',
-    '',
-    '## SECTION 3 — Storage (On-device)',
-    'Derived from ledger only.',
-    'List every storage mechanism + exact keys/prefixes/paths and what is stored.',
-    'If encryption is used, name the algorithm ONLY if explicitly shown.',
-    '',
-    '---',
-    '',
-    '## SECTION 4 — Network Transmission Inventory (Table)',
-    'Derived from ledger only.',
-    'One row per network call (including wrapper + call sites if present):',
-    '',
-    '| File | Function | Destination host | Full URL | Method | Auth mechanism | Headers (keys only) | Body/query fields (keys only) | What user data is included | Proof (ledger #) |',
-    '',
-    'Rules:',
-    '- If URL is constructed dynamically, show the base + how it’s constructed (ledger-backed).',
-    '- If payload content can’t be determined, write **Unknown**.',
-    '',
-    '---',
-    '',
-    '## SECTION 5 — Gmail Authorization (only if present)',
-    'Derived from ledger only. Explain in plain language later, but here capture facts:',
-    '- OAuth flow (as implemented)',
-    '- Scopes',
-    '- Token storage/refresh/revoke',
-    '- Redirect handling',
-    '',
-    'Ledger-backed.',
-    '',
-    '---',
-    '',
-    '## SECTION 6 — Plain-Language Summary (for non-technical humans)',
-    'Use very plain words. Avoid jargon like “OAuth”, “PKCE”, “Bearer token”. If unavoidable, explain in one short parenthetical.',
-    '',
-    '### 6.1 TL;DR (8 bullets max)',
-    'Write as “This app CAN…” / “This app DOESN’T appear to…” / “Unknown because we couldn’t see…”',
-    'Every bullet must reference ledger item numbers in brackets like [L3, L7].',
-    '',
-    '### 6.2 “Can it do this?” table (keep it simple)',
-    '| Question | Answer (✅ Yes / ❌ No evidence / ⚠️ Unknown) | What it means (one sentence) | Proof |',
-    'Include at least these questions:',
-    '- Can it read my emails?',
-    '- Can it send emails for me?',
-    '- Can it upload my data to Scrappy Kin servers?',
-    '- Can it share data with third parties (analytics/crash tools)?',
-    '- Can it track me across apps/websites?',
-    '- Can it store my personal info on my phone?',
-    '- Can it store my Gmail permission tokens on my phone?',
-    '',
-    '**Important phrasing rule for negatives:** prefer “❌ No evidence in audited code” over absolute “No”.',
-    '',
-    '### 6.3 Two examples of good plain language (follow this style)',
-    '- ✅ Good: “It can send emails for you, because it calls Gmail’s ‘send message’ address.”',
-    '- ❌ Bad: “It uses OAuth2 with PKCE and a Bearer token to access the Gmail API.”',
-    '',
-    '---',
-    '',
-    '## SECTION 7 — Gaps, limits, and confidence (non-scary)',
-    'Write:',
-    '- What you audited (tree? which raw files?)',
-    '- What you could NOT access',
-    '- What that means in plain language: “We can’t rule out X elsewhere because we did not see the full code.”',
-    '- If repo tree browsing succeeded: briefly explain whether the provided raw links seem to cover the major risk surfaces (auth, networking, storage, logging), WITHOUT claiming full coverage.',
-    '',
-    '---',
-    '',
-    '## Audit target',
-    `Repository: ${manifest.repo}`,
-    `Pinned commit (SHA): ${manifest.sha}`,
-    '',
-    '### Raw files to audit (authoritative)',
-    keyFileLines,
-    coverageNote.trim().length ? coverageNote.trimStart() : '',
-  ]
-    .filter((line) => line !== '')
-    .join('\n')
-}
+import ReviewAssetCard from '../ui/patterns/ReviewAssetCard'
+import ServerBoundaryClaim from '../ui/patterns/ServerBoundaryClaim'
 
 const emptyProfile: UserProfile = {
   fullName: '',
   email: '',
   city: '',
-  country: '',
-  partialPostcode: '',
+  state: '',
+  partialZip: '',
 }
 
 type Step = {
@@ -204,352 +53,109 @@ type Step = {
   showNext?: boolean
 }
 
+const stepIds = ['intro', 'brokers', 'request-review', 'gmail-send', 'final-review'] as const
+
 export default function Flow() {
   const history = useHistory()
+  const location = useLocation()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [gmailConnected, setGmailConnected] = useState(false)
   const [profileDraft, setProfileDraft] = useState<UserProfile>(emptyProfile)
-  const [profileSaved, setProfileSaved] = useState(false)
-  const [brokersCount, setBrokersCount] = useState(0)
+  const [brokers, setBrokers] = useState<Broker[]>([])
+  const [selectedBrokerIds, setSelectedBrokerIdsState] = useState<string[]>([])
   const [selectedCount, setSelectedCount] = useState(0)
   const [previewBroker, setPreviewBroker] = useState<Broker | null>(null)
-  const [toastOpen, setToastOpen] = useState(false)
   const [oauthError, setOauthError] = useState<string | null>(null)
   const [oauthInFlight, setOauthInFlight] = useState(false)
-  const auditPromptText =
-    (auditManifest as AuditManifest).prompt_text ?? buildAuditPrompt(auditManifest as AuditManifest)
+  const [sendError, setSendError] = useState<string | null>(null)
+  const [sendInFlight, setSendInFlight] = useState(false)
 
   async function refreshState() {
     const status = await getGmailStatus()
     setGmailConnected(status.connected)
+
     const profile = await getUserProfile()
-    if (profile) {
-      setProfileDraft(profile)
-      setProfileSaved(true)
-    } else {
-      setProfileDraft(emptyProfile)
-      setProfileSaved(false)
-    }
+    setProfileDraft(profile ?? emptyProfile)
+
     const brokers = await loadBrokers()
-    setBrokersCount(brokers.length)
-    setPreviewBroker(brokers[0] ?? null)
-    const ids = await getSelectedBrokerIds()
-    setSelectedCount(ids.length)
+    setBrokers(brokers)
+    const selectedIds = await getSelectedBrokerIds()
+    setSelectedBrokerIdsState(selectedIds)
+    setSelectedCount(selectedIds.length)
+    const selectedBroker = selectedIds.length
+      ? brokers.find((broker) => broker.id === selectedIds[0]) ?? null
+      : null
+    setPreviewBroker(selectedBroker ?? brokers[0] ?? null)
+  }
+
+  function syncStepFromLocation() {
+    const params = new URLSearchParams(location.search)
+    const requested = params.get('step')
+    if (!requested) return
+    const index = stepIds.indexOf(requested as (typeof stepIds)[number])
+    if (index >= 0) {
+      setCurrentIndex(index)
+    }
   }
 
   useIonViewWillEnter(() => {
-    refreshState()
+    void refreshState().then(() => {
+      syncStepFromLocation()
+    })
   })
 
-  function renderStepContext(summary: string, sheetTitle?: string, sheetBody?: ReactNode) {
+  function renderStepContext(
+    summary: string,
+    sheetTitle?: string,
+    sheetBody?: ReactNode,
+    linkLabel?: string,
+  ) {
     return (
       <div className="flow-context">
         <AppText intent="supporting">{summary}</AppText>
         {sheetTitle && sheetBody ? (
-          <ReadMoreSheetLink label="Why this matters" sheetTitle={sheetTitle} sheetBody={sheetBody} />
+          <ReadMoreSheetLink
+            label={linkLabel ?? sheetTitle}
+            sheetTitle={sheetTitle}
+            sheetBody={sheetBody}
+          />
         ) : null}
       </div>
     )
   }
 
-  const steps: Step[] = [
-    {
-      id: 'welcome',
-      title: 'Your data, your choice.',
-      render: () => (
-        <div className="flow-stack">
-          <AppText intent="body" emphasis>
-            Your personal information shouldn&apos;t be public knowledge. Brokers never asked for your permission. Take your data back.
-          </AppText>
-          <InlineTrustClaim
-            claim="We keep the broker list small and verified."
-            details={
-              <AppText intent="supporting">
-                We focus on brokers that matter most and confirm the email path works.
-              </AppText>
-            }
-            linkLabel="How we pick brokers"
-          />
-          <InlineTrustClaim
-            claim="Your data stays on your device or in Gmail."
-            details={
-              <AppText intent="supporting">
-                No PII touches our servers. You can inspect every email before sending.
-              </AppText>
-            }
-            linkLabel="Privacy stance"
-          />
-        </div>
-      ),
-      canContinue: true,
-    },
-    {
-      id: 'email-preview',
-      title: 'Review the opt-out email template',
-      render: () => (
-        <div className="flow-stack">
-          <AppText intent="body" emphasis>
-            Short and sweet but packs all the legal backing you need to exercise your rights.
-          </AppText>
-          <AppCard>
-            <div className="flow-template">
-              <AppText intent="body">
-                {`Subject: ${buildDeletionSubject()}\n\n${buildDeletionBody(
-                  previewBroker ?? { id: 'preview', name: 'Broker', contactEmail: '' },
-                  profileDraft,
-                )}`}
-              </AppText>
-            </div>
-          </AppCard>
-        </div>
-      ),
-      canContinue: true,
-    },
-    {
-      id: 'gmail-login',
-      title: 'Connect your Gmail account',
-      render: () => (
-        <div className="flow-stack">
-          <AppText intent="body" emphasis>
-            We use Gmail only to send opt‑out requests that you approve.
-          </AppText>
-          <AppText intent="body">
-            Next, you&apos;ll see Google&apos;s consent screen.
-          </AppText>
-          <AppText intent="label">This access will</AppText>
-          <AppList>
-            <AppListRow
-              title="Allow us to send opt‑out emails from your Gmail account"
-              left={<AppIcon icon={checkmarkCircle} size="sm" tone="primary" ariaLabel="Allowed" />}
-              emphasis={false}
-            />
-            <AppListRow
-              title="Allow us to keep a copy in Sent for your records"
-              left={<AppIcon icon={checkmarkCircle} size="sm" tone="primary" ariaLabel="Allowed" />}
-              emphasis={false}
-            />
-            <AppListRow
-              title={
-                <>
-                  <strong>Not</strong> allow us to read, edit, delete, or export emails from your account
-                </>
-              }
-              left={<AppIcon icon={closeCircle} size="sm" tone="danger" ariaLabel="Not allowed" />}
-              emphasis={false}
-            />
-          </AppList>
-          <AppText intent="supporting">
-            You can revoke access any time in Settings or on{' '}
-            <a
-              className="app-link app-link--external"
-              href="https://myaccount.google.com/permissions"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Google’s permissions page
-              <span className="app-link__icon">
-                <AppIcon icon={openOutline} size="sm" tone="primary" ariaLabel="External link" />
-              </span>
-            </a>
-            .
-          </AppText>
-          <InlineTrustClaim
-            linkLabel="All our code is public"
-            claim="See how to audit it yourself"
-            details={
-              <div className="flow-stack">
-                <AppText intent="body">
-                  View our open source code:{' '}
-                  <br />
-                  <a
-                    className="app-link app-link--external"
-                    href="https://github.com/Scrappy-Kin/scrappy-kin-ios"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    github.com/Scrappy-Kin/scrappy-kin-ios
-                    <span className="app-link__icon">
-                      <AppIcon icon={openOutline} size="sm" tone="primary" ariaLabel="External link" />
-                    </span>
-                  </a>
-                </AppText>
-                <AppText intent="body">
-                  <strong>Or, use AI to audit this app&apos;s code</strong>
-                </AppText>
-                <AppText intent="body">
-                  Use an AI (like{' '}
-                  <a
-                    className="app-link app-link--external"
-                    href="https://chat.openai.com/"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    ChatGPT
-                    <span className="app-link__icon">
-                      <AppIcon icon={openOutline} size="sm" tone="primary" ariaLabel="External link" />
-                    </span>
-                  </a>
-                  ) to audit this code and translate that audit into non-technical language for you.
-                </AppText>
-                <AppSurface padding="compact">
-                  <div className="flow-prompt">
-                    <AppStickyAction>
-                      <AppButton
-                        size="xs"
-                        variant="secondary"
-                        onClick={handleCopyAuditPrompt}
-                        iconStart={<AppIcon icon={copyOutline} size="sm" ariaLabel="Copy" />}
-                      >
-                        Copy prompt
-                      </AppButton>
-                    </AppStickyAction>
-                    <div className="flow-prompt__body">
-                      <AppText intent="body">{auditPromptText}</AppText>
-                    </div>
-                  </div>
-                </AppSurface>
-              </div>
-            }
-          />
-          {oauthError ? (
-            <AppNotice variant="error" title="Sign-in didn’t finish">
-              {oauthError}
-            </AppNotice>
-          ) : null}
-          <AppButton onClick={handleConnectGmail} disabled={oauthInFlight}>
-            {oauthError ? 'Retry Google sign-in' : 'Connect your Gmail account'}
-          </AppButton>
-          <AppText intent="supporting">
-            {gmailConnected ? 'Connected.' : 'Not connected yet.'}
-          </AppText>
-        </div>
-      ),
-      canContinue: gmailConnected,
-      showNext: gmailConnected,
-    },
-    {
-      id: 'gmail-auth',
-      title: 'Gmail permissions',
-      render: () => (
-        <AppCard>
-          {renderStepContext(
-            'You approve exactly what the app can do.',
-            'What permissions are requested?',
-            <AppText intent="body">Send‑only access. No inbox access, no reading messages.</AppText>,
-          )}
-          <AppText intent="body">Google will ask for permission to send email on your behalf.</AppText>
-          <AppText intent="supporting">We only request send-only access. No inbox access.</AppText>
-          {!gmailConnected && (
-            <AppButton variant="secondary" onClick={handleConnectGmail}>
-              Re-open Google approval
-            </AppButton>
-          )}
-          <AppText intent="supporting">
-            {gmailConnected ? 'Connected.' : 'Not connected yet.'}
-          </AppText>
-        </AppCard>
-      ),
-      canContinue: gmailConnected,
-    },
-    {
-      id: 'profile',
-      title: 'Your info',
-      render: () => (
-        <AppCard>
-          {renderStepContext(
-            'Brokers need a minimum set of details to locate you.',
-            'Why this info?',
-            <AppText intent="body">
-              We only ask for the fields that appear in broker lookup forms.
-            </AppText>,
-          )}
-          <AppText intent="body">This is the minimum info brokers require.</AppText>
-          <AppInput
-            label="Full name"
-            value={profileDraft.fullName}
-            onChange={(value) => updateProfile({ fullName: value })}
-          />
-          <AppInput
-            label="Email"
-            value={profileDraft.email}
-            onChange={(value) => updateProfile({ email: value })}
-            inputMode="email"
-          />
-          <AppInput
-            label="City"
-            value={profileDraft.city}
-            onChange={(value) => updateProfile({ city: value })}
-          />
-          <AppInput
-            label="Country"
-            value={profileDraft.country}
-            onChange={(value) => updateProfile({ country: value })}
-          />
-          <AppInput
-            label="Partial postcode"
-            value={profileDraft.partialPostcode}
-            onChange={(value) => updateProfile({ partialPostcode: value })}
-          />
-          <AppButton onClick={handleSaveProfile}>Save</AppButton>
-        </AppCard>
-      ),
-      canContinue: profileSaved && isProfileValid(profileDraft),
-    },
-    {
-      id: 'brokers',
-      title: 'Pick brokers',
-      render: () => (
-        <AppCard>
-          {renderStepContext(
-            'Start with a single broker to test the waters.',
-            'How do we choose brokers?',
-            <AppText intent="body">
-              We surface the highest‑impact brokers first so you can build momentum.
-            </AppText>,
-          )}
-          <AppSurface padding="compact">
-            <AppText intent="label">Suggested first broker</AppText>
-            <div className="flow-metrics">
-              <AppText intent="supporting">🔍 Search visibility: 78/100</AppText>
-              <AppText intent="supporting">📄 Indexed pages: ~124,000</AppText>
-            </div>
-          </AppSurface>
-          <AppText intent="body">{brokersCount} brokers available.</AppText>
-          <AppText intent="supporting">
-            {selectedCount > 0 ? `${selectedCount} selected.` : 'None selected yet.'}
-          </AppText>
-          <AppButton variant="secondary" onClick={() => history.push('/brokers')}>
-            Open broker list
-          </AppButton>
-        </AppCard>
-      ),
-      canContinue: true,
-    },
-    {
-      id: 'ready',
-      title: 'Test the waters',
-      render: () => (
-        <AppCard>
-          {renderStepContext(
-            'Send a single email first, then expand to the full list.',
-            'Why start small?',
-            <AppText intent="body">
-              A small win builds trust and confirms everything works before you scale up.
-            </AppText>,
-          )}
-          <AppText intent="body">Great — you’re ready to start emailing brokers.</AppText>
-          <AppButton onClick={() => history.push('/home')}>Send now</AppButton>
-        </AppCard>
-      ),
-      canContinue: true,
-    },
-  ]
-
-  const step = steps[currentIndex]
-
   function updateProfile(next: Partial<UserProfile>) {
     setProfileDraft((current) => ({ ...current, ...next }))
-    setProfileSaved(false)
+  }
+
+  function normalizeZipInput(value: string) {
+    return value.replace(/\D/g, '').slice(0, 4)
+  }
+
+  async function toggleBroker(id: string, checked: boolean) {
+    const next = checked
+      ? [...selectedBrokerIds, id]
+      : selectedBrokerIds.filter((item) => item !== id)
+    setSelectedBrokerIdsState(next)
+    setSelectedCount(next.length)
+    const selectedBroker = next.length ? brokers.find((broker) => broker.id === next[0]) ?? null : null
+    setPreviewBroker(selectedBroker ?? brokers[0] ?? null)
+    await setSelectedBrokerIds(next)
+  }
+
+  async function selectAllBrokers() {
+    const ids = brokers.map((broker) => broker.id)
+    setSelectedBrokerIdsState(ids)
+    setSelectedCount(ids.length)
+    setPreviewBroker(brokers[0] ?? null)
+    await setSelectedBrokerIds(ids)
+  }
+
+  async function clearAllBrokers() {
+    setSelectedBrokerIdsState([])
+    setSelectedCount(0)
+    setPreviewBroker(brokers[0] ?? null)
+    await setSelectedBrokerIds([])
   }
 
   function isProfileValid(profile: UserProfile) {
@@ -557,8 +163,8 @@ export default function Flow() {
       profile.fullName &&
         profile.email &&
         profile.city &&
-        profile.country &&
-        profile.partialPostcode,
+        profile.state &&
+        profile.partialZip,
     )
   }
 
@@ -570,51 +176,368 @@ export default function Flow() {
       const status = await getGmailStatus()
       setGmailConnected(status.connected)
       if (status.connected) {
-        const nextIndex = steps.findIndex((candidate) => candidate.id === 'profile')
-        const stepId = steps[currentIndex]?.id
-        if (nextIndex >= 0 && (stepId === 'gmail-login' || stepId === 'gmail-auth')) {
-          setCurrentIndex(nextIndex)
-        }
+        setCurrentIndex(stepIds.indexOf('final-review'))
       }
     } catch (error) {
       const message = (error as Error).message ?? 'Sign-in didn’t finish. Please try again.'
       setOauthError(message)
+    } finally {
+      setOauthInFlight(false)
     }
-    setOauthInFlight(false)
   }
 
-  async function handleCopyAuditPrompt() {
+  async function handleSendSelected() {
     try {
-      if (navigator?.clipboard?.writeText) {
-        await navigator.clipboard.writeText(auditPromptText)
-        setToastOpen(true)
-        return
-      }
-    } catch {
-      // fall through to legacy path
+      setSendError(null)
+      setSendInFlight(true)
+      const brokers = await loadBrokers()
+      const selectedIds = await getSelectedBrokerIds()
+      const targetIds = selectedIds.length > 0 ? selectedIds : brokers.map((broker) => broker.id)
+      await sendAll(brokers, targetIds)
+      history.push('/home')
+    } catch (error) {
+      setSendError((error as Error).message ?? 'Send failed.')
+    } finally {
+      setSendInFlight(false)
     }
-    const textarea = document.createElement('textarea')
-    textarea.value = auditPromptText
-    textarea.setAttribute('readonly', 'true')
-    textarea.style.position = 'absolute'
-    textarea.style.left = '-9999px'
-    document.body.appendChild(textarea)
-    textarea.select()
-    document.execCommand('copy')
-    document.body.removeChild(textarea)
-    setToastOpen(true)
   }
 
-  async function handleSaveProfile() {
-    if (!isProfileValid(profileDraft)) {
-      alert('Please fill in all fields.')
-      return
-    }
-    await setUserProfile(profileDraft)
-    setProfileSaved(true)
+  function previewBodyText() {
+    if (!previewBroker || !isProfileValid(profileDraft)) return ''
+    return buildDeletionBody(previewBroker, profileDraft, 'ABC123').replace(
+      /^To .+ Privacy\/Compliance Team,/,
+      'To [broker privacy team],',
+    )
   }
+
+  const steps: Step[] = [
+    {
+      id: 'intro',
+      title: 'Your data, your choice.',
+      render: () => (
+        <div className="flow-stack">
+          <AppText intent="body" emphasis>
+            Your personal information shouldn&apos;t be public knowledge. Brokers never asked for
+            your permission. Take your data back.
+          </AppText>
+          <InlineTrustClaim
+            claim="We keep the broker list small and verified."
+            details={
+              <AppText intent="supporting">
+                We focus on brokers with working email opt-out paths so the flow stays predictable.
+              </AppText>
+            }
+            linkLabel="How we pick brokers"
+          />
+          <InlineTrustClaim
+            claim="Your info and Gmail connection stay on your device."
+            details={
+              <AppText intent="supporting">
+                You review the request before sending and can edit your details any time.
+              </AppText>
+            }
+            linkLabel="Privacy stance"
+          />
+          <InlineTrustClaim
+            claim="We only request send-only Gmail access. No inbox access."
+            details={
+              <AppText intent="supporting">
+                Requests go from your Gmail account, not through Scrappy Kin servers.
+              </AppText>
+            }
+            linkLabel="How Gmail works"
+          />
+        </div>
+      ),
+      canContinue: true,
+    },
+    {
+      id: 'brokers',
+      title: 'Pick brokers',
+      render: () => (
+        <section className="app-section-shell">
+          {renderStepContext(
+            'Start with one or two brokers first, then expand when you are ready.',
+            'Why start smaller?',
+            <AppText intent="body">
+              Starting smaller makes the request feel concrete and keeps your first run easy to
+              review.
+            </AppText>,
+            'Why start smaller?'
+          )}
+          <AppText intent="body">{brokers.length} brokers available.</AppText>
+          <div className="broker-actions">
+            <AppButton size="sm" onClick={selectAllBrokers}>
+              Select all
+            </AppButton>
+            <AppButton size="sm" variant="secondary" onClick={clearAllBrokers}>
+              Clear
+            </AppButton>
+          </div>
+          <AppList>
+            {brokers.map((broker) => (
+              <AppListRow
+                key={broker.id}
+                title={broker.name}
+                description={
+                  broker.childCompanies && broker.childCompanies.length > 0
+                    ? `Includes: ${broker.childCompanies.join(', ')}`
+                    : undefined
+                }
+                left={
+                  <AppCheckbox
+                    checked={selectedBrokerIds.includes(broker.id)}
+                    onChange={(checked) => void toggleBroker(broker.id, checked)}
+                  />
+                }
+                emphasis={false}
+              />
+            ))}
+          </AppList>
+        </section>
+      ),
+      canContinue: selectedCount > 0,
+    },
+    {
+      id: 'request-review',
+      title: 'Review your request',
+      render: () => (
+        <section className="app-section-shell">
+          {renderStepContext(
+            'Fill only the minimum details needed. You’ll do one final review after Gmail is connected.',
+            'Why this wording works',
+            <AppText intent="body">
+              We arrived at this format through legal research and live broker testing. The goal is
+              the minimum personal information brokers usually need to find the right record and
+              honor the request.
+            </AppText>,
+            'Why this wording works'
+          )}
+          <div className="flow-request-preview">
+            <ArtifactPanel>
+              <div className="flow-request-preview__body">
+              <AppText intent="label">Subject</AppText>
+              <AppText intent="body">{buildDeletionSubject()}</AppText>
+              <AppText intent="label">Body</AppText>
+              <AppText intent="body">To [broker privacy team],</AppText>
+              <AppText intent="body">{buildDeletionIntro()}</AppText>
+              <AppText intent="label">Identity for lookup</AppText>
+              <div className="form-stack">
+                <AppInput
+                  label="Full name"
+                  value={profileDraft.fullName}
+                  onChange={(value) => updateProfile({ fullName: value })}
+                />
+                <AppInput
+                  label="Email"
+                  value={profileDraft.email}
+                  onChange={(value) => updateProfile({ email: value })}
+                  inputMode="email"
+                />
+                <AppInput
+                  label="City"
+                  value={profileDraft.city}
+                  onChange={(value) => updateProfile({ city: value })}
+                />
+                <AppInput
+                  label="State"
+                  value={profileDraft.state}
+                  onChange={(value) => updateProfile({ state: value })}
+                  placeholder="CA"
+                />
+                <AppInput
+                  label="First Four Digits of ZIP Code"
+                  value={profileDraft.partialZip}
+                  onChange={(value) => updateProfile({ partialZip: normalizeZipInput(value) })}
+                  inputMode="numeric"
+                  maxLength={4}
+                  placeholder="1234"
+                />
+              </div>
+              <AppText intent="label">What I&apos;m requesting</AppText>
+              <div className="flow-stack flow-stack--tight">
+                {buildDeletionRequestItems().map((item, index) => (
+                  <AppText key={item} intent="body">
+                    {index + 1}. {item}
+                  </AppText>
+                ))}
+              </div>
+              <AppText intent="body">
+                I am opting out of any sale or sharing of my personal information. Do not:
+              </AppText>
+              <div className="flow-stack flow-stack--tight">
+                {buildDeletionOptOutItems().map((item) => (
+                  <AppText key={item} intent="body">
+                    - {item}
+                  </AppText>
+                ))}
+              </div>
+              <AppText intent="label">Response</AppText>
+              <AppText intent="body">{buildDeletionResponseLine()}</AppText>
+              <AppText intent="body">{buildDeletionVerificationLine()}</AppText>
+              <AppText intent="body">{profileDraft.fullName || '[Your name]'}</AppText>
+              </div>
+            </ArtifactPanel>
+          </div>
+        </section>
+      ),
+      canContinue: selectedCount > 0 && isProfileValid(profileDraft),
+    },
+    {
+      id: 'gmail-send',
+      title: 'Connect Gmail to send',
+      render: () => (
+        <section className="app-section-shell">
+          {renderStepContext(
+            'We use your Gmail account so the requests go out from you, not from a Scrappy Kin mailbox.',
+            'Why use your Gmail account?',
+            <div className="flow-stack">
+              <AppText intent="body">
+                The point of Scrappy Kin is to keep your exposure surface small and keep you in
+                control.
+              </AppText>
+              <AppText intent="body">
+                So we use an account you already trust and control instead of asking you to hand
+                your personal data to a new service inbox.
+              </AppText>
+            </div>,
+            'Why use your Gmail account?'
+          )}
+          <AppText intent="body">
+            {gmailConnected
+              ? 'Gmail connected. Continue to final review.'
+              : 'Google will show its permission screen next.'}
+          </AppText>
+          <AppText intent="label">This access will</AppText>
+          <AppList>
+            <AppListRow
+              title="Send the requests you approve from your Gmail account"
+              left={<AppIcon icon={checkmarkCircle} size="sm" tone="primary" ariaLabel="Allowed" />}
+              emphasis={false}
+            />
+            <AppListRow
+              title={
+                <>
+                  <strong>Not</strong> allow Scrappy Kin to read, delete, or export your email
+                </>
+              }
+              left={<AppIcon icon={closeCircle} size="sm" tone="danger" ariaLabel="Not allowed" />}
+              emphasis={false}
+            />
+          </AppList>
+          <AppText intent="supporting">
+            {selectedCount > 0 ? `${selectedCount} brokers selected.` : 'No brokers selected yet.'}
+          </AppText>
+          {oauthError ? (
+            <AppNotice variant="error" title="Sign-in didn’t finish">
+              {oauthError}
+            </AppNotice>
+          ) : null}
+          {sendError ? (
+            <AppNotice variant="error" title="Send didn’t finish">
+              {sendError}
+            </AppNotice>
+          ) : null}
+          {!gmailConnected ? (
+            <AppButton onClick={handleConnectGmail} disabled={oauthInFlight}>
+              {oauthError ? 'Retry Google sign-in' : 'Continue to Google'}
+            </AppButton>
+          ) : (
+            <AppButton onClick={() => setCurrentIndex(stepIds.indexOf('final-review'))}>
+              Continue to final review
+            </AppButton>
+          )}
+          <ServerBoundaryClaim />
+        </section>
+      ),
+      showNext: false,
+    },
+    {
+      id: 'final-review',
+      title: 'Final review',
+      render: () => (
+        <section className="app-section-shell">
+          {renderStepContext(
+            'This is the final plain-text request that will go out from your connected Gmail account.',
+            'What you are approving',
+            <AppText intent="body">
+              You already connected Gmail. This final review is the last check before the selected
+              batch is sent.
+            </AppText>,
+            'What you are approving'
+          )}
+          <ReviewAssetCard
+            title="Gmail connected"
+            icon={checkmarkCircle}
+            action={
+              <button
+                type="button"
+                className="flow-inline-link"
+                onClick={() => history.push('/settings')}
+              >
+                Disconnect in Settings
+              </button>
+            }
+          >
+            <AppText intent="body">Send-only access is ready. No inbox access.</AppText>
+          </ReviewAssetCard>
+          <ReviewAssetCard
+            title={selectedCount > 0 ? `${selectedCount} brokers selected` : 'No brokers selected'}
+            action={
+              <AppIconButton
+                icon={createOutline}
+                ariaLabel="Edit brokers"
+                size="sm"
+                variant="ghost"
+                onClick={() => setCurrentIndex(stepIds.indexOf('brokers'))}
+              />
+            }
+          >
+            <AppText intent="body">
+              Review or change the broker list before you send the batch.
+            </AppText>
+          </ReviewAssetCard>
+          <ReviewAssetCard
+            title="Email preview"
+            action={
+              <AppIconButton
+                icon={createOutline}
+                ariaLabel="Edit request"
+                size="sm"
+                variant="ghost"
+                onClick={() => setCurrentIndex(stepIds.indexOf('request-review'))}
+              />
+            }
+          >
+            <div className="flow-final-preview">
+              <AppText intent="label">Subject</AppText>
+              <AppText intent="body">{buildDeletionSubject('ABC123')}</AppText>
+              <AppText intent="label">Body</AppText>
+              <pre className="flow-final-preview__text">{previewBodyText()}</pre>
+            </div>
+          </ReviewAssetCard>
+          {sendError ? (
+            <AppNotice variant="error" title="Send didn’t finish">
+              {sendError}
+            </AppNotice>
+          ) : null}
+          <AppButton onClick={handleSendSelected} disabled={sendInFlight || !gmailConnected}>
+            {sendInFlight ? 'Sending...' : `Send ${selectedCount || ''} selected requests`.trim()}
+          </AppButton>
+          <ServerBoundaryClaim />
+        </section>
+      ),
+      showNext: false,
+    },
+  ]
+
+  const step = steps[currentIndex]
 
   function goNext() {
+    if (step.id === 'request-review' && gmailConnected) {
+      setCurrentIndex(stepIds.indexOf('final-review'))
+      return
+    }
     if (currentIndex < steps.length - 1) {
       setCurrentIndex(currentIndex + 1)
     }
@@ -639,20 +562,17 @@ export default function Flow() {
           />
           <AppHeading intent="section">{step.title}</AppHeading>
           {step.render()}
-          <div className="flow-actions">
-            {step.showNext === false ? null : (
+          {step.showNext === false ? null : (
+            <>
+              <div className="flow-actions">
               <AppButton onClick={goNext} disabled={step.canContinue === false} fullWidth>
                 Next
               </AppButton>
-            )}
-          </div>
+              </div>
+              <ServerBoundaryClaim />
+            </>
+          )}
         </div>
-        <AppToast
-          open={toastOpen}
-          onDismiss={() => setToastOpen(false)}
-          variant="success"
-          message="Prompt copied."
-        />
       </IonContent>
     </IonPage>
   )

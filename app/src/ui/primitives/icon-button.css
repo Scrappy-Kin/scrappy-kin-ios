@@ -24,3 +24,8 @@
   height: var(--button-size);
   min-width: var(--button-size);
 }
+
+.app-icon-button--ghost::part(native) {
+  border-width: 0;
+  box-shadow: none;
+}

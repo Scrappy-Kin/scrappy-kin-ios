@@ -5,11 +5,20 @@ export type QueueStatus = 'pending' | 'sent' | 'failed'
 export type QueueItem = {
   brokerId: string
   status: QueueStatus
+  referenceId: string
   lastAttemptAt?: string
   errorCode?: string
+  gmailMessageId?: string
+  gmailThreadId?: string
 }
 
 const QUEUE_KEY = 'send_queue'
+
+function createReferenceId() {
+  const bytes = new Uint8Array(3)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('').toUpperCase()
+}
 
 export async function getQueue() {
   return (await getEncrypted<QueueItem[]>(QUEUE_KEY)) ?? []
@@ -28,10 +37,18 @@ export async function initializeQueue(brokerIds: string[]) {
       existingIds.size === nextIds.size &&
       Array.from(existingIds).every((id) => nextIds.has(id))
     if (same) {
-      return existing
+      const backfilled = existing.map((item) =>
+        item.referenceId ? item : { ...item, referenceId: createReferenceId() },
+      )
+      await setQueue(backfilled)
+      return backfilled
     }
   }
-  const queue = brokerIds.map((brokerId) => ({ brokerId, status: 'pending' as QueueStatus }))
+  const queue = brokerIds.map((brokerId) => ({
+    brokerId,
+    status: 'pending' as QueueStatus,
+    referenceId: createReferenceId(),
+  }))
   await setQueue(queue)
   return queue
 }
@@ -47,7 +64,13 @@ export async function resetFailedToPending() {
   const queue = await getQueue()
   const updated = queue.map((entry) =>
     entry.status === 'failed'
-      ? { ...entry, status: 'pending' as QueueStatus, errorCode: undefined }
+      ? {
+          ...entry,
+          status: 'pending' as QueueStatus,
+          errorCode: undefined,
+          gmailMessageId: undefined,
+          gmailThreadId: undefined,
+        }
       : entry,
   )
   await setQueue(updated)

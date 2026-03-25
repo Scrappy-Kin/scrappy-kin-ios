@@ -46,6 +46,25 @@ body {
   gap: var(--space-4);
 }
 
+.app-section-shell {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.app-section-shell--compact {
+  gap: var(--space-3);
+}
+
+.app-action-stack {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.app-meta-stack {
+  display: grid;
+  gap: var(--space-1);
+}
+
 .flow-context {
   display: grid;
   gap: var(--space-2);
@@ -61,6 +80,45 @@ body {
   white-space: pre-wrap;
 }
 
+.flow-request-preview {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.flow-inline-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.flow-inline-summary__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.flow-request-preview__body {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.flow-stack--tight {
+  gap: var(--space-1);
+}
+
+.flow-final-preview {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.flow-final-preview__text {
+  margin: 0;
+  white-space: pre-wrap;
+  font: inherit;
+  color: var(--neutral-900);
+}
+
 .flow-prompt {
   display: grid;
   gap: var(--space-3);
@@ -70,6 +128,21 @@ body {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.flow-inline-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0;
+  color: var(--secondary);
+  font: inherit;
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-xs);
+  font-weight: var(--font-weight-regular);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
 }
 
 .app-link {

@@ -9,6 +9,7 @@
     "build:dev": "tsc -b && vite build --mode development",
     "build:prod": "tsc -b && vite build --mode production",
     "capture:screens": "node scripts/capture-screens.mjs",
+    "capture:screens:simulator": "node scripts/capture-simulator-screens.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "audit:manifest": "node ../scripts/generate-audit-manifest.js",

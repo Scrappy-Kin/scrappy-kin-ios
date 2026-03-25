@@ -57,6 +57,14 @@
 				<string>$(GOOGLE_REDIRECT_SCHEME)</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>scrappykin-review</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>scrappykin-review</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

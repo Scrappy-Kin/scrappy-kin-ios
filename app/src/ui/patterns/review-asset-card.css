@@ -1,0 +1,39 @@
+.review-asset-card {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--neutral-900-12);
+  border-radius: var(--radius-2);
+  background: var(--neutral-50);
+}
+
+.review-asset-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.review-asset-card__title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.review-asset-card__icon {
+  font-size: 18px;
+  color: var(--secondary);
+}
+
+.review-asset-card__action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.review-asset-card__body {
+  display: grid;
+  gap: var(--space-2);
+}
