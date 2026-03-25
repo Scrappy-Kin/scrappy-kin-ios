@@ -27,6 +27,9 @@ pnpm-debug.log*
 # Misc
 *.log
 
+# Local browser tooling
+app/chrome/
+
 # Local mayor workflow (in-repo, not in git)
 .agents/
 .claude/
@@ -48,3 +51,7 @@ brand/
 
 # IDE-specific agent skills
 .windsurf/
+
+deliverables/reviews/*.log
+
+deliverables/reviews/**/*.log

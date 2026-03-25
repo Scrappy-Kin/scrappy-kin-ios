@@ -1,10 +1,17 @@
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react'
+import AppButton from '../primitives/AppButton'
+import AppCard from '../primitives/AppCard'
 import AppHeading from '../primitives/AppHeading'
+import AppList from '../primitives/AppList'
+import AppListRow from '../primitives/AppListRow'
 import AppText from '../primitives/AppText'
+import ArtifactPanel from '../patterns/ArtifactPanel'
 import InlineTrustClaim from '../patterns/InlineTrustClaim'
 import ReadMoreSheetLink from '../patterns/ReadMoreSheetLink'
 import InspectableArtifact from '../patterns/InspectableArtifact'
 import FlowStepHeader from '../patterns/FlowStepHeader'
+import ReviewAssetCard from '../patterns/ReviewAssetCard'
+import ServerBoundaryClaim from '../patterns/ServerBoundaryClaim'
 import './harness.css'
 
 export default function Patterns() {
@@ -88,6 +95,58 @@ export default function Patterns() {
               label="Step 2 of 6"
               onBack={() => {}}
             />
+          </section>
+
+          <section className="app-section">
+            <AppHeading intent="section">ServerBoundaryClaim</AppHeading>
+            <ServerBoundaryClaim />
+          </section>
+
+          <section className="app-section">
+            <AppHeading intent="section">ReviewAssetCard</AppHeading>
+            <ReviewAssetCard
+              title="2 brokers selected"
+              action={<span className="app-link">Edit</span>}
+            >
+              <AppText intent="body">Review or change the broker list before you send.</AppText>
+            </ReviewAssetCard>
+          </section>
+
+          <section className="app-section">
+            <AppHeading intent="section">Screen Composition</AppHeading>
+            <div className="app-section-shell">
+              <AppText intent="body">Plain section shell with support copy and one primary action.</AppText>
+              <ReadMoreSheetLink
+                label="Why this wording works"
+                sheetTitle="Why this wording works"
+                sheetBody={
+                  <div className="app-stack">
+                    <AppText intent="body">
+                      Use specific disclosure labels and keep the collapsed state meaningful on its own.
+                    </AppText>
+                  </div>
+                }
+              />
+              <ArtifactPanel>
+                <AppText intent="label">Artifact panel</AppText>
+                <AppText intent="body">Subject: Personal Data Deletion Request [SK-ABC123]</AppText>
+                <AppText intent="supporting">
+                  Plain-text content and embedded form fields belong inside the artifact surface.
+                </AppText>
+              </ArtifactPanel>
+              <AppButton>Primary action</AppButton>
+              <ServerBoundaryClaim />
+            </div>
+
+            <AppList header="List-based settings section">
+              <AppListRow title="Disconnect Gmail" />
+              <AppListRow title="Delete all local data" tone="danger" />
+            </AppList>
+
+            <AppCard title="Status summary">
+              <AppText intent="supporting">Cards are for bounded objects, not default page wrappers.</AppText>
+              <AppText intent="supporting">Sent: 2 · Failed: 0 · Pending: 0</AppText>
+            </AppCard>
           </section>
         </div>
       </IonContent>

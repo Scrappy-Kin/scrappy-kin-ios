@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import AppButton from '../primitives/AppButton'
 import AppSheet from '../primitives/AppSheet'
+import './read-more-sheet-link.css'
 
 type ReadMoreSheetLinkProps = {
   label: string
@@ -13,9 +13,9 @@ export default function ReadMoreSheetLink({ label, sheetTitle, sheetBody }: Read
 
   return (
     <>
-      <AppButton size="sm" variant="ghost" onClick={() => setOpen(true)}>
+      <button type="button" className="read-more-sheet-link" onClick={() => setOpen(true)}>
         {label}
-      </AppButton>
+      </button>
       <AppSheet title={sheetTitle} open={open} onDismiss={() => setOpen(false)}>
         {sheetBody}
       </AppSheet>

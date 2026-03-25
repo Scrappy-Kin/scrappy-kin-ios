@@ -1,8 +1,10 @@
+import { Capacitor } from '@capacitor/core'
 import { Preferences } from '@capacitor/preferences'
 import { SecureStoragePlugin } from 'capacitor-secure-storage-plugin'
 
 const KEY_NAME = 'scrappy_kin_master_key'
 const STORE_PREFIX = 'sk_store:'
+const WEB_KEY_STORAGE = `${STORE_PREFIX}${KEY_NAME}`
 
 function toBase64(data: Uint8Array) {
   return btoa(String.fromCharCode(...data))
@@ -12,18 +14,46 @@ function fromBase64(data: string) {
   return Uint8Array.from(atob(data), (char) => char.charCodeAt(0))
 }
 
+async function getStoredMasterKey() {
+  if (Capacitor.isNativePlatform()) {
+    const existing = await SecureStoragePlugin.get({ key: KEY_NAME })
+    return existing?.value ?? null
+  }
+
+  const existing = await Preferences.get({ key: WEB_KEY_STORAGE })
+  return existing.value
+}
+
+async function setStoredMasterKey(value: string) {
+  if (Capacitor.isNativePlatform()) {
+    await SecureStoragePlugin.set({ key: KEY_NAME, value })
+    return
+  }
+
+  await Preferences.set({ key: WEB_KEY_STORAGE, value })
+}
+
+async function removeStoredMasterKey() {
+  if (Capacitor.isNativePlatform()) {
+    await SecureStoragePlugin.remove({ key: KEY_NAME })
+    return
+  }
+
+  await Preferences.remove({ key: WEB_KEY_STORAGE })
+}
+
 async function getOrCreateKeyBytes() {
   try {
-    const existing = await SecureStoragePlugin.get({ key: KEY_NAME })
-    if (existing?.value) {
-      return fromBase64(existing.value)
+    const existing = await getStoredMasterKey()
+    if (existing) {
+      return fromBase64(existing)
     }
   } catch {
     // Missing key: first run or cleared storage.
   }
 
   const keyBytes = crypto.getRandomValues(new Uint8Array(32))
-  await SecureStoragePlugin.set({ key: KEY_NAME, value: toBase64(keyBytes) })
+  await setStoredMasterKey(toBase64(keyBytes))
   return keyBytes
 }
 
@@ -84,5 +114,5 @@ export async function removeEncrypted(key: string) {
 
 export async function wipeAllLocalData() {
   await Preferences.clear()
-  await SecureStoragePlugin.remove({ key: KEY_NAME })
+  await removeStoredMasterKey()
 }

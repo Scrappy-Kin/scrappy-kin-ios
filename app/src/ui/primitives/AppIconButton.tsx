@@ -4,12 +4,14 @@ import './icon-button.css'
 
 type IconButtonSize = 'sm' | 'md' | 'lg'
 type IconButtonTone = 'primary' | 'danger'
+type IconButtonVariant = 'outline' | 'ghost'
 
 type AppIconButtonProps = {
   icon: string
   ariaLabel: string
   size?: IconButtonSize
   tone?: IconButtonTone
+  variant?: IconButtonVariant
   disabled?: boolean
   onClick?: () => void
 }
@@ -36,16 +38,17 @@ export default function AppIconButton({
   ariaLabel,
   size = 'md',
   tone = 'primary',
+  variant = 'outline',
   disabled = false,
   onClick,
 }: AppIconButtonProps) {
-  const classes = ['app-icon-button', sizeClassMap[size]].join(' ')
+  const classes = ['app-icon-button', sizeClassMap[size], `app-icon-button--${variant}`].join(' ')
 
   return (
     <IonButton
       className={classes}
       color={toneColorMap[tone]}
-      fill="outline"
+      fill={variant === 'ghost' ? 'clear' : 'outline'}
       disabled={disabled}
       onClick={onClick}
       aria-label={ariaLabel}

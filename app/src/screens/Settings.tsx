@@ -1,4 +1,4 @@
-import { IonContent, IonPage } from '@ionic/react'
+import { IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
 import { useEffect, useMemo, useState } from 'react'
@@ -16,42 +16,51 @@ import { disconnectGmail } from '../services/googleAuth'
 import { wipeAllLocalData } from '../services/secureStore'
 import { getUserProfile, setUserProfile, type UserProfile } from '../services/userProfile'
 import AppButton from '../ui/primitives/AppButton'
-import AppCard from '../ui/primitives/AppCard'
+import AppHeading from '../ui/primitives/AppHeading'
 import AppInput from '../ui/primitives/AppInput'
 import AppList from '../ui/primitives/AppList'
 import AppListRow from '../ui/primitives/AppListRow'
 import AppText from '../ui/primitives/AppText'
 import AppToggle from '../ui/primitives/AppToggle'
+import ServerBoundaryClaim from '../ui/patterns/ServerBoundaryClaim'
 
 export default function Settings() {
   const [logOptIn, setOptIn] = useState(false)
   const [logOptInExpiresAt, setLogOptInExpiresAt] = useState('')
+  const [nowTs, setNowTs] = useState(() => Date.now())
   const [devLogOptIn, setDevLogOptInState] = useState(false)
   const [profileDraft, setProfileDraft] = useState<UserProfile>({
     fullName: '',
     email: '',
     city: '',
-    country: '',
-    partialPostcode: '',
+    state: '',
+    partialZip: '',
   })
   const [profileSaved, setProfileSaved] = useState(false)
 
-  useEffect(() => {
-    refreshLogOptIn()
+  async function refreshLogOptIn() {
+    const status = await getLogOptInStatus()
+    setOptIn(status.enabled)
+    setLogOptInExpiresAt(status.expiresAt)
+  }
+
+  useIonViewWillEnter(() => {
+    void refreshLogOptIn()
     if (IS_DEV_BUILD) {
-      getDevLogOptIn().then(setDevLogOptInState)
+      void getDevLogOptIn().then(setDevLogOptInState)
     }
-    getUserProfile().then((profile) => {
+    void getUserProfile().then((profile) => {
       if (profile) {
         setProfileDraft(profile)
         setProfileSaved(true)
       }
     })
-  }, [])
+  })
 
   useEffect(() => {
     if (!logOptIn || !logOptInExpiresAt) return
     const interval = window.setInterval(() => {
+      setNowTs(Date.now())
       refreshLogOptIn()
     }, 30000)
     return () => window.clearInterval(interval)
@@ -60,12 +69,6 @@ export default function Settings() {
   async function handleToggleLogs(enabled: boolean) {
     await setLogOptIn(enabled)
     await refreshLogOptIn()
-  }
-
-  async function refreshLogOptIn() {
-    const status = await getLogOptInStatus()
-    setOptIn(status.enabled)
-    setLogOptInExpiresAt(status.expiresAt)
   }
 
   async function handleToggleDevLogs(enabled: boolean) {
@@ -78,13 +81,17 @@ export default function Settings() {
     setProfileSaved(false)
   }
 
+  function normalizeZipInput(value: string) {
+    return value.replace(/\D/g, '').slice(0, 4)
+  }
+
   function isProfileValid(profile: UserProfile) {
     return Boolean(
       profile.fullName &&
         profile.email &&
         profile.city &&
-        profile.country &&
-        profile.partialPostcode,
+        profile.state &&
+        profile.partialZip,
     )
   }
 
@@ -99,11 +106,11 @@ export default function Settings() {
 
   const logOptInRemaining = useMemo(() => {
     if (!logOptIn || !logOptInExpiresAt) return ''
-    const remainingMs = Date.parse(logOptInExpiresAt) - Date.now()
+    const remainingMs = Date.parse(logOptInExpiresAt) - nowTs
     if (!Number.isFinite(remainingMs) || remainingMs <= 0) return 'Expired'
     const minutes = Math.max(1, Math.ceil(remainingMs / 60000))
     return `${minutes} min remaining`
-  }, [logOptIn, logOptInExpiresAt])
+  }, [logOptIn, logOptInExpiresAt, nowTs])
 
   async function handleExportLogs() {
     const text = await exportLogsAsText()
@@ -160,8 +167,9 @@ export default function Settings() {
     <IonPage>
       <AppHeader title="Settings" />
       <IonContent className="page-content">
-        <AppCard title="Profile">
-          <AppText intent="supporting">Edit the info used for broker requests.</AppText>
+        <section className="app-section-shell">
+          <AppHeading intent="section">Profile</AppHeading>
+          <AppText intent="supporting">Edit the details used in your request.</AppText>
           <AppText intent="supporting">{profileSaved ? 'Saved.' : 'Not saved yet.'}</AppText>
           <AppInput
             label="Full name"
@@ -180,26 +188,32 @@ export default function Settings() {
             onChange={(value) => updateProfile({ city: value })}
           />
           <AppInput
-            label="Country"
-            value={profileDraft.country}
-            onChange={(value) => updateProfile({ country: value })}
+            label="State"
+            value={profileDraft.state}
+            onChange={(value) => updateProfile({ state: value })}
+            placeholder="CA"
           />
           <AppInput
-            label="Partial postcode"
-            value={profileDraft.partialPostcode}
-            onChange={(value) => updateProfile({ partialPostcode: value })}
+            label="First Four Digits of ZIP Code"
+            value={profileDraft.partialZip}
+            onChange={(value) => updateProfile({ partialZip: normalizeZipInput(value) })}
+            inputMode="numeric"
+            maxLength={4}
+            placeholder="1234"
           />
           <AppButton onClick={handleSaveProfile}>Save profile</AppButton>
-        </AppCard>
+          <ServerBoundaryClaim />
+        </section>
 
-        <AppCard title="Diagnostics">
+        <section className="app-section-shell app-section-shell--compact">
+          <AppHeading intent="section">Diagnostics</AppHeading>
           <AppText intent="body">
-            Diagnostics are short, local logs that help us troubleshoot bugs. They never include
-            your personal info and never leave your device automatically.
+            These are short troubleshooting notes that can help us fix bugs. They do not include
+            your message content and do not leave your device on their own.
           </AppText>
           <AppText intent="supporting">
-            When enabled, diagnostics capture for 15 minutes. Export is manual: review the
-            plain-text file and email it to support@scrappykin.com.
+            When turned on, Scrappy Kin keeps these notes for 15 minutes. If you want help, you
+            can review them first and then choose whether to email them to support@scrappykin.com.
           </AppText>
           <AppToggle
             label="Enable diagnostics"
@@ -210,7 +224,7 @@ export default function Settings() {
           {logOptIn && logOptInRemaining ? (
             <AppText intent="supporting">Diagnostics capture: {logOptInRemaining}.</AppText>
           ) : null}
-        </AppCard>
+        </section>
 
         <AppList header="Diagnostics actions">
           <AppListRow title="Export diagnostics (plain text)" onClick={handleExportLogs} />
@@ -218,11 +232,15 @@ export default function Settings() {
           <AppListRow title="Wipe diagnostics" onClick={handleWipeLogs} tone="danger" />
         </AppList>
         <AppText intent="supporting">
-          Diagnostics never send automatically. Export and send manually if needed.
+          These notes never send automatically. Share them only if you want help.
+        </AppText>
+        <AppText intent="supporting">
+          If you contact support (support@scrappykin.com), we receive only what you choose to send us.
         </AppText>
 
         {IS_DEV_BUILD && (
-          <AppCard title="Dev diagnostics">
+          <section className="app-section-shell app-section-shell--compact">
+            <AppHeading intent="section">Dev diagnostics</AppHeading>
             <AppText intent="supporting">Debug-only toggle for richer local diagnostics.</AppText>
             <AppToggle
               label="Enable dev diagnostics"
@@ -230,7 +248,7 @@ export default function Settings() {
               checked={devLogOptIn}
               onChange={handleToggleDevLogs}
             />
-          </AppCard>
+          </section>
         )}
 
         <AppList header="Build">
@@ -248,7 +266,7 @@ export default function Settings() {
           />
         </AppList>
 
-        <AppList header="Account">
+        <AppList header="Gmail & local data">
           <AppListRow title="Disconnect Gmail" onClick={handleDisconnect} />
           <AppListRow
             title="Delete all local data"

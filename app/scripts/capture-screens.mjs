@@ -21,15 +21,15 @@ const pages = [
   { path: '/home', file: '01-home.png' },
   { path: '/brokers', file: '02-brokers.png' },
   { path: '/settings', file: '03-settings.png' },
-  { path: '/flow', file: '04-flow-step-1-welcome.png' },
+  { path: '/flow', file: '04-flow-step-1-intro.png' },
 ]
 
 const seededProfile = {
   fullName: 'Ada Lovelace',
   email: 'ada@example.com',
-  city: 'Toronto',
-  country: 'Canada',
-  partialPostcode: 'M5V',
+  city: 'Austin',
+  state: 'TX',
+  partialZip: '7870',
 }
 
 const seededBrokerIds = ['truepeoplesearch-com', 'data-axle-com']
@@ -128,15 +128,22 @@ async function seedPostAuthState(page) {
   await page.evaluate(
     async ({ profile, brokerIds }) => {
       const secureStore = await import('/src/services/secureStore.ts')
-      await secureStore.setEncrypted('gmail_tokens', {
-        accessToken: 'mock-access-token',
-        expiresAt: Date.now() + 60 * 60 * 1000,
-      })
       await secureStore.setEncrypted('user_profile', profile)
       await secureStore.setEncrypted('selected_brokers', brokerIds)
     },
     { profile: seededProfile, brokerIds: seededBrokerIds },
   )
+}
+
+async function seedConnectedState(page) {
+  await seedPostAuthState(page)
+  await page.evaluate(async () => {
+    const secureStore = await import('/src/services/secureStore.ts')
+    await secureStore.setEncrypted('gmail_tokens', {
+      accessToken: 'mock-access-token',
+      expiresAt: Date.now() + 60 * 60 * 1000,
+    })
+  })
 }
 
 async function mockSuccessfulGmailSend(page) {
@@ -170,32 +177,29 @@ async function main() {
     }
 
     await openFlowStep(page, 1)
-    await captureFlowStep(page, '05-flow-step-2-email-preview.png', summaries)
-
-    await openFlowStep(page, 2)
-    await captureFlowStep(page, '06-flow-step-3-gmail-login.png', summaries)
+    await captureFlowStep(page, '05-flow-step-2-brokers.png', summaries)
 
     await wipeLocalAppState(page)
     await seedPostAuthState(page)
 
+    await openFlowStep(page, 2)
+    await captureFlowStep(page, '06-flow-step-3-request-review.png', summaries)
+
     await openFlowStep(page, 3)
-    await captureFlowStep(page, '07-flow-step-4-gmail-permissions.png', summaries)
+    await captureFlowStep(page, '07-flow-step-4-gmail-send.png', summaries)
+
+    await wipeLocalAppState(page)
+    await seedConnectedState(page)
 
     await openFlowStep(page, 4)
-    await captureFlowStep(page, '08-flow-step-5-profile.png', summaries)
+    await captureFlowStep(page, '08-flow-step-5-final-review.png', summaries)
 
-    await openFlowStep(page, 5)
-    await captureFlowStep(page, '09-flow-step-6-brokers.png', summaries)
-
-    await openFlowStep(page, 6)
-    await captureFlowStep(page, '10-flow-step-7-ready.png', summaries)
-
-    await page.getByRole('button', { name: 'Send now' }).click()
-    await page.waitForURL(`${baseUrl}/home`)
-    await captureCurrentPage(page, '11-home-ready-to-send.png', summaries)
+    await page.goto(`${baseUrl}/home`, { waitUntil: 'networkidle' })
+    await captureCurrentPage(page, '09-home-ready-to-send.png', summaries)
 
     await mockSuccessfulGmailSend(page)
     await page.getByRole('button', { name: 'Send selected requests' }).click()
+    await page.waitForURL(`${baseUrl}/home`)
     await page.waitForFunction(
       ({ expectedSummary, expectedButton }) => {
         const text = document.body.innerText
@@ -206,7 +210,7 @@ async function main() {
         expectedButton: 'Send selected requests',
       },
     )
-    await captureCurrentPage(page, '12-home-after-send-all.png', summaries)
+    await captureCurrentPage(page, '10-home-after-send.png', summaries)
 
     const manifestPath = path.join(outputDir, 'manifest.json')
     await fs.writeFile(manifestPath, JSON.stringify({ baseUrl, outputDir, captures: summaries }, null, 2))

@@ -26,6 +26,99 @@
   gap: var(--space-3);
 }
 
+.review-board-shell {
+  min-height: 100svh;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-content: stretch;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--page-padding) calc(var(--space-3) + env(safe-area-inset-bottom));
+}
+
+.review-board-preview-shell {
+  width: min(100%, 430px);
+  height: min(900px, calc(100svh - 190px - env(safe-area-inset-bottom)));
+  border: 1px solid var(--neutral-900-12);
+  border-radius: 28px;
+  background: var(--neutral-0);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+}
+
+.review-board-preview {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: var(--neutral-0);
+}
+
+.review-board-footer {
+  width: min(100%, 430px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-1);
+  background: #fff7cc;
+  border: 1px solid rgba(32, 24, 24, 0.18);
+  position: sticky;
+  bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
+  z-index: 1;
+}
+
+.review-board-footer__summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.review-board-footer__controls {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.review-board-footer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.review-board-select {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.review-board-select__control {
+  flex: 1 1 auto;
+  min-height: 44px;
+  border-radius: var(--radius-1);
+  border: 1px solid var(--neutral-900-12);
+  background: var(--neutral-0);
+  color: var(--neutral-900);
+  font: inherit;
+  padding: 0 var(--space-3);
+}
+
+.review-board-select__control:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.review-board-select__label {
+  color: var(--secondary);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-xs);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  white-space: nowrap;
+}
+
 .app-section {
   display: grid;
   gap: var(--space-3);
@@ -148,4 +241,10 @@
   color: var(--primary);
   text-decoration: none;
   font-weight: var(--font-weight-medium);
+}
+
+@media (min-width: 720px) {
+  .review-board-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

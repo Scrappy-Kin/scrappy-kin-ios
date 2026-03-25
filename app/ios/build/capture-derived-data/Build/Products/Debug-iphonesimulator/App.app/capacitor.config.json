@@ -1,0 +1,13 @@
+{
+	"appId": "com.scrappykin.ios",
+	"appName": "Scrappy Kin",
+	"webDir": "dist",
+	"packageClassList": [
+		"AppPlugin",
+		"CAPBrowserPlugin",
+		"FilesystemPlugin",
+		"PreferencesPlugin",
+		"SharePlugin",
+		"SecureStoragePlugin"
+	]
+}

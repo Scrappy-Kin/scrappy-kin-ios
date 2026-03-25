@@ -16,10 +16,8 @@ import AppSurface from '../primitives/AppSurface'
 import AppSheet from '../primitives/AppSheet'
 import AppDisclosure from '../primitives/AppDisclosure'
 import AppToggle from '../primitives/AppToggle'
-import AppToast from '../primitives/AppToast'
 import AppTextarea from '../primitives/AppTextarea'
 import AppText from '../primitives/AppText'
-import AppStickyAction from '../primitives/AppStickyAction'
 import './harness.css'
 
 export default function Primitives() {
@@ -29,7 +27,6 @@ export default function Primitives() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
   const [diagnosticsEnabled, setDiagnosticsEnabled] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [toastOpen, setToastOpen] = useState(false)
 
   return (
     <IonPage>
@@ -76,6 +73,7 @@ export default function Primitives() {
               <AppButton variant="destructive">Destructive</AppButton>
               <AppButton variant="ghost">Ghost</AppButton>
               <AppIconButton icon={chevronBack} ariaLabel="Back" size="lg" />
+              <AppIconButton icon={chevronBack} ariaLabel="Back ghost" size="lg" variant="ghost" />
               <div className="app-stack">
                 <AppButton size="xs" iconStart={<IonIcon icon={add} aria-hidden="true" />}>
                   X-small
@@ -97,10 +95,10 @@ export default function Primitives() {
             <div className="t-xs lh-xs w-500 text-secondary uc ls-wide">AppSurface</div>
             <div className="app-stack">
               <AppSurface>
-                <AppText intent="body">Default surface with standard padding.</AppText>
+                <AppText intent="body">Use surfaces for inset artifacts, not general page wrappers.</AppText>
               </AppSurface>
               <AppSurface padding="compact">
-                <AppText intent="body">Compact surface for dense layouts.</AppText>
+                <AppText intent="body">Compact surface for denser artifact previews.</AppText>
               </AppSurface>
             </div>
           </section>
@@ -289,36 +287,6 @@ export default function Primitives() {
             <div className="app-stack">
               <AppProgress current={2} total={5} label="Progress" />
               <AppProgress current={4} total={5} label="Almost there" />
-            </div>
-          </section>
-
-          <section className="app-section">
-            <div className="t-xs lh-xs w-500 text-secondary uc ls-wide">AppToast</div>
-            <div className="app-stack">
-              <AppText intent="body">Toasts confirm short actions.</AppText>
-              <AppButton onClick={() => setToastOpen(true)}>Show toast</AppButton>
-            </div>
-            <AppToast
-              open={toastOpen}
-              onDismiss={() => setToastOpen(false)}
-              variant="success"
-              message="Saved locally."
-            />
-          </section>
-
-          <section className="app-section">
-            <div className="t-xs lh-xs w-500 text-secondary uc ls-wide">AppStickyAction</div>
-            <div className="app-stack">
-              <div className="flow-prompt">
-                <AppStickyAction>
-                  <AppButton size="xs" variant="secondary">
-                    Sticky action
-                  </AppButton>
-                </AppStickyAction>
-                <AppText intent="body">
-                  Scroll the prompt block to confirm the button stays visible.
-                </AppText>
-              </div>
             </div>
           </section>
 

@@ -1,0 +1,16 @@
+.server-boundary-claim {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-1);
+  background: var(--neutral-100);
+  border: 1px solid var(--neutral-900-12);
+}
+
+.server-boundary-claim__icon {
+  font-size: 18px;
+  color: var(--secondary);
+  margin-top: 2px;
+}

@@ -15,11 +15,16 @@ export default function HarnessHome() {
         <div className="app-shell">
           <section className="app-section-header">
             <div className="t-lg lh-lg w-400 text-primary">Scrappy Kin UI System</div>
-            <div className="t-base lh-md w-400 text-primary">Review tokens, primitives, and patterns.</div>
+            <div className="t-base lh-md w-400 text-primary">
+              Review the browser board first, then tokens, primitives, and patterns.
+            </div>
           </section>
 
           <AppCard>
             <div className="app-nav">
+              <Link className="app-link" to="/ui-harness/review-board">
+                Browser review board
+              </Link>
               <Link className="app-link" to="/ui-harness/tokens">
                 Tokens
               </Link>

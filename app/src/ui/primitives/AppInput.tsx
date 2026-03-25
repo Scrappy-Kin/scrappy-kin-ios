@@ -9,6 +9,7 @@ type AppInputProps = {
   onChange: (value: string) => void
   placeholder?: string
   inputMode?: InputHTMLAttributes<HTMLInputElement>['inputMode']
+  maxLength?: number
   error?: string
   helpText?: string
 }
@@ -19,6 +20,7 @@ export default function AppInput({
   onChange,
   placeholder,
   inputMode,
+  maxLength,
   error,
   helpText,
 }: AppInputProps) {
@@ -30,6 +32,7 @@ export default function AppInput({
         value={value}
         placeholder={placeholder}
         inputMode={inputMode}
+        maxlength={maxLength}
         onIonChange={(event) => onChange(event.detail.value ?? '')}
         aria-invalid={Boolean(error)}
       />
