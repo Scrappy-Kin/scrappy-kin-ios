@@ -13,6 +13,7 @@
   --font-size-subheading: 21px;
   --font-size-2xl: 28px;
   --font-size-3xl: 34px;
+  --font-size-control: 16px;
 
   --line-height-xs: 16px;
   --line-height-sm: 20px;
@@ -22,6 +23,7 @@
   --line-height-subheading: 26px;
   --line-height-2xl: 34px;
   --line-height-3xl: 40px;
+  --line-height-control: 24px;
 
   --letter-spacing-tight: -0.01em;
   --letter-spacing-wide: 0.02em;

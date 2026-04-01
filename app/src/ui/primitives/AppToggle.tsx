@@ -1,4 +1,5 @@
 import { IonToggle } from '@ionic/react'
+import { useId } from 'react'
 import AppText from './AppText'
 import './toggle.css'
 
@@ -20,6 +21,7 @@ export default function AppToggle({
   tone = 'neutral',
 }: AppToggleProps) {
   const isDanger = tone === 'danger'
+  const descriptionId = useId()
 
   return (
     <div className={`app-toggle${disabled ? ' app-toggle--disabled' : ''}`}>
@@ -28,15 +30,19 @@ export default function AppToggle({
           {label}
         </AppText>
         {description ? (
-          <AppText intent="supporting" tone={isDanger ? 'danger' : 'default'}>
-            {description}
-          </AppText>
+          <div id={descriptionId}>
+            <AppText intent="supporting" tone={isDanger ? 'danger' : 'default'}>
+              {description}
+            </AppText>
+          </div>
         ) : null}
       </div>
       <IonToggle
         checked={checked}
         disabled={disabled}
         onIonChange={(event) => onChange(event.detail.checked)}
+        aria-label={label}
+        aria-describedby={description ? descriptionId : undefined}
       />
     </div>
   )

@@ -13,33 +13,21 @@ type ReviewState = {
 
 const reviewStates: ReviewState[] = [
   {
-    title: 'Home: ready to send',
-    route: '/capture/home-ready-to-send?qa=1',
-    description: 'Connected Gmail, pending queue, and the pre-send dashboard state.',
-    seedsLocalState: true,
-  },
-  {
-    title: 'Home: after send',
-    route: '/capture/home-after-send?qa=1',
-    description: 'Sent-state dashboard with queue results after a completed batch.',
-    seedsLocalState: true,
-  },
-  {
-    title: 'Brokers',
-    route: '/capture/brokers?qa=1',
-    description: 'Full broker list, selection controls, and starter-state review.',
-    seedsLocalState: true,
-  },
-  {
     title: 'Flow: intro',
     route: '/capture/flow-intro?qa=1',
     description: 'Trust framing and the first guided setup step.',
     seedsLocalState: true,
   },
   {
-    title: 'Flow: request review',
+    title: 'Flow: pick brokers',
+    route: '/capture/flow-brokers?qa=1',
+    description: 'First-run broker selection inside setup flow.',
+    seedsLocalState: true,
+  },
+  {
+    title: 'Flow: email review',
     route: '/capture/flow-request-review?qa=1',
-    description: 'Template, inline fields, and the editable request artifact.',
+    description: 'Template, inline fields, and the editable opt-out email artifact.',
     seedsLocalState: true,
   },
   {
@@ -52,6 +40,24 @@ const reviewStates: ReviewState[] = [
     title: 'Flow: final review',
     route: '/capture/flow-final-review?qa=1',
     description: 'Connected Gmail, broker summary, and final send checkpoint.',
+    seedsLocalState: true,
+  },
+  {
+    title: 'App: review batch',
+    route: '/capture/review-batch?qa=1',
+    description: 'Post-onboarding batch review and send flow from Home.',
+    seedsLocalState: true,
+  },
+  {
+    title: 'Home: after send',
+    route: '/capture/home-after-send?qa=1',
+    description: 'Sent-state dashboard with queue results after a completed batch.',
+    seedsLocalState: true,
+  },
+  {
+    title: 'Brokers: review next batch',
+    route: '/capture/brokers?qa=1',
+    description: 'The same broker selector reused later from the dashboard flow.',
     seedsLocalState: true,
   },
   {

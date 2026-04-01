@@ -1,55 +1,51 @@
+import { IonContent, IonPage } from '@ionic/react'
+import { useEffect, useState } from 'react'
+import { useHistory, useLocation } from 'react-router-dom'
+import BrokerSelectionPanel from '../components/BrokerSelectionPanel'
+import { readReturnTo } from '../services/navigation'
+import { getQueue } from '../services/queueStore'
+import { getTaskEditBehavior } from '../services/taskRoutes'
 import {
-  IonContent,
-  IonPage,
-} from '@ionic/react'
-import { useEffect, useMemo, useState } from 'react'
-import {
+  filterSelectableBrokers,
   getSelectedBrokerIds,
   loadBrokers,
   setSelectedBrokerIds,
   type Broker,
 } from '../services/brokerStore'
-import AppHeader from '../components/AppHeader'
-import AppCheckbox from '../ui/primitives/AppCheckbox'
 import AppButton from '../ui/primitives/AppButton'
-import AppList from '../ui/primitives/AppList'
-import AppListRow from '../ui/primitives/AppListRow'
+import AppHeading from '../ui/primitives/AppHeading'
 import AppText from '../ui/primitives/AppText'
-
-const TIER_ORDER = ['mega', 'medium', 'small', 'other'] as const
-
-const TIER_LABELS: Record<string, string> = {
-  mega: 'Mega brokers',
-  medium: 'Medium brokers',
-  small: 'Small brokers',
-  other: 'Other brokers',
-}
+import AppTopNav from '../ui/patterns/AppTopNav'
+import SettingsShortcut from '../ui/patterns/SettingsShortcut'
 
 export default function Brokers() {
+  const history = useHistory()
+  const location = useLocation()
+  const returnTo = readReturnTo(location.search)
   const [brokers, setBrokers] = useState<Broker[]>([])
   const [selected, setSelected] = useState<string[]>([])
-
-  const grouped = useMemo(() => {
-    const groups: Record<string, Broker[]> = {
-      mega: [],
-      medium: [],
-      small: [],
-      other: [],
-    }
-    brokers.forEach((broker) => {
-      const tier =
-        broker.tier && TIER_ORDER.includes(broker.tier as (typeof TIER_ORDER)[number])
-          ? broker.tier
-          : 'other'
-      groups[tier].push(broker)
-    })
-    Object.values(groups).forEach((group) => group.sort((a, b) => a.name.localeCompare(b.name)))
-    return groups
-  }, [brokers])
+  const [failedBrokerIds, setFailedBrokerIds] = useState<string[]>([])
+  const editBehavior = getTaskEditBehavior('edit_brokers_for_batch')
+  const isReviewBatchContext = Boolean(returnTo && returnTo.startsWith('/review-batch'))
+  const reviewBatchParentHref = (() => {
+    if (!returnTo || !returnTo.startsWith('/review-batch')) return '/home'
+    const [, search = ''] = returnTo.split('?')
+    return readReturnTo(search ? `?${search}` : '') ?? '/home'
+  })()
 
   useEffect(() => {
-    loadBrokers().then(setBrokers)
-    getSelectedBrokerIds().then(setSelected)
+    Promise.all([loadBrokers(), getSelectedBrokerIds(), getQueue()]).then(([allBrokers, selectedIds, queue]) => {
+      const selectableBrokers = filterSelectableBrokers(allBrokers, queue)
+      const selectableBrokerIds = new Set(selectableBrokers.map((broker) => broker.id))
+      const filteredSelectedIds = selectedIds.filter((id) => selectableBrokerIds.has(id))
+
+      setBrokers(selectableBrokers)
+      setSelected(filteredSelectedIds)
+      setFailedBrokerIds(queue.filter((item) => item.status === 'failed').map((item) => item.brokerId))
+      if (filteredSelectedIds.length !== selectedIds.length) {
+        void setSelectedBrokerIds(filteredSelectedIds)
+      }
+    })
   }, [])
 
   async function toggleBroker(id: string, checked: boolean) {
@@ -71,40 +67,39 @@ export default function Brokers() {
 
   return (
     <IonPage>
-      <AppHeader title="Brokers" />
       <IonContent className="page-content">
-        <AppText intent="supporting">{brokers.length} brokers available.</AppText>
-        <div className="broker-actions">
-          <AppButton size="sm" onClick={selectAll}>
-            Select all
-          </AppButton>
-          <AppButton size="sm" variant="secondary" onClick={clearAll}>
-            Clear
-          </AppButton>
+        <div className="app-screen-shell">
+          <AppTopNav
+            backHref={selected.length === 0 && isReviewBatchContext ? reviewBatchParentHref : returnTo ?? '/home'}
+            onBack={
+              selected.length === 0 && isReviewBatchContext
+                ? () => history.replace(reviewBatchParentHref)
+                : undefined
+            }
+            action={<SettingsShortcut />}
+          />
+          <AppHeading intent="section">Brokers</AppHeading>
+          {returnTo && editBehavior === 'autosave' ? (
+            <AppText intent="supporting">Changes save automatically.</AppText>
+          ) : null}
+          <BrokerSelectionPanel
+            brokers={brokers}
+            selectedIds={selected}
+            failedBrokerIds={failedBrokerIds}
+            onToggle={toggleBroker}
+            onSelectAll={selectAll}
+            onClearAll={clearAll}
+          />
+          {isReviewBatchContext ? (
+            <AppButton
+              fullWidth
+              disabled={selected.length === 0}
+              onClick={() => history.push(returnTo!)}
+            >
+              Review email
+            </AppButton>
+          ) : null}
         </div>
-        {TIER_ORDER.map((tier) =>
-          grouped[tier].length > 0 ? (
-            <AppList header={TIER_LABELS[tier]} key={tier}>
-              {grouped[tier].map((broker) => (
-                <AppListRow
-                  key={broker.id}
-                  title={broker.name}
-                  description={
-                    broker.childCompanies && broker.childCompanies.length > 0
-                      ? `Includes: ${broker.childCompanies.join(', ')}`
-                      : undefined
-                  }
-                  left={
-                    <AppCheckbox
-                      checked={selected.includes(broker.id)}
-                      onChange={(checked) => toggleBroker(broker.id, checked)}
-                    />
-                  }
-                />
-              ))}
-            </AppList>
-          ) : null,
-        )}
       </IonContent>
     </IonPage>
   )

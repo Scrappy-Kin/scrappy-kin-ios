@@ -4,7 +4,7 @@ import { Capacitor, type PluginListenerHandle } from '@capacitor/core'
 import { getEncrypted, removeEncrypted, setEncrypted } from './secureStore'
 import { OAUTH_TIMEOUT_MS } from '../config/constants'
 import { generateCodeChallenge, generateCodeVerifier, generateState } from './pkce'
-import { GOOGLE_CLIENT_ID, GOOGLE_REDIRECT_URI } from '../config/oauth'
+import { getGoogleOAuthConfig } from '../config/oauth'
 
 const TOKEN_URL = 'https://oauth2.googleapis.com/token'
 const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
@@ -42,7 +42,7 @@ export async function clearStaleOAuthState() {
   }
 }
 
-async function waitForOAuthRedirect(state: string) {
+async function waitForOAuthRedirect(state: string, redirectUri: string) {
   return new Promise<string>((resolve, reject) => {
     const timeout = setTimeout(() => {
       Browser.close().catch(() => undefined)
@@ -52,7 +52,7 @@ async function waitForOAuthRedirect(state: string) {
     let resolved = false
     let appHandler: PluginListenerHandle | null = null
     let browserHandler: PluginListenerHandle | null = null
-    const expectedUrl = new URL(GOOGLE_REDIRECT_URI)
+    const expectedUrl = new URL(redirectUri)
 
     const cleanup = () => {
       clearTimeout(timeout)
@@ -122,6 +122,7 @@ export async function connectGmail() {
   }
 
   oauthInFlight = true
+  const oauthConfig = await getGoogleOAuthConfig()
   const verifier = generateCodeVerifier()
   const challenge = await generateCodeChallenge(verifier)
   const state = generateState()
@@ -137,8 +138,8 @@ export async function connectGmail() {
     })
 
     const authParams = new URLSearchParams({
-      client_id: GOOGLE_CLIENT_ID,
-      redirect_uri: GOOGLE_REDIRECT_URI,
+      client_id: oauthConfig.clientId,
+      redirect_uri: oauthConfig.redirectUri,
       response_type: 'code',
       scope: SCOPE,
       code_challenge: challenge,
@@ -151,13 +152,13 @@ export async function connectGmail() {
 
     await Browser.open({ url })
 
-    const code = await waitForOAuthRedirect(state)
+    const code = await waitForOAuthRedirect(state, oauthConfig.redirectUri)
 
     const tokenParams = new URLSearchParams({
       grant_type: 'authorization_code',
       code,
-      client_id: GOOGLE_CLIENT_ID,
-      redirect_uri: GOOGLE_REDIRECT_URI,
+      client_id: oauthConfig.clientId,
+      redirect_uri: oauthConfig.redirectUri,
       code_verifier: verifier,
     })
 
@@ -204,10 +205,11 @@ export async function disconnectGmail() {
 }
 
 async function refreshAccessToken(refreshToken: string) {
+  const oauthConfig = await getGoogleOAuthConfig()
   const tokenParams = new URLSearchParams({
     grant_type: 'refresh_token',
     refresh_token: refreshToken,
-    client_id: GOOGLE_CLIENT_ID,
+    client_id: oauthConfig.clientId,
   })
 
   const response = await fetch(TOKEN_URL, {

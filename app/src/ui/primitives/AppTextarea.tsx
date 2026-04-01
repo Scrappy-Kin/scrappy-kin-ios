@@ -1,4 +1,3 @@
-import { IonTextarea } from '@ionic/react'
 import AppText from './AppText'
 import './input.css'
 
@@ -24,12 +23,12 @@ export default function AppTextarea({
   return (
     <div className={`app-input${error ? ' app-input--error' : ''}`}>
       <AppText intent="label">{label}</AppText>
-      <IonTextarea
+      <textarea
         className="app-input__control"
         value={value}
         placeholder={placeholder}
         rows={rows}
-        onIonChange={(event) => onChange(event.detail.value ?? '')}
+        onChange={(event) => onChange(event.target.value)}
         aria-invalid={Boolean(error)}
       />
       {error ? (

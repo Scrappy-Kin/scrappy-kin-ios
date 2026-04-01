@@ -1,0 +1,12 @@
+.settings-home {
+  padding-bottom: var(--space-4);
+}
+
+.internal-tools-panel {
+  display: grid;
+  gap: var(--stack-gap-tight);
+  padding: var(--space-4);
+  border: 1px solid rgba(128, 92, 0, 0.18);
+  border-radius: var(--radius-2);
+  background: #fff3bf;
+}

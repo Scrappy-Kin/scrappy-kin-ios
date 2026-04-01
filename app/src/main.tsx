@@ -18,7 +18,9 @@ import './theme/utilities.css'
 import './styles/theme.css'
 import './index.css'
 
-setupIonicReact()
+setupIonicReact({
+  swipeBackEnabled: true,
+})
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

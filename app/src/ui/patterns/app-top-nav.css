@@ -1,15 +1,16 @@
-.flow-step-header {
+.app-top-nav {
   display: grid;
   gap: var(--space-2);
 }
 
-.flow-step-header__row {
+.app-top-nav__row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
 }
 
-.flow-step-header__row > span {
+.app-top-nav__row > span {
   flex: 0 0 auto;
+  min-width: 44px;
 }

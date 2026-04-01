@@ -1,10 +1,30 @@
 import { getAccessToken } from './googleAuth'
+import { isVerboseDevLane } from '../config/buildInfo'
 
 type SendEmailInput = {
   to: string
   subject: string
   body: string
   replyTo?: string
+}
+
+type GmailApiErrorPayload = {
+  error?: {
+    code?: number
+    message?: string
+    status?: string
+    errors?: Array<{
+      message?: string
+      reason?: string
+      domain?: string
+    }>
+  }
+}
+
+type GmailSendError = Error & {
+  status?: number
+  reason?: string
+  detail?: string
 }
 
 function base64UrlEncode(text: string) {
@@ -39,7 +59,37 @@ export async function sendEmail(input: SendEmailInput) {
   })
 
   if (!response.ok) {
-    throw new Error(`Gmail send failed (${response.status}).`)
+    let detail = ''
+    let reason = ''
+
+    try {
+      const payload = (await response.json()) as GmailApiErrorPayload
+      reason = payload.error?.errors?.[0]?.reason ?? payload.error?.status ?? ''
+      detail =
+        payload.error?.message ??
+        payload.error?.errors?.[0]?.message ??
+        ''
+    } catch {
+      try {
+        detail = await response.text()
+      } catch {
+        detail = ''
+      }
+    }
+
+    const trimmedDetail = detail.trim()
+    const trimmedReason = reason.trim()
+    const baseMessage = `Gmail send failed (${response.status})`
+    const isVerboseLane = await isVerboseDevLane()
+    const debugSuffix =
+      isVerboseLane && (trimmedReason || trimmedDetail)
+        ? `: ${trimmedReason || trimmedDetail}${trimmedReason && trimmedDetail ? ` — ${trimmedDetail}` : ''}`
+        : '.'
+    const error = new Error(`${baseMessage}${debugSuffix}`) as GmailSendError
+    error.status = response.status
+    error.reason = trimmedReason || undefined
+    error.detail = trimmedDetail || undefined
+    throw error
   }
 
   return response.json() as Promise<{ id?: string; threadId?: string }>

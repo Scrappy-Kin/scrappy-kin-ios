@@ -5,8 +5,36 @@
   gap: var(--space-2);
   padding: var(--space-3);
   border-radius: var(--radius-1);
-  background: var(--neutral-100);
+  background: var(--surface-translucent);
   border: 1px solid var(--neutral-900-12);
+}
+
+.server-boundary-claim__copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1);
+}
+
+.server-boundary-claim__link {
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0;
+  color: var(--secondary);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-sm);
+  font-weight: var(--font-weight-medium);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.server-boundary-claim__link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+  border-radius: var(--radius-1);
 }
 
 .server-boundary-claim__icon {

@@ -12,6 +12,7 @@ type AppIconButtonProps = {
   size?: IconButtonSize
   tone?: IconButtonTone
   variant?: IconButtonVariant
+  compact?: boolean
   disabled?: boolean
   onClick?: () => void
 }
@@ -39,10 +40,18 @@ export default function AppIconButton({
   size = 'md',
   tone = 'primary',
   variant = 'outline',
+  compact = false,
   disabled = false,
   onClick,
 }: AppIconButtonProps) {
-  const classes = ['app-icon-button', sizeClassMap[size], `app-icon-button--${variant}`].join(' ')
+  const classes = [
+    'app-icon-button',
+    sizeClassMap[size],
+    `app-icon-button--${variant}`,
+    compact ? 'app-icon-button--compact' : null,
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   return (
     <IonButton

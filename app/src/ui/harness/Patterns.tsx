@@ -9,7 +9,7 @@ import ArtifactPanel from '../patterns/ArtifactPanel'
 import InlineTrustClaim from '../patterns/InlineTrustClaim'
 import ReadMoreSheetLink from '../patterns/ReadMoreSheetLink'
 import InspectableArtifact from '../patterns/InspectableArtifact'
-import FlowStepHeader from '../patterns/FlowStepHeader'
+import AppTopNav from '../patterns/AppTopNav'
 import ReviewAssetCard from '../patterns/ReviewAssetCard'
 import ServerBoundaryClaim from '../patterns/ServerBoundaryClaim'
 import './harness.css'
@@ -88,12 +88,12 @@ export default function Patterns() {
           </section>
 
           <section className="app-section">
-            <AppHeading intent="section">FlowStepHeader</AppHeading>
-            <FlowStepHeader
-              current={2}
-              total={6}
+            <AppHeading intent="section">AppTopNav</AppHeading>
+            <AppTopNav
               label="Step 2 of 6"
               onBack={() => {}}
+              progressCurrent={2}
+              progressTotal={6}
             />
           </section>
 

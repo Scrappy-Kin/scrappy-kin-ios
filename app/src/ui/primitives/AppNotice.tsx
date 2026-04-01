@@ -30,9 +30,10 @@ const variantIcon: Record<NoticeVariant, string> = {
 export default function AppNotice({ variant, title, children, actions }: AppNoticeProps) {
   const tone = variantTone[variant]
   const icon = variantIcon[variant]
+  const role = variant === 'error' || variant === 'warning' ? 'alert' : 'status'
 
   return (
-    <section className={`app-notice app-notice--${variant}`}>
+    <section className={`app-notice app-notice--${variant}`} role={role} aria-live={role === 'alert' ? 'assertive' : 'polite'}>
       {title ? (
         <div className="app-notice__title">
           <IonIcon aria-hidden="true" className={`app-notice__icon app-notice__icon--${variant}`} icon={icon} />

@@ -3,6 +3,7 @@ import { add, alertCircle, arrowForward, chevronBack, home, informationCircle } 
 import { useState } from 'react'
 import AppButton from '../primitives/AppButton'
 import AppCard from '../primitives/AppCard'
+import AppChip from '../primitives/AppChip'
 import AppHeading from '../primitives/AppHeading'
 import AppCheckbox from '../primitives/AppCheckbox'
 import AppInput from '../primitives/AppInput'
@@ -87,6 +88,20 @@ export default function Primitives() {
                 <AppButton size="lg" loading>
                   Large (loading)
                 </AppButton>
+              </div>
+            </div>
+          </section>
+
+          <section className="app-section">
+            <div className="t-xs lh-xs w-500 text-secondary uc ls-wide">AppChip</div>
+            <div className="app-stack">
+              <div className="app-inline">
+                <AppChip label="Data Axle" />
+                <AppChip label="Spokeo" />
+              </div>
+              <div className="app-inline">
+                <AppChip label="Gravy Analytics & Venntel" onRemove={() => undefined} />
+                <AppChip label="Seamless.AI" onRemove={() => undefined} />
               </div>
             </div>
           </section>

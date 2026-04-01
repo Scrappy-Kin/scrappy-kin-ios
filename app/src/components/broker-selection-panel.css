@@ -1,0 +1,118 @@
+.broker-selection {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: 24px;
+  border: 1px solid var(--neutral-900-12);
+}
+
+.broker-selection--selected {
+  background: var(--neutral-900);
+  color: var(--neutral-0);
+}
+
+.broker-selection--selected .app-text {
+  color: inherit;
+}
+
+.broker-selection__header,
+.broker-selection__available-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.broker-selection__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.broker-selection__available {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.broker-selection__group {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.broker-selection__group-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.broker-selection__card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  border: 1px solid var(--neutral-900-12);
+  border-radius: var(--radius-2);
+  background: var(--neutral-0);
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  font: inherit;
+  color: var(--neutral-900);
+}
+
+.broker-selection__content {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.broker-selection__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.broker-selection__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(var(--danger-rgb), 0.1);
+  color: var(--danger);
+  font-size: var(--font-size-xs);
+  line-height: 1;
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.broker-selection__add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: rgba(var(--primary-rgb), 0.06);
+  flex-shrink: 0;
+}
+
+.broker-selection__link {
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0;
+  color: var(--secondary);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.broker-selection__link--inverse {
+  color: var(--neutral-0);
+}

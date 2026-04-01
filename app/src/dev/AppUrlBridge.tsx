@@ -24,7 +24,17 @@ function toAppRoute(urlString: string) {
     return null
   }
 
-  const allowedRoots = ['/home', '/flow', '/brokers', '/settings', '/ui-harness', '/capture']
+  const allowedRoots = [
+    '/home',
+    '/flow',
+    '/onboarding',
+    '/brokers',
+    '/gmail',
+    '/review-batch',
+    '/settings',
+    '/ui-harness',
+    '/capture',
+  ]
   if (!allowedRoots.some((root) => route === root || route.startsWith(`${root}/`) || route.startsWith(`${root}?`))) {
     return null
   }

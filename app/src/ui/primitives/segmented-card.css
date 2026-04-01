@@ -1,0 +1,18 @@
+.app-segmented-card {
+  display: grid;
+  border: 1px solid var(--neutral-900-12);
+  border-radius: var(--radius-2);
+  background: var(--surface-translucent);
+  overflow: hidden;
+}
+
+.app-segmented-card__section {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--neutral-900-12);
+}
+
+.app-segmented-card__section:last-child {
+  border-bottom: none;
+}
