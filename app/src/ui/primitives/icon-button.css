@@ -20,9 +20,27 @@
 }
 
 .app-icon-button::part(native) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: var(--button-size);
   height: var(--button-size);
   min-width: var(--button-size);
+  min-height: var(--button-size);
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: var(--radius-round);
+  overflow: hidden;
+}
+
+.app-icon-button--compact::part(native) {
+  min-width: var(--button-size);
+  min-height: var(--button-size);
+}
+
+.app-icon-button:focus-visible::part(native) {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
 }
 
 .app-icon-button--ghost::part(native) {

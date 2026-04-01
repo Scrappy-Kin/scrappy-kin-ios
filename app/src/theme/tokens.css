@@ -12,14 +12,20 @@
   --space-10: 40px;
   --page-padding: var(--space-6);
   --page-padding-top: var(--space-4);
+  --stack-gap-tight: var(--space-2);
+  --stack-gap-default: var(--space-4);
+  --stack-gap-loose: var(--space-6);
+  --screen-gap: var(--space-5);
 
   --radius-1: 10px;
   --radius-2: 16px;
   --radius-round: 999px;
 
   --neutral-0: #fffdfd;
+  --neutral-0-rgb: 255, 253, 253;
   --neutral-50: #fff4f4;
   --neutral-100: #ffe9e9;
+  --neutral-placeholder: #766565;
   --neutral-700: #5b4040;
   --neutral-900: #201818;
   --neutral-900-12: rgba(32, 24, 24, 0.12);
@@ -29,6 +35,9 @@
   --brand-pink-rgb: 255, 192, 192;
   --brand-dark: #462c2c;
   --brand-dark-rgb: 70, 44, 44;
+  --app-background: var(--brand-pink);
+  --app-background-rgb: 255, 192, 192;
+  --surface-translucent: rgba(var(--neutral-0-rgb), 0.34);
 
   --shadow-1: 0 10px 26px rgba(32, 24, 24, 0.08);
 

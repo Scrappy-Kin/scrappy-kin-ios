@@ -35,9 +35,9 @@ export const phaseAInfoSteps: InfoStep[] = [
     title: 'How it works',
     body: [
       'Pick brokers.',
-      'Review the request and fill in only the minimum details needed.',
+      'Review the opt-out email and fill in only the minimum details needed.',
       'Connect Gmail for send-only access.',
-      'Send selected requests and track progress.',
+      'Send selected opt-out emails and track progress.',
     ],
   },
 ]

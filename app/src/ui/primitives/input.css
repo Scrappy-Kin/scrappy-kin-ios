@@ -2,6 +2,7 @@
   display: grid;
   gap: var(--space-2);
   width: 100%;
+  scroll-margin-top: calc(var(--page-padding-top) + 72px);
 }
 
 .app-form-stack {
@@ -10,21 +11,34 @@
 }
 
 .app-input__control {
-  --padding-start: var(--space-3);
-  --padding-end: var(--space-3);
-  --padding-top: var(--space-2);
-  --padding-bottom: var(--space-2);
-  --placeholder-color: var(--secondary);
-  --color: var(--primary);
-  font-size: var(--font-size-md);
-  line-height: var(--line-height-md);
+  display: block;
+  min-height: 52px;
+  padding-block: var(--space-2);
+  padding-inline: var(--space-3);
+  padding-left: var(--space-3);
+  padding-right: var(--space-3);
+  color: var(--primary);
+  font-size: var(--font-size-control);
+  line-height: var(--line-height-control);
   border: 1px solid var(--neutral-900-12);
   border-radius: var(--radius-2);
   background: var(--neutral-50);
   width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  text-indent: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background-clip: padding-box;
 }
 
-.app-input__control.ion-focused {
+.app-input__control::placeholder {
+  color: var(--neutral-placeholder);
+  opacity: 1;
+  padding: 0;
+}
+
+.app-input__control:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 1px var(--primary);
 }
@@ -33,7 +47,27 @@
   border-color: var(--danger);
 }
 
-.app-input--error .app-input__control.ion-focused {
+.app-input--error .app-input__control:focus {
   border-color: var(--danger);
   box-shadow: 0 0 0 1px var(--danger);
+}
+
+textarea.app-input__control {
+  resize: vertical;
+  min-height: 120px;
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+  font-family: inherit;
+  font-weight: inherit;
+}
+
+.app-input__required {
+  color: var(--danger);
+  margin-left: var(--space-1);
+}
+
+.app-input__error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
 }

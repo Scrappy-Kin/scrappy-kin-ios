@@ -13,7 +13,7 @@
   display: grid;
   border: 1px solid var(--neutral-900-12);
   border-radius: var(--radius-2);
-  background: var(--neutral-50);
+  background: var(--surface-translucent);
   overflow: hidden;
 }
 

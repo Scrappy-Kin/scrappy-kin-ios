@@ -9,6 +9,16 @@ function formatReference(referenceId?: string) {
   return referenceId ? `SK-${referenceId.toUpperCase()}` : null
 }
 
+export type DeletionTemplateContent = {
+  intro: string
+  requestBlock: string
+  signOff: string
+}
+
+function normalizeTemplateBlock(text: string) {
+  return text.replace(/\r\n/g, '\n').trim()
+}
+
 export function buildDeletionSubject(referenceId?: string) {
   const formatted = formatReference(referenceId)
   return formatted ? `Personal Data Deletion Request [${formatted}]` : 'Personal Data Deletion Request'
@@ -23,7 +33,17 @@ export function buildDeletionIntro() {
 }
 
 export function buildDeletionLocation(profile: UserProfile) {
-  return `${profile.city}, ${profile.state}${profile.partialZip ? ` ${profile.partialZip}` : ''}`
+  const parts: string[] = []
+  if (profile.city) {
+    parts.push(profile.city)
+  }
+
+  const region = [profile.state, profile.partialZip].filter(Boolean).join(' ')
+  if (region) {
+    parts.push(region)
+  }
+
+  return parts.join(', ')
 }
 
 export function buildDeletionRequestItems() {
@@ -51,19 +71,34 @@ export function buildDeletionVerificationLine() {
   return 'If you need verification, tell me the minimum information specifically required to locate my records.'
 }
 
-export function buildDeletionReferenceLine(referenceId?: string) {
-  const formatted = formatReference(referenceId)
-  return formatted ? `Reference: ${formatted}` : null
-}
-
-export function buildDeletionBody(broker: Broker, profile: UserProfile, referenceId?: string) {
+export function buildDefaultDeletionRequestBlock() {
   const requestItems = buildDeletionRequestItems()
     .map((item, index) => `${index + 1}. ${item}`)
     .join('\n')
   const optOutItems = buildDeletionOptOutItems()
     .map((item) => `- ${item}`)
     .join('\n')
-  const referenceLine = buildDeletionReferenceLine(referenceId)
 
-  return `To ${broker.name} Privacy/Compliance Team,\n\n${buildDeletionIntro()}\n\nIDENTITY FOR LOOKUP:\n- Name: ${profile.fullName}\n- Email: ${profile.email}\n- Location: ${buildDeletionLocation(profile)}\n\nWHAT I'M REQUESTING:\n${requestItems}\n\nI am opting out of any sale or sharing of my personal information. Do not:\n${optOutItems}\n\nRESPONSE:\n${buildDeletionResponseLine()}\n\n${buildDeletionVerificationLine()}${referenceLine ? `\n\n${referenceLine}` : ''}\n\n${profile.fullName}\n`
+  return `${requestItems}\n\nI am opting out of any sale or sharing of my personal information. Do not:\n${optOutItems}\n\nRESPONSE:\n${buildDeletionResponseLine()}\n\n${buildDeletionVerificationLine()}`
+}
+
+export function buildDeletionReferenceLine(referenceId?: string) {
+  const formatted = formatReference(referenceId)
+  return formatted ? `Reference: ${formatted}` : null
+}
+
+export function buildDeletionBody(
+  broker: Broker,
+  profile: UserProfile,
+  referenceId?: string,
+  template?: Partial<DeletionTemplateContent>,
+) {
+  const referenceLine = buildDeletionReferenceLine(referenceId)
+  const intro = normalizeTemplateBlock(template?.intro ?? buildDeletionIntro())
+  const requestBlock = normalizeTemplateBlock(
+    template?.requestBlock ?? buildDefaultDeletionRequestBlock(),
+  )
+  const signOff = normalizeTemplateBlock(template?.signOff ?? profile.fullName)
+
+  return `To ${broker.name} Privacy/Compliance Team,\n\n${intro}\n\nIDENTITY FOR LOOKUP:\n- Name: ${profile.fullName}\n- Email: ${profile.email}\n- Location: ${buildDeletionLocation(profile)}\n\nWHAT I'M REQUESTING:\n${requestBlock}${referenceLine ? `\n\n${referenceLine}` : ''}\n\n${signOff}\n`
 }

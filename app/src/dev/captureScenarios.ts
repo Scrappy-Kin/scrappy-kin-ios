@@ -1,5 +1,6 @@
 import { IS_DEV_BUILD } from '../config/buildInfo'
 import { setSelectedBrokerIds } from '../services/brokerStore'
+import { setTotalSentCount } from '../services/metricsStore'
 import { setEncrypted, wipeAllLocalData } from '../services/secureStore'
 import { setQueue, type QueueItem } from '../services/queueStore'
 import { setUserProfile, type UserProfile } from '../services/userProfile'
@@ -16,13 +17,13 @@ type GmailTokenPayload = {
 
 const CAPTURE_GMAIL_TOKEN_KEY = 'gmail_tokens'
 const seededProfile: UserProfile = {
-  fullName: 'Ada Lovelace',
-  email: 'ada@example.com',
-  city: 'Austin',
+  fullName: 'Your name',
+  email: 'your@email.com',
+  city: 'Your city',
   state: 'TX',
   partialZip: '7870',
 }
-const seededBrokerIds = ['truepeoplesearch-com', 'data-axle-com']
+const seededBrokerIds = ['broker-happy-path', 'broker-needs-retry']
 
 function buildConnectedToken(): GmailTokenPayload {
   return {
@@ -34,18 +35,40 @@ function buildConnectedToken(): GmailTokenPayload {
 function buildQueue(status: QueueItem['status']): QueueItem[] {
   return [
     {
-      brokerId: 'truepeoplesearch-com',
+      brokerId: 'broker-happy-path',
       status,
       referenceId: 'ABC123',
       gmailMessageId: status === 'sent' ? 'gmail-msg-1' : undefined,
       gmailThreadId: status === 'sent' ? 'gmail-thread-1' : undefined,
     },
     {
-      brokerId: 'data-axle-com',
+      brokerId: 'broker-needs-retry',
       status,
       referenceId: 'DEF456',
       gmailMessageId: status === 'sent' ? 'gmail-msg-2' : undefined,
       gmailThreadId: status === 'sent' ? 'gmail-thread-2' : undefined,
+    },
+  ]
+}
+
+function buildRetryPreviewQueue(): QueueItem[] {
+  return [
+    {
+      brokerId: 'broker-happy-path',
+      status: 'failed',
+      referenceId: 'ABC123',
+    },
+    {
+      brokerId: 'broker-needs-retry',
+      status: 'failed',
+      referenceId: 'DEF456',
+    },
+    {
+      brokerId: 'broker-already-sent',
+      status: 'sent',
+      referenceId: 'GHI789',
+      gmailMessageId: 'gmail-msg-3',
+      gmailThreadId: 'gmail-thread-3',
     },
   ]
 }
@@ -63,44 +86,51 @@ async function seedConnectedState() {
 const captureScenarios: Record<string, CaptureScenarioDefinition> = {
   home: { route: '/home' },
   brokers: { route: '/brokers' },
+  'brokers-retry-state': {
+    route: '/brokers?returnTo=%2Fhome',
+    seed: async () => {
+      await setUserProfile(seededProfile)
+      await setSelectedBrokerIds(['broker-happy-path'])
+      await setQueue(buildRetryPreviewQueue())
+      await setTotalSentCount(1)
+    },
+  },
   settings: {
     route: '/settings',
     seed: async () => {
       await setUserProfile(seededProfile)
     },
   },
-  'flow-intro': { route: '/flow?step=intro' },
+  'flow-intro': { route: '/onboarding/intro' },
   'flow-brokers': {
-    route: '/flow?step=brokers',
+    route: '/onboarding/brokers',
     seed: async () => {
       await setSelectedBrokerIds([])
     },
   },
   'flow-request-review': {
-    route: '/flow?step=request-review',
+    route: '/onboarding/request-review',
     seed: seedProfileAndBrokers,
   },
   'flow-gmail-send': {
-    route: '/flow?step=gmail-send',
+    route: '/onboarding/gmail-send',
     seed: seedProfileAndBrokers,
   },
   'flow-final-review': {
-    route: '/flow?step=final-review',
+    route: '/onboarding/final-review',
     seed: seedConnectedState,
-  },
-  'home-ready-to-send': {
-    route: '/home',
-    seed: async () => {
-      await seedConnectedState()
-      await setQueue(buildQueue('pending'))
-    },
   },
   'home-after-send': {
     route: '/home',
     seed: async () => {
       await seedConnectedState()
       await setQueue(buildQueue('sent'))
+      await setTotalSentCount(seededBrokerIds.length)
     },
+  },
+  'review-batch': {
+    route: '/review-batch?returnTo=%2Fhome',
+    seed: seedConnectedState,
   },
 }
 

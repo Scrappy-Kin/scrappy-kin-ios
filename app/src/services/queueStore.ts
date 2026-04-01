@@ -8,6 +8,8 @@ export type QueueItem = {
   referenceId: string
   lastAttemptAt?: string
   errorCode?: string
+  errorStatus?: number
+  errorDetail?: string
   gmailMessageId?: string
   gmailThreadId?: string
 }
@@ -68,6 +70,8 @@ export async function resetFailedToPending() {
           ...entry,
           status: 'pending' as QueueStatus,
           errorCode: undefined,
+          errorStatus: undefined,
+          errorDetail: undefined,
           gmailMessageId: undefined,
           gmailThreadId: undefined,
         }

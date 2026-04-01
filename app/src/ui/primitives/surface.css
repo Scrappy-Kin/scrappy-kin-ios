@@ -13,7 +13,7 @@
 }
 
 .app-card {
-  background: var(--neutral-50);
+  background: var(--surface-translucent);
   border: 1px solid var(--neutral-900-12);
   border-radius: var(--radius-2);
   padding: var(--space-4);

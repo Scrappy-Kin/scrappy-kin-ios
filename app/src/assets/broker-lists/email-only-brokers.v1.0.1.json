@@ -10,7 +10,7 @@
   },
   {
     "id": "data-axle-com",
-    "name": "Data Axle, Inc. f/k/a Infogroup Inc.",
+    "name": "Data Axle",
     "domain": "data-axle.com",
     "contactEmail": "privacyteam@data-axle.com",
     "tier": "mega",
@@ -19,7 +19,7 @@
   },
   {
     "id": "gravyanalytics-com",
-    "name": "Gravy Analytics, Inc.",
+    "name": "Gravy Analytics & Venntel",
     "domain": "gravyanalytics.com",
     "contactEmail": "privacy@gravyanalytics.com",
     "tier": "mega",
@@ -40,7 +40,7 @@
   },
   {
     "id": "stirista-com",
-    "name": "Stirista, LLC",
+    "name": "Stirista",
     "domain": "stirista.com",
     "contactEmail": "privacyinfo@stirista.com",
     "tier": "medium",
@@ -67,7 +67,7 @@
   },
   {
     "id": "careerbuilder-com",
-    "name": "CareerBuilder, LLC",
+    "name": "CareerBuilder",
     "domain": "careerbuilder.com",
     "contactEmail": "info@careerbuilder.com",
     "tier": "small",
@@ -94,7 +94,7 @@
   },
   {
     "id": "giantpartners-com",
-    "name": "Giant Partners, Inc ",
+    "name": "Giant Partners",
     "domain": "giantpartners.com",
     "contactEmail": "compliance@giantpartners.com",
     "tier": "small",
@@ -112,7 +112,7 @@
   },
   {
     "id": "inmarket-com",
-    "name": "InMarket Media LLC",
+    "name": "InMarket Media",
     "domain": "inmarket.com",
     "contactEmail": "privacy@inmarket.com",
     "tier": "small",
@@ -121,7 +121,7 @@
   },
   {
     "id": "intentiq-com",
-    "name": "Intent IQ LLC",
+    "name": "Intent IQ",
     "domain": "intentiq.com",
     "contactEmail": "privacy@intentiq.com",
     "tier": "small",
@@ -130,7 +130,7 @@
   },
   {
     "id": "seamlessleads-com",
-    "name": "Seamless Contacts, Inc. d/b/a Seamless.AI or Seamless AI",
+    "name": "Seamless.AI",
     "domain": "seamlessleads.com",
     "contactEmail": "privacy@seamlessleads.com",
     "tier": "small",
