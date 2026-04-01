@@ -32,9 +32,9 @@ You can test on the iOS simulator without TestFlight:
 
 ```bash
 cd app
-npm run build
+npm install
 npx cap add ios
-npx cap sync ios
+npm run ios:sync:dev
 npx cap open ios
 ```
 

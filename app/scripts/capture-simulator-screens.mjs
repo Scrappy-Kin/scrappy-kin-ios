@@ -41,8 +41,7 @@ const captures = [
     scenario: 'flow-final-review',
     file: path.join(productOutputDir, '08-flow-step-5-final-review.png'),
   },
-  { scenario: 'home-ready-to-send', file: path.join(productOutputDir, '09-home-ready-to-send.png') },
-  { scenario: 'home-after-send', file: path.join(productOutputDir, '10-home-after-send.png') },
+  { scenario: 'home-after-send', file: path.join(productOutputDir, '09-home-after-send.png') },
   { route: 'ui-harness/primitives', file: path.join(harnessOutputDir, 'primitives.png') },
   { route: 'ui-harness/patterns', file: path.join(harnessOutputDir, 'patterns.png') },
 ]
