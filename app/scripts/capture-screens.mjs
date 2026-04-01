@@ -25,9 +25,9 @@ const pages = [
 ]
 
 const seededProfile = {
-  fullName: 'Ada Lovelace',
-  email: 'ada@example.com',
-  city: 'Austin',
+  fullName: 'Your name',
+  email: 'your@email.com',
+  city: 'Your city',
   state: 'TX',
   partialZip: '7870',
 }
@@ -194,9 +194,6 @@ async function main() {
     await openFlowStep(page, 4)
     await captureFlowStep(page, '08-flow-step-5-final-review.png', summaries)
 
-    await page.goto(`${baseUrl}/home`, { waitUntil: 'networkidle' })
-    await captureCurrentPage(page, '09-home-ready-to-send.png', summaries)
-
     await mockSuccessfulGmailSend(page)
     await page.getByRole('button', { name: 'Send selected requests' }).click()
     await page.waitForURL(`${baseUrl}/home`)
@@ -210,7 +207,7 @@ async function main() {
         expectedButton: 'Send selected requests',
       },
     )
-    await captureCurrentPage(page, '10-home-after-send.png', summaries)
+    await captureCurrentPage(page, '09-home-after-send.png', summaries)
 
     const manifestPath = path.join(outputDir, 'manifest.json')
     await fs.writeFile(manifestPath, JSON.stringify({ baseUrl, outputDir, captures: summaries }, null, 2))

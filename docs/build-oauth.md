@@ -9,12 +9,14 @@ This app uses build-time configuration for OAuth. There are **no runtime switche
 - Display name: `Scrappy Kin`
 - Google project: `scrappy-kin`
 - Google client ID: `304151210577-2hvg4113nd77cn8om3kppubqju7eu3sj.apps.googleusercontent.com`
+- Broker catalog: real curated broker list
 
 **DEV**
 - Bundle ID: `com.scrappykin.ios.dev`
 - Display name: `Scrappy Dev`
 - Google project: `Scrappy-Kin-Dev`
 - Google client ID: `914858229260-ns59pecm40udl9fi18ugrb1njlqie0m1.apps.googleusercontent.com`
+- Broker catalog: deterministic fixture brokers only
 
 Set the DEV client ID in:
 - `app/.env.development` (`VITE_GOOGLE_CLIENT_ID=...`)
@@ -29,17 +31,40 @@ Token/keychain storage is isolated per bundle ID (no shared keychain group).
 
 ## Build selection (required)
 
-Use the correct build mode so the compiled client ID matches the target environment.
+Use the correct build-and-sync pair so the compiled client ID matches the target environment and the native app actually picks up the matching bundle.
 
-- Dev build (uses `.env.development`)
-  - `npm run build:dev`
-- Prod build (uses `.env.production`)
-  - `npm run build:prod`
+- Xcode scheme pairing:
+  - `Scrappy Kin Dev` scheme must be paired with `npm run ios:sync:dev`
+  - `Scrappy Kin Prod` scheme must be paired with `npm run ios:sync:prod`
+  - Do not mix a dev scheme with a prod web bundle, or a prod scheme with a dev web bundle.
 
-After building:
-```
-npx cap sync ios
-```
+Canonical local runbook:
+- Dev lane
+  - select Xcode scheme `Scrappy Kin Dev`
+  - run `npm run ios:sync:dev`
+  - expect the 5 neutral fixture brokers:
+    - `Fixture Broker One`
+    - `Fixture Broker Two`
+    - `Fixture Broker Three`
+    - `Very Long Broker Name For Layout Testing`
+    - `Fixture Broker Four`
+  - fixture emails use `testbot+broker-fixture_...@scrappykin.com` plus `testbot+broker-long_name@scrappykin.com`
+- Prod lane
+  - select Xcode scheme `Scrappy Kin Prod`
+  - run `npm run ios:sync:prod`
+  - expect the real curated broker list
+
+## Route model (required for debugging)
+
+- `onboarding/*` is the first-run setup wizard.
+- App-mode work does **not** re-enter onboarding routes.
+- Use app-mode pages for post-onboarding tasks:
+  - `/home`
+  - `/brokers`
+  - `/gmail`
+  - `/review-batch`
+  - `/sent-emails`
+- If a Home or Settings action lands in onboarding, treat that as a routing bug, not expected behavior.
 
 ## iOS config mapping
 

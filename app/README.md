@@ -13,8 +13,7 @@ npm run dev
 
 ```bash
 npx cap add ios
-npm run build:dev # or npm run build:prod
-npx cap sync ios
+npm run ios:sync:dev # or npm run ios:sync:prod
 ```
 
 ## OAuth redirect scheme

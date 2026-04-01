@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "node scripts/require-explicit-build-mode.mjs",
     "build:dev": "tsc -b && vite build --mode development",
     "build:prod": "tsc -b && vite build --mode production",
+    "ios:sync:dev": "npm run build:dev && npx cap sync ios",
+    "ios:sync:prod": "npm run build:prod && npx cap sync ios",
     "capture:screens": "node scripts/capture-screens.mjs",
     "capture:screens:simulator": "node scripts/capture-simulator-screens.mjs",
     "lint": "eslint .",
