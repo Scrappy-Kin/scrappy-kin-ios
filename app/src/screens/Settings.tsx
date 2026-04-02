@@ -4,7 +4,7 @@ import { Directory, Encoding, Filesystem } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Redirect, useHistory, useLocation } from 'react-router-dom'
-import { BUILD_MODE, BUILD_SHA, BUILD_TIME, IS_DEV_BUILD } from '../config/buildInfo'
+import { BUILD_MODE, BUILD_SHA, BUILD_TIME, isDevAppLane } from '../config/buildInfo'
 import {
   buildSettingsHref,
   buildTemplateHref,
@@ -85,6 +85,7 @@ export default function Settings() {
   const [logOptInExpiresAt, setLogOptInExpiresAt] = useState('')
   const [nowTs, setNowTs] = useState(() => Date.now())
   const [devLogOptIn, setDevLogOptInState] = useState(false)
+  const [showInternalTools, setShowInternalTools] = useState(false)
   const [gmailConnected, setGmailConnected] = useState(false)
   const [profileDraft, setProfileDraft] = useState<UserProfile>(emptyProfile)
   const [profileSaved, setProfileSaved] = useState(false)
@@ -100,8 +101,12 @@ export default function Settings() {
     await refreshLogOptIn()
     const gmail = await getGmailStatus()
     setGmailConnected(gmail.connected)
-    if (IS_DEV_BUILD) {
+    const devLane = await isDevAppLane()
+    setShowInternalTools(devLane)
+    if (devLane) {
       setDevLogOptInState(await getDevLogOptIn())
+    } else {
+      setDevLogOptInState(false)
     }
     const profile = await getUserProfile()
     if (profile) {
@@ -319,7 +324,7 @@ export default function Settings() {
           />
           <AppListRow
             title="Support contact and build info"
-            description="Support contact and build information."
+            description="Get support contact details and inspect the current build."
             onClick={() => openView('about')}
           />
         </AppList>
@@ -436,7 +441,7 @@ export default function Settings() {
           These notes never send automatically. Share them only if you want troubleshooting help.
         </AppText>
 
-        {IS_DEV_BUILD ? (
+        {showInternalTools ? (
           <section className="internal-tools-panel">
             <AppHeading intent="section">Internal only</AppHeading>
             <AppText intent="supporting">
