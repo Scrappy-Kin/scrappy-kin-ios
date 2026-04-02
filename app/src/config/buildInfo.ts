@@ -6,6 +6,7 @@ const DEV_APP_ID = 'com.scrappykin.ios.dev'
 export const BUILD_SHA = typeof __BUILD_SHA__ === 'string' ? __BUILD_SHA__ : 'unknown'
 export const BUILD_TIME = typeof __BUILD_TIME__ === 'string' ? __BUILD_TIME__ : 'unknown'
 export const BUILD_MODE = typeof __BUILD_MODE__ === 'string' ? __BUILD_MODE__ : 'unknown'
+// Web-only fallback for browser preview/runtime checks. Native prod/dev authority comes from App.getInfo().
 export const IS_DEV_BUILD = BUILD_MODE !== 'production'
 
 export async function isDevAppLane() {
