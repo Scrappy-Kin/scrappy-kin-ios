@@ -27,7 +27,7 @@ const seededBrokerIds = ['broker-happy-path', 'broker-needs-retry']
 
 function buildConnectedToken(): GmailTokenPayload {
   return {
-    accessToken: 'capture-access-token',
+    accessToken: 'FIXTURE_CAPTURE_ONLY__NOT_A_REAL_TOKEN',
     expiresAt: Date.now() + 60 * 60 * 1000,
   }
 }

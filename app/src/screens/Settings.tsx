@@ -2,7 +2,7 @@ import { IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
 import { Browser } from '@capacitor/browser'
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Redirect, useHistory, useLocation } from 'react-router-dom'
 import { BUILD_MODE, BUILD_SHA, BUILD_TIME, isDevAppLane } from '../config/buildInfo'
 import {
@@ -59,6 +59,10 @@ const emptyProfile: UserProfile = {
 }
 
 const GMAIL_PERMISSION_HELP_URL = 'https://scrappykin.com/help/gmail-permission/'
+const DEV_BUNDLE_ENABLED = import.meta.env.DEV
+const DevDiagnosticsPanel = DEV_BUNDLE_ENABLED
+  ? lazy(() => import('../dev/DevDiagnosticsPanel'))
+  : null
 
 function getSettingsView(search: string): SettingsView {
   const view = new URLSearchParams(search).get('view')
@@ -95,6 +99,18 @@ export default function Settings() {
     const status = await getLogOptInStatus()
     setOptIn(status.enabled)
     setLogOptInExpiresAt(status.expiresAt)
+  }
+
+  function renderDevDiagnosticsPanel() {
+    if (!DevDiagnosticsPanel) return null
+    return (
+      <Suspense fallback={null}>
+        <DevDiagnosticsPanel
+          devLogOptIn={devLogOptIn}
+          onChange={handleToggleDevLogs}
+        />
+      </Suspense>
+    )
   }
 
   async function refreshState() {
@@ -441,20 +457,7 @@ export default function Settings() {
           These notes never send automatically. Share them only if you want troubleshooting help.
         </AppText>
 
-        {showInternalTools ? (
-          <section className="internal-tools-panel">
-            <AppHeading intent="section">Internal only</AppHeading>
-            <AppText intent="supporting">
-              Debug-only controls for local testing. Not part of the user-facing product.
-            </AppText>
-            <AppToggle
-              label="Enable dev diagnostics"
-              description="Only available in Debug builds. Data stays on-device."
-              checked={devLogOptIn}
-              onChange={handleToggleDevLogs}
-            />
-          </section>
-        ) : null}
+        {showInternalTools ? renderDevDiagnosticsPanel() : null}
       </section>
     )
   }

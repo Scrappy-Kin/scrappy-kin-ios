@@ -6,6 +6,7 @@ import {
 } from '@ionic/react'
 import { IonReactRouter } from '@ionic/react-router'
 import { Redirect, Route } from 'react-router-dom'
+import { lazy, Suspense, useEffect, useState, type ComponentType } from 'react'
 import Brokers from './screens/Brokers'
 import Flow from './screens/Flow'
 import Gmail from './screens/Gmail'
@@ -15,16 +16,8 @@ import SentEmails from './screens/SentEmails'
 import Settings from './screens/Settings'
 import TemplateEditor from './screens/TemplateEditor'
 import { useOnlineStatus } from './state/useOnlineStatus'
-import { useEffect, useState } from 'react'
 import { clearStaleOAuthState, getGmailStatus } from './services/googleAuth'
-import HarnessHome from './ui/harness/HarnessHome'
-import ReviewBoard from './ui/harness/ReviewBoard'
-import Patterns from './ui/harness/Patterns'
-import Primitives from './ui/harness/Primitives'
-import Tokens from './ui/harness/Tokens'
 import { isDevAppLane } from './config/buildInfo'
-import AppUrlBridge from './dev/AppUrlBridge'
-import CaptureScenarioRoute from './dev/CaptureScenarioRoute'
 import {
   FLOW_STEP_IDS,
   getSavedFlowStep,
@@ -37,6 +30,17 @@ import { getTotalSentCount } from './services/metricsStore'
 import { getQueue, summarizeQueue } from './services/queueStore'
 import { getUserProfile } from './services/userProfile'
 import { buildOnboardingHref, readSuccessTo } from './services/navigation'
+
+const DEV_BUNDLE_ENABLED = import.meta.env.DEV
+const DevHarnessHome = DEV_BUNDLE_ENABLED ? lazy(() => import('./ui/harness/HarnessHome')) : null
+const DevReviewBoard = DEV_BUNDLE_ENABLED ? lazy(() => import('./ui/harness/ReviewBoard')) : null
+const DevPatterns = DEV_BUNDLE_ENABLED ? lazy(() => import('./ui/harness/Patterns')) : null
+const DevPrimitives = DEV_BUNDLE_ENABLED ? lazy(() => import('./ui/harness/Primitives')) : null
+const DevTokens = DEV_BUNDLE_ENABLED ? lazy(() => import('./ui/harness/Tokens')) : null
+const DevAppUrlBridge = DEV_BUNDLE_ENABLED ? lazy(() => import('./dev/AppUrlBridge')) : null
+const DevCaptureScenarioRoute = DEV_BUNDLE_ENABLED
+  ? lazy(() => import('./dev/CaptureScenarioRoute'))
+  : null
 
 function OfflineShell() {
   return (
@@ -138,6 +142,18 @@ function FallbackRedirect() {
   return <Redirect to="/home" />
 }
 
+function renderLazyDevComponent<T extends Record<string, unknown>>(
+  Component: ComponentType<T> | null,
+  props?: T,
+) {
+  if (!Component) return null
+  return (
+    <Suspense fallback={null}>
+      <Component {...(props ?? ({} as T))} />
+    </Suspense>
+  )
+}
+
 export default function App() {
   return (
     <IonApp>
@@ -170,33 +186,44 @@ function AppShell() {
   }, [])
 
   const isOnline = useOnlineStatus()
+  const showDevTools = DEV_BUNDLE_ENABLED && showDevLaneUi
 
-  const devRoutes = showDevLaneUi
+  const devRoutes = showDevTools
     ? [
-        <Route exact path="/ui-harness" component={HarnessHome} key="ui-harness" />,
+        <Route
+          exact
+          path="/ui-harness"
+          render={() => renderLazyDevComponent(DevHarnessHome)}
+          key="ui-harness"
+        />,
         <Route
           exact
           path="/ui-harness/review-board"
-          component={ReviewBoard}
+          render={() => renderLazyDevComponent(DevReviewBoard)}
           key="ui-harness-review-board"
         />,
-        <Route exact path="/ui-harness/tokens" component={Tokens} key="ui-harness-tokens" />,
+        <Route
+          exact
+          path="/ui-harness/tokens"
+          render={() => renderLazyDevComponent(DevTokens)}
+          key="ui-harness-tokens"
+        />,
         <Route
           exact
           path="/ui-harness/primitives"
-          component={Primitives}
+          render={() => renderLazyDevComponent(DevPrimitives)}
           key="ui-harness-primitives"
         />,
         <Route
           exact
           path="/ui-harness/patterns"
-          component={Patterns}
+          render={() => renderLazyDevComponent(DevPatterns)}
           key="ui-harness-patterns"
         />,
         <Route
           exact
           path="/capture/:scenario"
-          component={CaptureScenarioRoute}
+          render={() => renderLazyDevComponent(DevCaptureScenarioRoute)}
           key="capture-scenario"
         />,
       ]
@@ -204,13 +231,13 @@ function AppShell() {
 
   return (
     <>
-      {showDevLaneUi ? (
+      {showDevTools ? (
         <div className="dev-lane-badge" aria-hidden="true">
           <span className="dev-lane-badge__dot" />
           <span className="dev-lane-badge__label">DEV</span>
         </div>
       ) : null}
-      {showDevLaneUi ? <AppUrlBridge /> : null}
+      {showDevTools ? renderLazyDevComponent(DevAppUrlBridge) : null}
       <IonRouterOutlet>
         <Route exact path="/" component={EntryGate} />
         <Route exact path="/home" component={RoutedHome} />
