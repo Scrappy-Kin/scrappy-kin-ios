@@ -1,4 +1,5 @@
 import { IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
+import { Browser } from '@capacitor/browser'
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
@@ -56,6 +57,8 @@ const emptyProfile: UserProfile = {
   state: '',
   partialZip: '',
 }
+
+const GMAIL_PERMISSION_HELP_URL = 'https://scrappykin.com/help/gmail-permission/'
 
 function getSettingsView(search: string): SettingsView {
   const view = new URLSearchParams(search).get('view')
@@ -455,6 +458,11 @@ export default function Settings() {
     return (
       <section className="app-section-shell">
         <AppList header="Support">
+          <AppListRow
+            title="How Scrappy Kin uses Gmail permission"
+            description="Open the plain-language help article."
+            onClick={() => Browser.open({ url: GMAIL_PERMISSION_HELP_URL })}
+          />
           <AppListRow
             title="Support email"
             right={<AppText intent="caption">support@scrappykin.com</AppText>}
