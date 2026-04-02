@@ -17,7 +17,7 @@ export async function isDevAppLane() {
     const { id } = await App.getInfo()
     return id === DEV_APP_ID
   } catch {
-    return IS_DEV_BUILD
+    return false
   }
 }
 

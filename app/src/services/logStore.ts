@@ -1,4 +1,5 @@
 import { LOG_LIMIT } from '../config/constants'
+import { isVerboseDevLane } from '../config/buildInfo'
 import { getEncrypted, setEncrypted } from './secureStore'
 import { sanitizeLogEvent } from './logSchema'
 
@@ -6,7 +7,6 @@ const LOGS_KEY = 'diagnostic_logs'
 const LOG_OPT_IN_KEY = 'diagnostic_opt_in'
 const LOG_OPT_IN_EXPIRES_KEY = 'diagnostic_opt_in_expires_at'
 const DEV_LOG_OPT_IN_KEY = 'diagnostic_dev_opt_in'
-const isDevBuild = import.meta.env.DEV
 const OPT_IN_DURATION_MS = 15 * 60 * 1000
 export type LogEvent = {
   timestamp: string
@@ -52,19 +52,28 @@ export async function getLogOptInStatus() {
 }
 
 export async function getDevLogOptIn() {
+  const verboseDevLane = await isVerboseDevLane()
+  if (!verboseDevLane) {
+    await setEncrypted(DEV_LOG_OPT_IN_KEY, false)
+    return false
+  }
   const stored = await getEncrypted<boolean>(DEV_LOG_OPT_IN_KEY)
   return stored ?? false
 }
 
 export async function setDevLogOptIn(enabled: boolean) {
-  if (!isDevBuild) return
+  const verboseDevLane = await isVerboseDevLane()
+  if (!verboseDevLane) {
+    await setEncrypted(DEV_LOG_OPT_IN_KEY, false)
+    return
+  }
   await setEncrypted(DEV_LOG_OPT_IN_KEY, enabled)
 }
 
 export async function logEvent(event: string, details: Partial<LogEvent> = {}) {
   const optInStatus = await getLogOptInStatus()
   const optIn = optInStatus.enabled
-  const devOptIn = isDevBuild ? await getDevLogOptIn() : false
+  const devOptIn = await getDevLogOptIn()
   if (!optIn && !devOptIn) return
   const sanitized = sanitizeLogEvent(event, {
     status: details.status,

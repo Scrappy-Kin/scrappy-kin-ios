@@ -22,7 +22,7 @@ import ReviewBoard from './ui/harness/ReviewBoard'
 import Patterns from './ui/harness/Patterns'
 import Primitives from './ui/harness/Primitives'
 import Tokens from './ui/harness/Tokens'
-import { IS_DEV_BUILD, isDevAppLane } from './config/buildInfo'
+import { isDevAppLane } from './config/buildInfo'
 import AppUrlBridge from './dev/AppUrlBridge'
 import CaptureScenarioRoute from './dev/CaptureScenarioRoute'
 import {
@@ -149,7 +149,7 @@ export default function App() {
 }
 
 function AppShell() {
-  const [showDevBadge, setShowDevBadge] = useState(false)
+  const [showDevLaneUi, setShowDevLaneUi] = useState(false)
 
   useEffect(() => {
     clearStaleOAuthState().catch(() => undefined)
@@ -160,7 +160,7 @@ function AppShell() {
 
     isDevAppLane().then((visible) => {
       if (!cancelled) {
-        setShowDevBadge(visible)
+        setShowDevLaneUi(visible)
       }
     })
 
@@ -171,7 +171,7 @@ function AppShell() {
 
   const isOnline = useOnlineStatus()
 
-  const devRoutes = IS_DEV_BUILD
+  const devRoutes = showDevLaneUi
     ? [
         <Route exact path="/ui-harness" component={HarnessHome} key="ui-harness" />,
         <Route
@@ -204,13 +204,13 @@ function AppShell() {
 
   return (
     <>
-      {showDevBadge ? (
+      {showDevLaneUi ? (
         <div className="dev-lane-badge" aria-hidden="true">
           <span className="dev-lane-badge__dot" />
           <span className="dev-lane-badge__label">DEV</span>
         </div>
       ) : null}
-      {IS_DEV_BUILD ? <AppUrlBridge /> : null}
+      {showDevLaneUi ? <AppUrlBridge /> : null}
       <IonRouterOutlet>
         <Route exact path="/" component={EntryGate} />
         <Route exact path="/home" component={RoutedHome} />
