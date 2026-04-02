@@ -1,15 +1,22 @@
 # Scrappy Kin iOS
 
-Scrappy Kin is an iOS app that helps you protect your privacy. In particular it helps you send opt-out requests to data brokers from your own Gmail account. The app keeps data on-device (never our servers) and uses Gmail only to send the emails you initiate. No analytics or tracking SDKs anywhere. This code is public so you dont have to take our word for it.
+Scrappy Kin is an iOS app for preparing and sending data-broker opt-out emails from your own Gmail account.
 
-Tip: if you're not a developer, generate the local audit prompt with:
+Current product surface:
+- requests only the Google `gmail.send` scope
+- does not read your inbox or manage your mailbox
+- stores the Gmail token locally on your device
+- keeps Gmail content off Scrappy Kin servers
+- lets you review the message batch before you send it
+- sends only after you choose brokers and start the batch yourself
+- includes no analytics SDKs, no third-party tracking tools, and no automatic crash reporting
+- keeps optional diagnostics local unless you manually export and share them
 
-```bash
-cd app
-npm run audit:manifest
-```
-
-That writes `AUDIT_PROMPT.md` in the repo root for local review. It is intentionally not tracked in git.
+Links:
+- Website: [scrappykin.com](https://scrappykin.com)
+- Help: [How Scrappy Kin uses Gmail permission](https://scrappykin.com/help/gmail-permission/)
+- Privacy Policy: [scrappykin.com/privacy.html](https://scrappykin.com/privacy.html)
+- Terms: [scrappykin.com/tos.html](https://scrappykin.com/tos.html)
 
 ## Structure
 - `app/` - React + TypeScript UI (Capacitor host)
@@ -17,6 +24,17 @@ That writes `AUDIT_PROMPT.md` in the repo root for local review. It is intention
 - `docs/build-oauth.md` - build-time OAuth and environment contract
 
 Local mayor workflow files (`THREAD_A_STATE.md`, `workstreams/`, `work-orders/`, `deliverables/`, `.agents/`, `.claude/`) are intentionally kept in the repo working tree but out of git.
+
+## Auditing the code
+
+If you want a local plain-language review prompt for the main trust surfaces, generate the audit manifest with:
+
+```bash
+cd app
+npm run audit:manifest
+```
+
+That writes `AUDIT_PROMPT.md` in the repo root for local review. It is intentionally not tracked in git.
 
 ## Licensing & Governance
 
