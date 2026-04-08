@@ -3,9 +3,6 @@ import {
   checkmarkCircle,
   closeCircle,
   createOutline,
-  mailOutline,
-  personCircleOutline,
-  shieldCheckmarkOutline,
 } from 'ionicons/icons'
 import { useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
@@ -414,46 +411,44 @@ export default function Flow({ stepId }: FlowProps) {
 
   const steps: Record<FlowStepId, StepConfig> = {
     intro: {
-      title: 'Your data, your choice.',
+      title: 'Take back your privacy, on your terms',
       render: () => (
         <div className="flow-stack">
-          <AppText intent="body" emphasis>
-            Data brokers collect and resell your personal data without your permission. State
-            privacy laws and broker opt-out rules give you ways to tell them to stop. Let&apos;s
-            claw back your privacy together.
+          <AppText intent="body">
+            Scrappy Kin helps you send opt-out emails to data brokers from your own Gmail account.
           </AppText>
           <div className="flow-intro-points">
             <div className="flow-intro-points__item">
-              <AppIcon icon={shieldCheckmarkOutline} size="md" tone="primary" />
               <div className="app-stack app-stack--tight">
                 <AppText intent="body" emphasis>
-                  We keep the broker list small and verified.
+                  What data brokers are
                 </AppText>
-                <AppText intent="supporting">
-                  We vet brokers and focus on the ones with straightforward email opt-out paths.
+                <AppText intent="body">
+                  Data brokers are companies that collect, package, and sell people&apos;s personal
+                  information.
                 </AppText>
               </div>
             </div>
             <div className="flow-intro-points__item">
-              <AppIcon icon={personCircleOutline} size="md" tone="primary" />
               <div className="app-stack app-stack--tight">
                 <AppText intent="body" emphasis>
-                  You fill in only the minimum details brokers usually need.
+                  How Scrappy Kin works
                 </AppText>
-                <AppText intent="supporting">
-                  You review the opt-out email before sending and can edit your details any time.
+                <AppText intent="body">
+                  You&apos;ll choose which data brokers to contact from a curated list, review the
+                  opt-out emails, and approve them before anything is sent.
                 </AppText>
               </div>
             </div>
             <div className="flow-intro-points__item">
-              <AppIcon icon={mailOutline} size="md" tone="primary" />
               <div className="app-stack app-stack--tight">
                 <AppText intent="body" emphasis>
-                  You approve each batch, and the emails go out from your own Gmail account.
+                  How Gmail permission works
                 </AppText>
-                <AppText intent="supporting">
-                  Your opt-out emails never touch our servers. The app can send from your Gmail,
-                  but it cannot read your inbox.
+                <AppText intent="body">
+                  Scrappy Kin sends from your Gmail so you stay in control. We only ask for
+                  permission to send emails, and you approve every email before it&apos;s sent. By
+                  design, we cannot read your inbox or manage your mailbox.
                 </AppText>
               </div>
             </div>
@@ -794,6 +789,7 @@ export default function Flow({ stepId }: FlowProps) {
             backDisabled={!previousStep}
             progressCurrent={currentIndex + 1}
             progressTotal={stepIds.length}
+            sticky
           />
           <AppHeading intent="section">{step.title}</AppHeading>
           {step.render()}
