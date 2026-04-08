@@ -12,6 +12,7 @@ type AppTopNavProps = {
   action?: ReactNode
   progressCurrent?: number
   progressTotal?: number
+  sticky?: boolean
 }
 
 export default function AppTopNav({
@@ -22,6 +23,7 @@ export default function AppTopNav({
   action,
   progressCurrent,
   progressTotal,
+  sticky = false,
 }: AppTopNavProps) {
   const showBack = Boolean(onBack || backHref || backDisabled)
   const showProgress =
@@ -30,7 +32,7 @@ export default function AppTopNav({
     progressTotal > 0
 
   return (
-    <div className="app-top-nav">
+    <div className={`app-top-nav${sticky ? ' app-top-nav--sticky' : ''}`}>
       <div className="app-top-nav__row">
         {showBack ? (
           <BackNavigationButton

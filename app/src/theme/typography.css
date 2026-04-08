@@ -7,22 +7,24 @@
 
   --font-size-xs: 12px;
   --font-size-sm: 14px;
-  --font-size-md: 14px;
+  --font-size-md: 16px;
   --font-size-lg: 18px;
   --font-size-xl: 22px;
   --font-size-subheading: 21px;
   --font-size-2xl: 28px;
   --font-size-3xl: 34px;
+  --font-size-display: clamp(96px, 26vw, 180px);
   --font-size-control: 16px;
 
   --line-height-xs: 16px;
   --line-height-sm: 20px;
-  --line-height-md: 20px;
+  --line-height-md: 24px;
   --line-height-lg: 26px;
   --line-height-xl: 28px;
   --line-height-subheading: 26px;
   --line-height-2xl: 34px;
   --line-height-3xl: 40px;
+  --line-height-display: 0.9;
   --line-height-control: 24px;
 
   --letter-spacing-tight: -0.01em;
@@ -38,6 +40,10 @@ body {
 
 .t-3xl {
   font-size: var(--font-size-3xl);
+}
+
+.t-display {
+  font-size: var(--font-size-display);
 }
 
 .t-2xl {
@@ -70,6 +76,10 @@ body {
 
 .lh-3xl {
   line-height: var(--line-height-3xl);
+}
+
+.lh-display {
+  line-height: var(--line-height-display);
 }
 
 .lh-2xl {
