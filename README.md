@@ -7,6 +7,7 @@ Current product surface:
 - does not read your inbox or manage your mailbox
 - stores the Gmail token locally on your device
 - keeps Gmail content off Scrappy Kin servers
+- protects local app data using your device’s built-in secure storage and encryption
 - lets you review the message batch before you send it
 - sends only after you choose brokers and start the batch yourself
 - includes no analytics SDKs, no third-party tracking tools, and no automatic crash reporting
