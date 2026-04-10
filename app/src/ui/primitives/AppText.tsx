@@ -17,7 +17,7 @@ const intentClassMap: Record<TextIntent, string> = {
   body: 't-base lh-md w-400 text-primary',
   supporting: 't-base lh-md w-400 text-secondary',
   caption: 't-sm lh-sm w-400 text-secondary',
-  label: 't-sm lh-sm w-500 text-secondary uc ls-wide',
+  label: 't-sm lh-sm w-600 text-secondary uc ls-wide',
 }
 
 export default function AppText({

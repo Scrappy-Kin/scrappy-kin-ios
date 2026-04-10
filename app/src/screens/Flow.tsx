@@ -76,7 +76,7 @@ type FlowProps = {
 }
 
 type StepConfig = {
-  title: string
+  title: ReactNode
   render: () => ReactElement
   canContinue?: boolean
   showNext?: boolean
@@ -411,7 +411,13 @@ export default function Flow({ stepId }: FlowProps) {
 
   const steps: Record<FlowStepId, StepConfig> = {
     intro: {
-      title: 'Take back your privacy, on your terms',
+      title: (
+        <>
+          Take Back Your Privacy,
+          <br />
+          On Your Terms
+        </>
+      ),
       render: () => (
         <div className="flow-stack">
           <AppText intent="body">
@@ -420,35 +426,26 @@ export default function Flow({ stepId }: FlowProps) {
           <div className="flow-intro-points">
             <div className="flow-intro-points__item">
               <div className="app-stack app-stack--tight">
-                <AppText intent="body" emphasis>
-                  What data brokers are
-                </AppText>
                 <AppText intent="body">
-                  Data brokers are companies that collect, package, and sell people&apos;s personal
-                  information.
+                  <strong>Data brokers are</strong> companies that collect, package, and sell
+                  people&apos;s personal information.
                 </AppText>
               </div>
             </div>
             <div className="flow-intro-points__item">
               <div className="app-stack app-stack--tight">
-                <AppText intent="body" emphasis>
-                  How Scrappy Kin works
-                </AppText>
                 <AppText intent="body">
-                  You&apos;ll choose which data brokers to contact from a curated list, review the
-                  opt-out emails, and approve them before anything is sent.
+                  <strong>You</strong> choose which data brokers to contact from a curated list,
+                  review the opt-out emails, and approve them before anything is sent.
                 </AppText>
               </div>
             </div>
             <div className="flow-intro-points__item">
               <div className="app-stack app-stack--tight">
-                <AppText intent="body" emphasis>
-                  How Gmail permission works
-                </AppText>
                 <AppText intent="body">
-                  Scrappy Kin sends from your Gmail so you stay in control. We only ask for
-                  permission to send emails, and you approve every email before it&apos;s sent. By
-                  design, we cannot read your inbox or manage your mailbox.
+                  <strong>Scrappy Kin sends from your Gmail so you stay in control.</strong> We
+                  only ask for permission to send emails, and you approve every email before
+                  it&apos;s sent. By design, we cannot read your inbox or manage your mailbox.
                 </AppText>
               </div>
             </div>
@@ -480,7 +477,7 @@ export default function Flow({ stepId }: FlowProps) {
       showFooterClaim: false,
     },
     'request-review': {
-      title: 'Fill in your profile and review the email',
+      title: 'Review your opt-out email',
       render: () => (
         <section className="app-section-shell">
           <AppText intent="supporting">
@@ -538,7 +535,8 @@ export default function Flow({ stepId }: FlowProps) {
                     label="State"
                     fieldId="state"
                     value={profileDraft.state}
-                    onChange={(value) => updateProfile({ state: value })}
+                    onChange={(value) => updateProfile({ state: value.toUpperCase() })}
+                    autoCapitalize="characters"
                     placeholder="CA"
                   />
                   <AppInput

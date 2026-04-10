@@ -26,6 +26,7 @@
   --line-height-3xl: 40px;
   --line-height-display: 0.9;
   --line-height-control: 24px;
+  --touch-target-nav: calc(var(--space-6) * 2);
 
   --letter-spacing-tight: -0.01em;
   --letter-spacing-wide: 0.02em;

@@ -17,6 +17,10 @@
   width: 100%;
 }
 
+.app-text__content strong {
+  font-weight: var(--font-weight-semibold);
+}
+
 .app-text--truncate .app-text__content {
   overflow: hidden;
   text-overflow: ellipsis;
