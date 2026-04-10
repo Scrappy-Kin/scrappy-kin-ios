@@ -5,6 +5,8 @@
   --padding-top: 0;
   --padding-bottom: 0;
   --button-size: var(--space-10);
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .app-icon-button--sm {

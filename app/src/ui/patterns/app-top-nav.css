@@ -27,13 +27,41 @@
 }
 
 .app-top-nav__row {
-  display: flex;
+  display: grid;
+  grid-template-columns: var(--touch-target-nav) minmax(0, 1fr) var(--touch-target-nav);
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
+  gap: var(--space-4);
+  min-height: var(--touch-target-nav);
 }
 
-.app-top-nav__row > span {
-  flex: 0 0 auto;
-  min-width: 44px;
+.app-top-nav__slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch-target-nav);
+  min-height: var(--touch-target-nav);
 }
+
+.app-top-nav__slot--leading {
+  justify-content: flex-start;
+}
+
+.app-top-nav__slot--trailing {
+  justify-content: flex-end;
+}
+
+.app-top-nav__label-wrap {
+  display: flex;
+  align-items: center;
+  min-height: var(--touch-target-nav);
+}
+
+.app-top-nav__label-wrap .app-text {
+  width: auto;
+}
+
+.app-top-nav__label-wrap .app-text__content {
+  display: inline-block;
+  transform: translateY(-12px);
+}
+
