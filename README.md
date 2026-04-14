@@ -19,12 +19,18 @@ Links:
 - Privacy Policy: [scrappykin.com/privacy.html](https://scrappykin.com/privacy.html)
 - Terms: [scrappykin.com/tos.html](https://scrappykin.com/tos.html)
 
+## Planning canon
+Cross-repo planning lives in HQ:
+- `/Users/jonamar/Development/scrappy-kin/scrappy-kin-hq/README.md`
+- `/Users/jonamar/Development/scrappy-kin/scrappy-kin-hq/workstreams/google-auth-phase-a/shared.md`
+
+This repo owns execution, code, runtime notes, and technical reference.
+Local scratch notes are fine, but they are not canonical planning state.
+
 ## Structure
 - `app/` - React + TypeScript UI (Capacitor host)
 - `scripts/` - engineering scripts used by the app/tooling
 - `docs/build-oauth.md` - build-time OAuth and environment contract
-
-Local mayor workflow files (`THREAD_A_STATE.md`, `workstreams/`, `work-orders/`, `deliverables/`, `.agents/`, `.claude/`) are intentionally kept in the repo working tree but out of git.
 
 ## Auditing the code
 
