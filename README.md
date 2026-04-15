@@ -22,7 +22,7 @@ Links:
 ## Planning canon
 Cross-repo planning lives in HQ:
 - `/Users/jonamar/Development/scrappy-kin/scrappy-kin-hq/README.md`
-- `/Users/jonamar/Development/scrappy-kin/scrappy-kin-hq/workstreams/parked-google-auth-phase-a/shared.md`
+- `/Users/jonamar/Development/scrappy-kin/scrappy-kin-hq/workstreams/active-user-facing-launch/shared.md`
 
 This repo owns execution, code, runtime notes, and technical reference.
 Local scratch notes are fine, but they are not canonical planning state.
