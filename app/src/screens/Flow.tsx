@@ -6,6 +6,8 @@ import {
 } from 'ionicons/icons'
 import { useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
+import { isQaStoreKitLane } from '../config/buildInfo'
+import { QA_STOREKIT_SEND_NOTICE } from '../config/qaStoreKit'
 import { completeOnboardingSend } from '../services/batchSend'
 import {
   buildBrokerCatalogSummary,
@@ -152,6 +154,7 @@ export default function Flow({ stepId }: FlowProps) {
   const [subscriptionBusy, setSubscriptionBusy] = useState<'purchase' | 'restore' | null>(null)
   const [totalSentCount, setTotalSentCount] = useState(0)
   const [sentReviewItemCount, setSentReviewItemCount] = useState(0)
+  const isQaStoreKit = isQaStoreKitLane()
 
   async function refreshState() {
     const [
@@ -713,6 +716,11 @@ export default function Flow({ stepId }: FlowProps) {
           {renderStepContext(
             'Review the starter broker list and the email below. If it looks right, this batch will send from your connected Gmail account.',
           )}
+          {isQaStoreKit ? (
+            <AppNotice variant="warning" title="QA send lane">
+              {QA_STOREKIT_SEND_NOTICE}
+            </AppNotice>
+          ) : null}
           <ReviewAssetCard
             title="Gmail connected"
             icon={checkmarkCircle}

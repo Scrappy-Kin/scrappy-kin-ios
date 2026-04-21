@@ -2,6 +2,8 @@ import { IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
 import { checkmarkCircle, createOutline } from 'ionicons/icons'
 import { useEffect, useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
+import { isQaStoreKitLane } from '../config/buildInfo'
+import { QA_STOREKIT_SEND_NOTICE } from '../config/qaStoreKit'
 import { executeBatchSend } from '../services/batchSend'
 import {
   filterSelectableBrokers,
@@ -57,6 +59,7 @@ export default function ReviewBatch() {
   const [templateDraft, setTemplateDraft] = useState<DeletionTemplateDraft | null>(null)
   const [sendError, setSendError] = useState<string | null>(null)
   const [sendInFlight, setSendInFlight] = useState(false)
+  const isQaStoreKit = isQaStoreKitLane()
 
   async function refreshState() {
     const [status, profile, nextTemplateDraft, nextBrokers, selectedIds, queue] = await Promise.all([
@@ -167,6 +170,11 @@ export default function ReviewBatch() {
               Review the broker list and the email below. If it looks right, this batch will send
               from your connected Gmail account.
             </AppText>
+            {isQaStoreKit ? (
+              <AppNotice variant="warning" title="QA send lane">
+                {QA_STOREKIT_SEND_NOTICE}
+              </AppNotice>
+            ) : null}
             <ReviewAssetCard
               title="Gmail connected"
               icon={checkmarkCircle}

@@ -1,8 +1,9 @@
-# OAuth Build & Environment Guide
+# Build Lane, OAuth, and QA StoreKit Guide
 
-This app uses build-time configuration for OAuth. There are **no runtime switches**.
+This app uses build-time lanes for OAuth, StoreKit, and broker-send safety. There
+are **no user-facing runtime switches**.
 
-## Environments (locked)
+## Lanes (locked)
 
 **PROD**
 - Bundle ID: `com.scrappykin.ios`
@@ -10,6 +11,17 @@ This app uses build-time configuration for OAuth. There are **no runtime switche
 - Google project: `scrappy-kin`
 - Google client ID: `304151210577-2hvg4113nd77cn8om3kppubqju7eu3sj.apps.googleusercontent.com`
 - Broker catalog: real curated broker list
+- StoreKit product: `com.scrappykin.ios.subscription.annual`
+
+**QA StoreKit**
+- Bundle ID: `com.scrappykin.ios`
+- Display name: `Scrappy Kin`
+- Google project: `scrappy-kin`
+- Google client ID: `304151210577-2hvg4113nd77cn8om3kppubqju7eu3sj.apps.googleusercontent.com`
+- Broker catalog: real curated broker list with `contactEmail` replaced by Scrappy Kin sink inboxes
+- StoreKit product: `com.scrappykin.ios.subscription.annual`
+- Visible app badge: `QA`
+- Purpose: dogfood the real onboarding/send/subscription flow without emailing real brokers
 
 **DEV**
 - Bundle ID: `com.scrappykin.ios.dev`
@@ -18,9 +30,11 @@ This app uses build-time configuration for OAuth. There are **no runtime switche
 - Google client ID: `914858229260-ns59pecm40udl9fi18ugrb1njlqie0m1.apps.googleusercontent.com`
 - Broker catalog: deterministic fixture brokers only
 
-Set the DEV client ID in:
+Set local env values in:
 - `app/.env.development` (`VITE_GOOGLE_CLIENT_ID=...`)
+- `app/.env.production` (`VITE_GOOGLE_CLIENT_ID=...`, `VITE_APPLE_SUBSCRIPTION_PRODUCT_ID=...`)
 - `app/ios/debug.xcconfig` (`GOOGLE_CLIENT_ID` + `GOOGLE_REDIRECT_SCHEME`)
+- `app/ios/release.xcconfig` (`GOOGLE_CLIENT_ID` + `GOOGLE_REDIRECT_SCHEME`)
 
 Token/keychain storage is isolated per bundle ID (no shared keychain group).
 
@@ -36,6 +50,7 @@ Use the correct build-and-sync pair so the compiled client ID matches the target
 - Xcode scheme pairing:
   - `Scrappy Kin Dev` scheme must be paired with `npm run ios:sync:dev`
   - `Scrappy Kin Prod` scheme must be paired with `npm run ios:sync:prod`
+  - `npm run ios:install:qa-storekit` builds and installs the `Scrappy Kin Prod` Release scheme for simulator QA
   - Do not mix a dev scheme with a prod web bundle, or a prod scheme with a dev web bundle.
 
 Canonical local runbook:
@@ -53,6 +68,16 @@ Canonical local runbook:
   - select Xcode scheme `Scrappy Kin Prod`
   - run `npm run ios:sync:prod`
   - expect the real curated broker list
+- QA StoreKit lane
+  - run `npm run ios:install:qa-storekit`
+  - expect bundle ID `com.scrappykin.ios`, `CAPACITOR_DEBUG=false`, and a visible `QA` badge
+  - expect real broker names/counts/order, but all sends go only to:
+    - `testbot+testround-broker-a@scrappykin.com`
+    - `testbot+testround-broker-b@scrappykin.com`
+    - `testbot+testround-broker-c@scrappykin.com`
+    - `testbot+testround-broker-d@scrappykin.com`
+    - `testbot+testround-broker-e@scrappykin.com`
+  - if any QA send attempts a non-test recipient, the app must block before calling Gmail
 
 ## Route model (required for debugging)
 
