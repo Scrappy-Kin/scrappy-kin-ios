@@ -2,3 +2,14 @@
   display: grid;
   gap: var(--space-2);
 }
+
+.app-progress ion-progress-bar {
+  --progress-background: var(--neutral-900-12);
+  --progress-color: var(--primary);
+  border-radius: var(--radius-round);
+  overflow: hidden;
+}
+
+.app-progress--success ion-progress-bar {
+  --progress-color: var(--success, #2a7a50);
+}

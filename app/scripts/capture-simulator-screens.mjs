@@ -12,13 +12,14 @@ const appRoot = path.resolve(__dirname, '..')
 const repoRoot = path.resolve(appRoot, '..')
 
 const defaultCaptureScheme = 'scrappykin-review'
-const simulatorName = process.env.IOS_SIMULATOR_NAME ?? 'iPhone 16'
+const simulatorName = process.env.IOS_SIMULATOR_NAME
 const simulatorRuntime = process.env.IOS_SIMULATOR_RUNTIME
 const simulatorUdid = process.env.IOS_SIMULATOR_UDID
 const bundleId = process.env.IOS_BUNDLE_ID ?? 'com.scrappykin.ios.dev'
 const captureScheme = process.env.IOS_CAPTURE_SCHEME ?? defaultCaptureScheme
+const derivedDataRoot = process.env.XCODE_DERIVED_DATA_ROOT ?? '/Volumes/T7-Dev/Xcode-DerivedData'
 const derivedDataPath =
-  process.env.IOS_DERIVED_DATA_PATH ?? path.join(appRoot, 'ios', 'build', 'capture-derived-data')
+  process.env.IOS_DERIVED_DATA_PATH ?? path.join(derivedDataRoot, 'ScrappyKinCapture')
 const productOutputDir =
   process.env.CAPTURE_OUTPUT_DIR ??
   path.join(appRoot, 'dist', 'review-artifacts', 'local-ui-review-screens')
@@ -31,7 +32,7 @@ const captures = [
   { scenario: 'brokers', file: path.join(productOutputDir, '02-brokers.png') },
   { scenario: 'settings', file: path.join(productOutputDir, '03-settings.png') },
   { scenario: 'flow-intro', file: path.join(productOutputDir, '04-flow-step-1-intro.png') },
-  { scenario: 'flow-brokers', file: path.join(productOutputDir, '05-flow-step-2-brokers.png') },
+  { scenario: 'flow-starter-set', file: path.join(productOutputDir, '05-flow-step-2-starter-set.png') },
   {
     scenario: 'flow-request-review',
     file: path.join(productOutputDir, '06-flow-step-3-request-review.png'),
@@ -41,10 +42,16 @@ const captures = [
     scenario: 'flow-final-review',
     file: path.join(productOutputDir, '08-flow-step-5-final-review.png'),
   },
-  { scenario: 'home-after-send', file: path.join(productOutputDir, '09-home-after-send.png') },
+  { scenario: 'flow-beat-sent', file: path.join(productOutputDir, '09-flow-beat-sent.png') },
+  { scenario: 'flow-beat-subscribe', file: path.join(productOutputDir, '10-flow-beat-subscribe.png') },
+  { scenario: 'home-unsubscribed', file: path.join(productOutputDir, '11-home-unsubscribed.png') },
+  { scenario: 'home-subscribed', file: path.join(productOutputDir, '12-home-subscribed.png') },
+  { scenario: 'settings-subscription', file: path.join(productOutputDir, '13-settings-subscription.png') },
   { route: 'ui-harness/primitives', file: path.join(harnessOutputDir, 'primitives.png') },
   { route: 'ui-harness/patterns', file: path.join(harnessOutputDir, 'patterns.png') },
 ]
+
+let builtAppPathCache = null
 
 function logCommand(command, args) {
   console.log(`$ ${command} ${args.join(' ')}`)
@@ -85,10 +92,15 @@ async function findDeviceUdid(name, runtime) {
 
   for (const [runtimeId, runtimeDevices] of Object.entries(payload.devices)) {
     for (const device of runtimeDevices) {
-      if (device.name !== name) continue
+      if (name && device.name !== name) continue
+      if (!name && !device.name.startsWith('iPhone')) continue
       if (runtime && !runtimeId.includes(runtime)) continue
-      matches.push({ runtimeId, udid: device.udid })
+      matches.push({ runtimeId, udid: device.udid, state: device.state })
     }
+  }
+
+  if (!name && matches.length > 0) {
+    return (matches.find((match) => match.state === 'Booted') ?? matches[0]).udid
   }
 
   if (matches.length === 1) {
@@ -151,7 +163,7 @@ async function clearStatusBar(udid) {
 async function buildNativeApp(udid) {
   await run('npm', ['run', 'build:dev'])
   await run('npx', ['cap', 'sync', 'ios'])
-  await run('xcodebuild', [
+  const xcodebuildArgs = [
     '-project',
     'ios/App/App.xcodeproj',
     '-scheme',
@@ -162,12 +174,25 @@ async function buildNativeApp(udid) {
     `id=${udid}`,
     '-derivedDataPath',
     derivedDataPath,
-    'build',
-  ])
+  ]
+  await run('xcodebuild', [...xcodebuildArgs, 'build'])
+
+  const { stdout } = await run('xcodebuild', [...xcodebuildArgs, '-showBuildSettings'])
+  const targetBuildDir = stdout.match(/^\s*TARGET_BUILD_DIR = (.+)$/m)?.[1]
+  const fullProductName = stdout.match(/^\s*FULL_PRODUCT_NAME = (.+)$/m)?.[1]
+
+  if (!targetBuildDir || !fullProductName) {
+    throw new Error('Unable to resolve built app path from xcodebuild settings.')
+  }
+
+  builtAppPathCache = path.join(targetBuildDir, fullProductName)
 }
 
 function builtAppPath() {
-  return path.join(derivedDataPath, 'Build', 'Products', 'Debug-iphonesimulator', 'App.app')
+  if (!builtAppPathCache) {
+    throw new Error('Native app has not been built yet.')
+  }
+  return builtAppPathCache
 }
 
 async function installAndLaunch(udid) {
@@ -197,7 +222,7 @@ async function captureRoute(udid, route, file) {
 async function writeManifest(udid) {
   const manifestPath = path.join(productOutputDir, 'manifest.json')
   const payload = {
-    device: simulatorName,
+    device: simulatorName ?? 'first available iPhone simulator',
     udid,
     bundleId,
     captureScheme,

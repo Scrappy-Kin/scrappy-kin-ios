@@ -2,7 +2,7 @@ import { IonText } from '@ionic/react'
 import type { ReactNode } from 'react'
 import './typography.css'
 
-type TextIntent = 'body' | 'supporting' | 'caption' | 'label'
+type TextIntent = 'body' | 'supporting' | 'caption' | 'label' | 'intro'
 type TextTone = 'default' | 'danger'
 
 type AppTextProps = {
@@ -18,6 +18,7 @@ const intentClassMap: Record<TextIntent, string> = {
   supporting: 't-base lh-md w-400 text-secondary',
   caption: 't-sm lh-sm w-400 text-secondary',
   label: 't-sm lh-sm w-600 text-secondary uc ls-wide',
+  intro: 't-sm lh-sm w-500 text-secondary',
 }
 
 export default function AppText({

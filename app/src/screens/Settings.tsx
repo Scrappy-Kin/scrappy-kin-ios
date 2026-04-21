@@ -22,6 +22,16 @@ import {
 import { getGmailStatus } from '../services/googleAuth'
 import { wipeAllLocalData } from '../services/secureStore'
 import {
+  loadBrokerCatalogSummary,
+  type BrokerCatalogSummary,
+} from '../services/brokerStore'
+import {
+  getSubscriptionSnapshot,
+  purchaseSubscription,
+  restoreSubscriptionPurchases,
+  type SubscriptionSnapshot,
+} from '../services/subscription'
+import {
   clearUserProfileDraft,
   getUserProfile,
   getUserProfileValidationErrors,
@@ -35,15 +45,18 @@ import AppHeading from '../ui/primitives/AppHeading'
 import AppInput from '../ui/primitives/AppInput'
 import AppList from '../ui/primitives/AppList'
 import AppListRow from '../ui/primitives/AppListRow'
+import AppNotice from '../ui/primitives/AppNotice'
 import AppText from '../ui/primitives/AppText'
 import AppToggle from '../ui/primitives/AppToggle'
 import AppTopNav from '../ui/patterns/AppTopNav'
+import SubscriptionOfferCard from '../ui/patterns/SubscriptionOfferCard'
 import './settings.css'
 
 type SettingsView =
   | 'home'
   | 'profile'
   | 'gmail'
+  | 'subscription'
   | 'privacy'
   | 'diagnostics'
   | 'about'
@@ -69,6 +82,7 @@ function getSettingsView(search: string): SettingsView {
   if (
     view === 'profile' ||
     view === 'gmail' ||
+    view === 'subscription' ||
     view === 'privacy' ||
     view === 'diagnostics' ||
     view === 'about'
@@ -94,6 +108,18 @@ export default function Settings() {
   const [profileDraft, setProfileDraft] = useState<UserProfile>(emptyProfile)
   const [profileSaved, setProfileSaved] = useState(false)
   const [profileErrors, setProfileErrors] = useState<UserProfileErrors>({})
+  const [subscriptionSnapshot, setSubscriptionSnapshot] = useState<SubscriptionSnapshot | null>(null)
+  const [brokerSummary, setBrokerSummary] = useState<BrokerCatalogSummary>({
+    starterCount: 0,
+    totalBrokerCount: 0,
+    remainingBrokerCount: 0,
+  })
+  const [subscriptionBusy, setSubscriptionBusy] = useState<'purchase' | 'restore' | null>(null)
+  const [subscriptionNotice, setSubscriptionNotice] = useState<{
+    variant: 'error' | 'success'
+    title: string
+    body: string
+  } | null>(null)
 
   async function refreshLogOptIn() {
     const status = await getLogOptInStatus()
@@ -133,6 +159,12 @@ export default function Settings() {
       setProfileSaved(false)
     }
     setProfileErrors({})
+    const [nextSubscriptionSnapshot, nextBrokerSummary] = await Promise.all([
+      getSubscriptionSnapshot(),
+      loadBrokerCatalogSummary(),
+    ])
+    setSubscriptionSnapshot(nextSubscriptionSnapshot)
+    setBrokerSummary(nextBrokerSummary)
   }
 
   useIonViewWillEnter(() => {
@@ -285,6 +317,46 @@ export default function Settings() {
     alert('All local data deleted.')
   }
 
+  async function handlePurchaseSubscription() {
+    setSubscriptionNotice(null)
+    setSubscriptionBusy('purchase')
+    const result = await purchaseSubscription()
+    setSubscriptionBusy(null)
+    setSubscriptionSnapshot(result.snapshot)
+
+    if (result.status === 'cancelled') {
+      return
+    }
+
+    if (result.status === 'error') {
+      setSubscriptionNotice({
+        variant: 'error',
+        title: 'Subscription didn’t start',
+        body: result.message,
+      })
+      return
+    }
+
+    setSubscriptionNotice({
+      variant: 'success',
+      title: 'Subscription active',
+      body: 'Your paid access is active on this device.',
+    })
+  }
+
+  async function handleRestorePurchases() {
+    setSubscriptionNotice(null)
+    setSubscriptionBusy('restore')
+    const result = await restoreSubscriptionPurchases()
+    setSubscriptionBusy(null)
+    setSubscriptionSnapshot(result.snapshot)
+    setSubscriptionNotice({
+      variant: result.status === 'restored' ? 'success' : 'error',
+      title: result.status === 'restored' ? 'Purchases restored' : 'Restore didn’t complete',
+      body: result.message,
+    })
+  }
+
   function renderHome() {
     return (
       <section className="app-section-shell settings-home">
@@ -324,6 +396,18 @@ export default function Settings() {
           />
         </AppList>
 
+        <AppList header="Subscription">
+          <AppListRow
+            title="Subscription"
+            description={
+              subscriptionSnapshot?.active
+                ? 'Active on this device. Apple manages billing and renewals.'
+                : 'Subscribe or restore purchases. Apple manages billing.'
+            }
+            onClick={() => openView('subscription')}
+          />
+        </AppList>
+
         <AppList header="Privacy & local data">
           <AppListRow
             title="On-device data and deletion"
@@ -344,6 +428,72 @@ export default function Settings() {
             onClick={() => openView('about')}
           />
         </AppList>
+      </section>
+    )
+  }
+
+  function renderSubscription() {
+    return (
+      <section className="app-section-shell">
+        <AppText intent="supporting">
+          Apple manages billing and renewals. Scrappy Kin does not store your card details, billing address, or a separate account profile for subscription access.
+        </AppText>
+
+        <AppList header="Status">
+          <AppListRow
+            title="Subscription access"
+            description={
+              subscriptionSnapshot?.active
+                ? 'Active on this device.'
+                : 'Not active on this device.'
+            }
+            right={
+              <AppText intent="caption">
+                {subscriptionSnapshot?.active ? 'Active' : 'Inactive'}
+              </AppText>
+            }
+            emphasis={false}
+          />
+        </AppList>
+
+        <SubscriptionOfferCard brokerSummary={brokerSummary} />
+
+        {subscriptionSnapshot?.loadError ? (
+          <AppNotice variant="error" title="Subscription unavailable">
+            {subscriptionSnapshot.loadError}
+          </AppNotice>
+        ) : null}
+
+        {subscriptionNotice ? (
+          <AppNotice variant={subscriptionNotice.variant} title={subscriptionNotice.title}>
+            {subscriptionNotice.body}
+          </AppNotice>
+        ) : null}
+
+        <div className="app-action-stack">
+          {subscriptionSnapshot?.active ? (
+            <AppButton fullWidth disabled>
+              Subscribed
+            </AppButton>
+          ) : (
+            <AppButton
+              fullWidth
+              onClick={() => void handlePurchaseSubscription()}
+              loading={subscriptionBusy === 'purchase'}
+              disabled={subscriptionBusy !== null || subscriptionSnapshot?.isAvailable === false}
+            >
+              Subscribe — $5/year
+            </AppButton>
+          )}
+          <AppButton
+            variant="secondary"
+            onClick={() => void handleRestorePurchases()}
+            loading={subscriptionBusy === 'restore'}
+            disabled={subscriptionBusy !== null}
+          >
+            Restore Purchases
+          </AppButton>
+        </div>
       </section>
     )
   }
@@ -507,6 +657,7 @@ export default function Settings() {
   const viewMap: Record<SettingsContentView, { title: string; body: ReactNode }> = {
     home: { title: 'Settings', body: renderHome() },
     profile: { title: 'Profile', body: renderProfile() },
+    subscription: { title: 'Subscription', body: renderSubscription() },
     privacy: { title: 'Privacy & local data', body: renderPrivacy() },
     diagnostics: { title: 'Diagnostics', body: renderDiagnostics() },
     about: { title: 'Support contact and build info', body: renderAbout() },

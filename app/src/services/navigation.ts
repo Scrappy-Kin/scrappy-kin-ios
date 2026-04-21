@@ -50,7 +50,7 @@ export function buildReviewBatchHref(returnTo?: string | null) {
 }
 
 export function buildSettingsHref(
-  view?: 'profile' | 'gmail' | 'privacy' | 'diagnostics' | 'about',
+  view?: 'profile' | 'gmail' | 'subscription' | 'privacy' | 'diagnostics' | 'about',
   returnTo?: string | null,
 ) {
   return withParams('/settings', { view, returnTo })

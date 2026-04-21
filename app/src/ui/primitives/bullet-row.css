@@ -1,0 +1,11 @@
+.app-bullet-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.app-bullet-row__copy {
+  display: grid;
+  gap: var(--space-1);
+}

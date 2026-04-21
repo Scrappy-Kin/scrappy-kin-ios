@@ -20,14 +20,14 @@ import { clearStaleOAuthState, getGmailStatus } from './services/googleAuth'
 import { isDevAppLane } from './config/buildInfo'
 import {
   FLOW_STEP_IDS,
+  getOnboardingSentCount,
   getSavedFlowStep,
   hasStartedFlow,
   isFlowStepId,
 } from './services/flowProgress'
-import { filterSelectableBrokers, getSelectedBrokerIds, loadBrokers } from './services/brokerStore'
 import { deriveEntryTarget } from './services/homeState'
 import { getTotalSentCount } from './services/metricsStore'
-import { getQueue, summarizeQueue } from './services/queueStore'
+import { getQueue } from './services/queueStore'
 import { getUserProfile } from './services/userProfile'
 import { buildOnboardingHref, readSuccessTo } from './services/navigation'
 
@@ -78,22 +78,16 @@ function EntryGate() {
       getUserProfile(),
       hasStartedFlow(),
       getSavedFlowStep(),
-      getSelectedBrokerIds(),
-      loadBrokers(),
+      getOnboardingSentCount(),
       getQueue(),
       getTotalSentCount(),
-    ]).then(([gmailStatus, profile, flowStarted, lastFlowStep, selectedIds, brokers, queue, totalSent]) => {
+    ]).then(([gmailStatus, profile, flowStarted, lastFlowStep, onboardingSentCount, queue, totalSent]) => {
       if (cancelled) return
-      const selectableBrokers = filterSelectableBrokers(brokers, queue)
-      const selectableBrokerIds = new Set(selectableBrokers.map((broker) => broker.id))
-      const filteredSelectedIds = selectedIds.filter((id) => selectableBrokerIds.has(id))
       const nextTarget =
         deriveEntryTarget({
           gmailConnected: gmailStatus.connected,
           hasProfile: Boolean(profile),
-          selectedBrokerIds: filteredSelectedIds,
-          brokers: selectableBrokers,
-          queueSummary: summarizeQueue(queue),
+          onboardingSentCount,
           totalSentCount: totalSent,
           sentReviewItemCount: queue.filter((item) => item.status === 'sent').length,
         }, lastFlowStep, flowStarted) ?? '/home'
@@ -121,15 +115,19 @@ function LegacyFlowRedirect() {
   const params = new URLSearchParams(search)
   const requestedStep = params.get('step')
   const successTo = readSuccessTo(search)
-  const target = isFlowStepId(requestedStep)
-    ? buildOnboardingHref(requestedStep, successTo)
+  const normalizedStep = requestedStep === 'brokers' ? 'starter-set' : requestedStep
+  const target = isFlowStepId(normalizedStep)
+    ? buildOnboardingHref(normalizedStep, successTo)
     : buildOnboardingHref('intro')
   return <Redirect to={target} />
 }
 
 function LegacyFlowPathRedirect({ stepId }: { stepId: string }) {
   const successTo = readSuccessTo(window.location.search)
-  const target = isFlowStepId(stepId) ? buildOnboardingHref(stepId, successTo) : buildOnboardingHref('intro')
+  const normalizedStep = stepId === 'brokers' ? 'starter-set' : stepId
+  const target = isFlowStepId(normalizedStep)
+    ? buildOnboardingHref(normalizedStep, successTo)
+    : buildOnboardingHref('intro')
   return <Redirect to={target} />
 }
 
