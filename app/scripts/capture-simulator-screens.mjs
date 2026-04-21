@@ -11,12 +11,11 @@ const __dirname = path.dirname(__filename)
 const appRoot = path.resolve(__dirname, '..')
 const repoRoot = path.resolve(appRoot, '..')
 
-const defaultCaptureScheme = 'scrappykin-review'
 const simulatorName = process.env.IOS_SIMULATOR_NAME
 const simulatorRuntime = process.env.IOS_SIMULATOR_RUNTIME
 const simulatorUdid = process.env.IOS_SIMULATOR_UDID
 const bundleId = process.env.IOS_BUNDLE_ID ?? 'com.scrappykin.ios.dev'
-const captureScheme = process.env.IOS_CAPTURE_SCHEME ?? defaultCaptureScheme
+const captureRoutePreferenceKey = 'CapacitorStorage.dev_capture_route'
 const derivedDataRoot = process.env.XCODE_DERIVED_DATA_ROOT ?? '/Volumes/T7-Dev/Xcode-DerivedData'
 const derivedDataPath =
   process.env.IOS_DERIVED_DATA_PATH ?? path.join(derivedDataRoot, 'ScrappyKinCapture')
@@ -204,12 +203,30 @@ async function installAndLaunch(udid) {
   await delay(2500)
 }
 
-function routeToUrl(route) {
-  return `${captureScheme}://${route}?qa=1`
+function routeWithQa(route) {
+  const [pathAndSearch, hash = ''] = route.split('#', 2)
+  const [pathPart, search = ''] = pathAndSearch.split('?', 2)
+  const params = new URLSearchParams(search)
+  params.set('qa', '1')
+  const query = params.toString()
+  const pathName = pathPart.startsWith('/') ? pathPart : `/${pathPart}`
+
+  return `${pathName}${query ? `?${query}` : ''}${hash ? `#${hash}` : ''}`
 }
 
 async function openRoute(udid, route, waitMs = 1400) {
-  await run('xcrun', ['simctl', 'openurl', udid, routeToUrl(route)])
+  await run('xcrun', [
+    'simctl',
+    'spawn',
+    udid,
+    'defaults',
+    'write',
+    bundleId,
+    captureRoutePreferenceKey,
+    routeWithQa(route),
+  ])
+  await runQuiet('xcrun', ['simctl', 'terminate', udid, bundleId], { allowFailure: true })
+  await run('xcrun', ['simctl', 'launch', udid, bundleId])
   await delay(waitMs)
 }
 
@@ -225,7 +242,7 @@ async function writeManifest(udid) {
     device: simulatorName ?? 'first available iPhone simulator',
     udid,
     bundleId,
-    captureScheme,
+    routeDelivery: 'Capacitor Preferences dev_capture_route',
     captures: captures.map((entry) => ({
       route: entry.route ?? `capture/${entry.scenario}`,
       file: entry.file,
