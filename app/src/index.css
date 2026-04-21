@@ -38,7 +38,7 @@ body {
   margin-bottom: var(--space-3);
 }
 
-.dev-lane-badge {
+.execution-lane-badge {
   position: fixed;
   top: calc(var(--ion-safe-area-top, 0px) + var(--space-2));
   left: calc(var(--ion-safe-area-left, 0px) + var(--space-2));
@@ -53,7 +53,13 @@ body {
   pointer-events: none;
 }
 
-.dev-lane-badge__dot {
+.execution-lane-badge--qa {
+  right: calc(var(--ion-safe-area-right, 0px) + var(--space-2));
+  left: auto;
+  background: rgba(22, 97, 58, 0.92);
+}
+
+.execution-lane-badge__dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -61,7 +67,7 @@ body {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
 }
 
-.dev-lane-badge__label {
+.execution-lane-badge__label {
   color: #fff;
   font-size: var(--font-size-xs);
   line-height: var(--line-height-xs);

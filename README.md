@@ -69,3 +69,14 @@ OAuth note: if your Google OAuth consent screen is in Testing mode, add your
 Google account to the Test users list in Google Cloud Console.
 
 For build-time OAuth configuration (DEV vs PROD), see `docs/build-oauth.md`.
+
+For final prelaunch QA that exercises StoreKit without emailing real brokers, use
+the QA StoreKit lane:
+
+```bash
+cd app
+npm run ios:install:qa-storekit
+```
+
+This installs the production bundle ID with broker recipients routed to Scrappy
+Kin test inboxes. See `docs/build-oauth.md` for lane rules and guardrails.

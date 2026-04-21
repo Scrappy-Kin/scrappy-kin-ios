@@ -1,5 +1,6 @@
 import { getAccessToken } from './googleAuth'
-import { isVerboseDevLane } from '../config/buildInfo'
+import { isQaStoreKitLane, isVerboseDevLane } from '../config/buildInfo'
+import { isQaStoreKitSinkEmail } from '../config/qaStoreKit'
 
 type SendEmailInput = {
   to: string
@@ -46,6 +47,10 @@ function buildMimeMessage({ to, subject, body, replyTo }: SendEmailInput) {
 }
 
 export async function sendEmail(input: SendEmailInput) {
+  if (isQaStoreKitLane() && !isQaStoreKitSinkEmail(input.to)) {
+    throw new Error('QA StoreKit build blocked a non-test broker recipient before Gmail send.')
+  }
+
   const token = await getAccessToken()
   const raw = base64UrlEncode(buildMimeMessage(input))
 

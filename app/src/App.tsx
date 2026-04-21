@@ -17,7 +17,7 @@ import Settings from './screens/Settings'
 import TemplateEditor from './screens/TemplateEditor'
 import { useOnlineStatus } from './state/useOnlineStatus'
 import { clearStaleOAuthState, getGmailStatus } from './services/googleAuth'
-import { isDevAppLane } from './config/buildInfo'
+import { isDevAppLane, isQaStoreKitLane } from './config/buildInfo'
 import {
   FLOW_STEP_IDS,
   getOnboardingSentCount,
@@ -185,6 +185,7 @@ function AppShell() {
 
   const isOnline = useOnlineStatus()
   const showDevTools = DEV_BUNDLE_ENABLED && showDevLaneUi
+  const showQaStoreKitUi = isQaStoreKitLane()
 
   const devRoutes = showDevTools
     ? [
@@ -229,10 +230,15 @@ function AppShell() {
 
   return (
     <>
-      {showDevTools ? (
-        <div className="dev-lane-badge" aria-hidden="true">
-          <span className="dev-lane-badge__dot" />
-          <span className="dev-lane-badge__label">DEV</span>
+      {showDevTools || showQaStoreKitUi ? (
+        <div
+          className={`execution-lane-badge${showQaStoreKitUi ? ' execution-lane-badge--qa' : ''}`}
+          aria-hidden="true"
+        >
+          <span className="execution-lane-badge__dot" />
+          <span className="execution-lane-badge__label">
+            {showQaStoreKitUi ? 'QA' : 'DEV'}
+          </span>
         </div>
       ) : null}
       {showDevTools ? renderLazyDevComponent(DevAppUrlBridge) : null}
