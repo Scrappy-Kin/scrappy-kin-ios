@@ -789,6 +789,7 @@ export default function Flow({ stepId }: FlowProps) {
         </section>
       ),
       showNext: false,
+      showFooterClaim: false,
     },
     'beat-sent': {
       title: 'Requests sent.',
