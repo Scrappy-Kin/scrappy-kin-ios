@@ -11,6 +11,15 @@ export type Broker = {
   contactEmail: string
   tier?: string
   childCompanies?: string[]
+  inTop30?: boolean
+  verifiedResolutions?: number
+  starterOrder?: number
+}
+
+export type BrokerCatalogSummary = {
+  starterCount: number
+  totalBrokerCount: number
+  remainingBrokerCount: number
 }
 
 const SELECTED_KEY = 'selected_brokers'
@@ -39,6 +48,39 @@ export async function loadBrokerCatalog(): Promise<Broker[]> {
 
 export async function loadBrokers(): Promise<Broker[]> {
   return loadBrokerCatalog()
+}
+
+export function isStarterBroker(broker: Broker) {
+  return typeof broker.starterOrder === 'number'
+}
+
+export function getStarterBrokers(brokers: Broker[]) {
+  return brokers
+    .filter(isStarterBroker)
+    .sort((left, right) => (left.starterOrder ?? Number.MAX_SAFE_INTEGER) - (right.starterOrder ?? Number.MAX_SAFE_INTEGER))
+}
+
+export function buildBrokerCatalogSummary(brokers: Broker[]): BrokerCatalogSummary {
+  const starterCount = getStarterBrokers(brokers).length
+  const totalBrokerCount = brokers.length
+
+  return {
+    starterCount,
+    totalBrokerCount,
+    remainingBrokerCount: Math.max(totalBrokerCount - starterCount, 0),
+  }
+}
+
+export async function loadStarterBrokers() {
+  return getStarterBrokers(await loadBrokerCatalog())
+}
+
+export async function loadStarterBrokerIds() {
+  return (await loadStarterBrokers()).map((broker) => broker.id)
+}
+
+export async function loadBrokerCatalogSummary() {
+  return buildBrokerCatalogSummary(await loadBrokerCatalog())
 }
 
 export async function getSelectedBrokerIds() {

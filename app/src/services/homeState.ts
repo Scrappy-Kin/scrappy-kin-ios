@@ -1,15 +1,14 @@
-import type { Broker } from './brokerStore'
-import { FLOW_STEP_IDS, type FlowStepId } from './flowProgress'
+import type { Broker, BrokerCatalogSummary } from './brokerStore'
+import type { FlowStepId } from './flowProgress'
 import { buildOnboardingHref } from './navigation'
 import type { QueueItem } from './queueStore'
 
 type HomeRedirectTarget = string
 
 type HomeReadyState = {
-  mode: 'next-up' | 'all-done'
+  mode: 'subscribed' | 'unsubscribed'
   remainingCount: number
   canReviewSent: boolean
-  remainingLabel: 'left-in-round' | 'available-next-round'
 }
 
 export type DerivedHomeState =
@@ -25,146 +24,114 @@ export type DerivedHomeState =
 type DeriveHomeStateInput = {
   gmailConnected: boolean
   hasProfile: boolean
-  selectedBrokerIds: string[]
-  brokers: Broker[]
-  queueSummary: {
-    sent: number
-    failed: number
-    pending: number
-    total: number
-  }
+  onboardingSentCount: number
   totalSentCount: number
   sentReviewItemCount: number
+  subscriptionActive: boolean
+  brokerSummary: BrokerCatalogSummary
 }
+
+type DeriveEntryTargetInput = Pick<
+  DeriveHomeStateInput,
+  'gmailConnected' | 'hasProfile' | 'onboardingSentCount' | 'totalSentCount' | 'sentReviewItemCount'
+>
 
 function buildFlowStepHref(step: FlowStepId): HomeRedirectTarget {
   return buildOnboardingHref(step)
 }
 
-function hasAnySetupProgress(input: DeriveHomeStateInput) {
-  return (
-    input.hasProfile ||
-    input.gmailConnected ||
-    input.queueSummary.total > 0 ||
-    input.selectedBrokerIds.length > 0
-  )
+function hasAnyCompletedSend(input: Pick<DeriveEntryTargetInput, 'onboardingSentCount' | 'totalSentCount' | 'sentReviewItemCount'>) {
+  return input.onboardingSentCount > 0 || input.totalSentCount > 0 || input.sentReviewItemCount > 0
 }
 
-function getEarliestFlowStep(input: DeriveHomeStateInput, flowStarted = false): FlowStepId {
-  if (!input.selectedBrokerIds.length) {
-    return !flowStarted && !hasAnySetupProgress(input) ? 'intro' : 'brokers'
+function buildPostSendResumeTarget(lastFlowStep?: FlowStepId | null) {
+  if (lastFlowStep === 'beat-subscribe') {
+    return buildFlowStepHref('beat-subscribe')
   }
-
-  if (!input.hasProfile) {
-    return 'request-review'
-  }
-
-  if (!input.gmailConnected) {
-    return 'gmail-send'
-  }
-
-  return 'final-review'
-}
-
-function getEarliestIncompleteStep(input: DeriveHomeStateInput): FlowStepId | null {
-  const {
-    gmailConnected,
-    hasProfile,
-    selectedBrokerIds,
-    queueSummary,
-    totalSentCount,
-  } = input
-
-  const hasCompletedSend = queueSummary.sent > 0 || totalSentCount > 0
-  if (hasCompletedSend) {
-    return null
-  }
-
-  if (!selectedBrokerIds.length) {
-    return hasAnySetupProgress(input) ? 'brokers' : 'intro'
-  }
-
-  if (!hasProfile) {
-    return 'request-review'
-  }
-
-  if (!gmailConnected) {
-    return 'gmail-send'
-  }
-
-  return 'final-review'
-}
-
-export function deriveFallbackTarget(input: DeriveHomeStateInput): HomeRedirectTarget {
-  const earliestIncomplete = getEarliestIncompleteStep(input)
-  if (!earliestIncomplete) {
-    return '/home'
-  }
-  return buildFlowStepHref(earliestIncomplete)
+  return buildFlowStepHref('beat-sent')
 }
 
 export function deriveEntryTarget(
-  input: DeriveHomeStateInput,
+  input: DeriveEntryTargetInput,
   lastFlowStep?: FlowStepId | null,
   flowStarted = false,
 ): HomeRedirectTarget | null {
-  const earliestIncomplete = getEarliestIncompleteStep(input)
-  if (!earliestIncomplete) {
+  if (flowStarted && input.onboardingSentCount > 0) {
+    return buildPostSendResumeTarget(lastFlowStep)
+  }
+
+  if (hasAnyCompletedSend(input)) {
     return null
   }
 
   if (!flowStarted) {
-    return deriveFallbackTarget(input)
+    return buildFlowStepHref('intro')
   }
 
-  if (!lastFlowStep) {
-    return buildFlowStepHref(earliestIncomplete)
+  if (lastFlowStep === 'intro' || lastFlowStep === null || typeof lastFlowStep === 'undefined') {
+    return buildFlowStepHref('starter-set')
   }
 
-  const earliestIndex = FLOW_STEP_IDS.indexOf(earliestIncomplete)
-  const savedIndex = FLOW_STEP_IDS.indexOf(lastFlowStep)
-  const resumeStep = FLOW_STEP_IDS[Math.min(savedIndex, earliestIndex)]
-  return buildFlowStepHref(resumeStep)
+  if (lastFlowStep === 'starter-set') {
+    return buildFlowStepHref('request-review')
+  }
+
+  if (!input.hasProfile) {
+    return buildFlowStepHref('request-review')
+  }
+
+  if (!input.gmailConnected) {
+    return buildFlowStepHref('gmail-send')
+  }
+
+  return buildFlowStepHref('final-review')
 }
 
 export function deriveOnboardingRedirect(
-  input: DeriveHomeStateInput,
+  input: DeriveEntryTargetInput,
   requestedStep: FlowStepId,
   flowStarted = false,
 ) {
-  const earliestIncomplete = getEarliestFlowStep(input, flowStarted)
+  if (flowStarted && input.onboardingSentCount > 0) {
+    if (requestedStep === 'beat-sent' || requestedStep === 'beat-subscribe') {
+      return null
+    }
+    return buildFlowStepHref('beat-sent')
+  }
+
+  if ((requestedStep === 'beat-sent' || requestedStep === 'beat-subscribe') && input.onboardingSentCount === 0) {
+    if (hasAnyCompletedSend(input)) {
+      return '/home'
+    }
+    return buildFlowStepHref(flowStarted ? 'starter-set' : 'intro')
+  }
 
   if (requestedStep === 'intro') {
     return null
   }
 
-  if (requestedStep === 'brokers') {
-    if (!flowStarted && !hasAnySetupProgress(input)) {
-      return buildFlowStepHref('intro')
-    }
-    return null
+  if (requestedStep === 'starter-set') {
+    return flowStarted ? null : buildFlowStepHref('intro')
+  }
+
+  if (!flowStarted) {
+    return buildFlowStepHref('intro')
   }
 
   if (requestedStep === 'request-review') {
-    if (earliestIncomplete === 'intro' || earliestIncomplete === 'brokers') {
-      return buildFlowStepHref(earliestIncomplete)
-    }
     return null
+  }
+
+  if (!input.hasProfile) {
+    return buildFlowStepHref('request-review')
   }
 
   if (requestedStep === 'gmail-send') {
-    if (
-      earliestIncomplete === 'intro' ||
-      earliestIncomplete === 'brokers' ||
-      earliestIncomplete === 'request-review'
-    ) {
-      return buildFlowStepHref(earliestIncomplete)
-    }
     return null
   }
 
-  if (requestedStep === 'final-review' && earliestIncomplete !== 'final-review') {
-    return buildFlowStepHref(earliestIncomplete)
+  if (!input.gmailConnected) {
+    return buildFlowStepHref('gmail-send')
   }
 
   return null
@@ -187,44 +154,30 @@ export function deriveHomeState(
   lastFlowStep?: FlowStepId | null,
   flowStarted = false,
 ): DerivedHomeState {
-  const {
-    selectedBrokerIds,
-    brokers,
-    queueSummary,
-    totalSentCount,
-    sentReviewItemCount,
-  } = input
-
-  const remainingCount = Math.max(0, brokers.length - selectedBrokerIds.length)
-  const hasCompletedSend = queueSummary.sent > 0 || totalSentCount > 0
-
-  if (!hasCompletedSend) {
+  const redirectTarget = deriveEntryTarget(
+    {
+      gmailConnected: input.gmailConnected,
+      hasProfile: input.hasProfile,
+      onboardingSentCount: input.onboardingSentCount,
+      totalSentCount: input.totalSentCount,
+      sentReviewItemCount: input.sentReviewItemCount,
+    },
+    lastFlowStep,
+    flowStarted,
+  )
+  if (redirectTarget) {
     return {
       kind: 'redirect',
-      target: deriveEntryTarget(input, lastFlowStep, flowStarted) ?? buildFlowStepHref('final-review'),
-    }
-  }
-
-  if (queueSummary.failed > 0 || remainingCount > 0) {
-    return {
-      kind: 'ready',
-      state: {
-        mode: 'next-up',
-        remainingCount,
-        canReviewSent: sentReviewItemCount > 0,
-        remainingLabel:
-          selectedBrokerIds.length > 0 ? 'left-in-round' : 'available-next-round',
-      },
+      target: redirectTarget,
     }
   }
 
   return {
     kind: 'ready',
     state: {
-      mode: 'all-done',
-      remainingCount,
-      canReviewSent: sentReviewItemCount > 0,
-      remainingLabel: 'left-in-round',
+      mode: input.subscriptionActive ? 'subscribed' : 'unsubscribed',
+      remainingCount: input.brokerSummary.remainingBrokerCount,
+      canReviewSent: input.sentReviewItemCount > 0,
     },
   }
 }

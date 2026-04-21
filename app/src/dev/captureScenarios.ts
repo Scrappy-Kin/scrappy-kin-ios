@@ -1,8 +1,21 @@
 import { IS_DEV_BUILD } from '../config/buildInfo'
-import { setSelectedBrokerIds } from '../services/brokerStore'
+import {
+  loadBrokers,
+  loadStarterBrokerIds,
+  setSelectedBrokerIds,
+} from '../services/brokerStore'
+import {
+  clearFlowProgress,
+  setOnboardingSentCount,
+  setSavedFlowStep,
+} from '../services/flowProgress'
 import { setTotalSentCount } from '../services/metricsStore'
 import { setEncrypted, wipeAllLocalData } from '../services/secureStore'
 import { setQueue, type QueueItem } from '../services/queueStore'
+import {
+  clearDevSubscriptionState,
+  setDevSubscriptionEntitled,
+} from '../services/subscription'
 import { setUserProfile, type UserProfile } from '../services/userProfile'
 
 type CaptureScenarioDefinition = {
@@ -23,7 +36,6 @@ const seededProfile: UserProfile = {
   state: 'TX',
   partialZip: '7870',
 }
-const seededBrokerIds = ['broker-happy-path', 'broker-needs-retry']
 
 function buildConnectedToken(): GmailTokenPayload {
   return {
@@ -32,39 +44,30 @@ function buildConnectedToken(): GmailTokenPayload {
   }
 }
 
-function buildQueue(status: QueueItem['status']): QueueItem[] {
-  return [
-    {
-      brokerId: 'broker-happy-path',
-      status,
-      referenceId: 'ABC123',
-      gmailMessageId: status === 'sent' ? 'gmail-msg-1' : undefined,
-      gmailThreadId: status === 'sent' ? 'gmail-thread-1' : undefined,
-    },
-    {
-      brokerId: 'broker-needs-retry',
-      status,
-      referenceId: 'DEF456',
-      gmailMessageId: status === 'sent' ? 'gmail-msg-2' : undefined,
-      gmailThreadId: status === 'sent' ? 'gmail-thread-2' : undefined,
-    },
-  ]
+function buildQueue(status: QueueItem['status'], brokerIds: string[]): QueueItem[] {
+  return brokerIds.map((brokerId, index) => ({
+    brokerId,
+    status,
+    referenceId: `REF-${index + 1}`,
+    gmailMessageId: status === 'sent' ? `gmail-msg-${index + 1}` : undefined,
+    gmailThreadId: status === 'sent' ? `gmail-thread-${index + 1}` : undefined,
+  }))
 }
 
 function buildRetryPreviewQueue(): QueueItem[] {
   return [
     {
-      brokerId: 'broker-happy-path',
+      brokerId: 'spokeo-com',
       status: 'failed',
       referenceId: 'ABC123',
     },
     {
-      brokerId: 'broker-needs-retry',
+      brokerId: 'whitepages-com',
       status: 'failed',
       referenceId: 'DEF456',
     },
     {
-      brokerId: 'broker-already-sent',
+      brokerId: 'beenverified-com',
       status: 'sent',
       referenceId: 'GHI789',
       gmailMessageId: 'gmail-msg-3',
@@ -73,14 +76,35 @@ function buildRetryPreviewQueue(): QueueItem[] {
   ]
 }
 
-async function seedProfileAndBrokers() {
+async function seedProfileAndSelection() {
   await setUserProfile(seededProfile)
-  await setSelectedBrokerIds(seededBrokerIds)
+  const starterIds = await loadStarterBrokerIds()
+  await setSelectedBrokerIds(starterIds)
 }
 
 async function seedConnectedState() {
-  await seedProfileAndBrokers()
+  await seedProfileAndSelection()
   await setEncrypted(CAPTURE_GMAIL_TOKEN_KEY, buildConnectedToken())
+}
+
+async function seedPostSendState(step: 'beat-sent' | 'beat-subscribe' | null) {
+  await seedConnectedState()
+
+  const [starterIds, brokers] = await Promise.all([loadStarterBrokerIds(), loadBrokers()])
+  const remainingBrokerIds = brokers
+    .map((broker) => broker.id)
+    .filter((brokerId) => !starterIds.includes(brokerId))
+
+  await setQueue(buildQueue('sent', starterIds))
+  await setTotalSentCount(starterIds.length)
+  await setSelectedBrokerIds(remainingBrokerIds)
+
+  if (step) {
+    await setOnboardingSentCount(starterIds.length)
+    await setSavedFlowStep(step)
+  } else {
+    await clearFlowProgress()
+  }
 }
 
 const captureScenarios: Record<string, CaptureScenarioDefinition> = {
@@ -90,7 +114,7 @@ const captureScenarios: Record<string, CaptureScenarioDefinition> = {
     route: '/brokers?returnTo=%2Fhome',
     seed: async () => {
       await setUserProfile(seededProfile)
-      await setSelectedBrokerIds(['broker-happy-path'])
+      await setSelectedBrokerIds(['spokeo-com'])
       await setQueue(buildRetryPreviewQueue())
       await setTotalSentCount(1)
     },
@@ -101,36 +125,75 @@ const captureScenarios: Record<string, CaptureScenarioDefinition> = {
       await setUserProfile(seededProfile)
     },
   },
-  'flow-intro': { route: '/onboarding/intro' },
-  'flow-brokers': {
-    route: '/onboarding/brokers',
+  'settings-subscription': {
+    route: '/settings?view=subscription',
     seed: async () => {
-      await setSelectedBrokerIds([])
+      await seedPostSendState(null)
+      await setDevSubscriptionEntitled(false)
+    },
+  },
+  'flow-intro': { route: '/onboarding/intro' },
+  'flow-starter-set': {
+    route: '/onboarding/starter-set',
+    seed: async () => {
+      await setSavedFlowStep('starter-set')
     },
   },
   'flow-request-review': {
     route: '/onboarding/request-review',
-    seed: seedProfileAndBrokers,
+    seed: async () => {
+      await seedProfileAndSelection()
+      await setSavedFlowStep('request-review')
+    },
   },
   'flow-gmail-send': {
     route: '/onboarding/gmail-send',
-    seed: seedProfileAndBrokers,
+    seed: async () => {
+      await seedProfileAndSelection()
+      await setSavedFlowStep('gmail-send')
+    },
   },
   'flow-final-review': {
     route: '/onboarding/final-review',
-    seed: seedConnectedState,
-  },
-  'home-after-send': {
-    route: '/home',
     seed: async () => {
       await seedConnectedState()
-      await setQueue(buildQueue('sent'))
-      await setTotalSentCount(seededBrokerIds.length)
+      await setSavedFlowStep('final-review')
+    },
+  },
+  'flow-beat-sent': {
+    route: '/onboarding/beat-sent',
+    seed: async () => {
+      await seedPostSendState('beat-sent')
+      await setDevSubscriptionEntitled(false)
+    },
+  },
+  'flow-beat-subscribe': {
+    route: '/onboarding/beat-subscribe',
+    seed: async () => {
+      await seedPostSendState('beat-subscribe')
+      await setDevSubscriptionEntitled(false)
+    },
+  },
+  'home-unsubscribed': {
+    route: '/home',
+    seed: async () => {
+      await seedPostSendState(null)
+      await setDevSubscriptionEntitled(false)
+    },
+  },
+  'home-subscribed': {
+    route: '/home',
+    seed: async () => {
+      await seedPostSendState(null)
+      await setDevSubscriptionEntitled(true)
     },
   },
   'review-batch': {
     route: '/review-batch?returnTo=%2Fhome',
-    seed: seedConnectedState,
+    seed: async () => {
+      await seedPostSendState(null)
+      await setDevSubscriptionEntitled(true)
+    },
   },
 }
 
@@ -149,6 +212,7 @@ export async function applyCaptureScenario(id: string) {
   }
 
   await wipeAllLocalData()
+  await clearDevSubscriptionState()
   if (scenario.seed) {
     await scenario.seed()
   }

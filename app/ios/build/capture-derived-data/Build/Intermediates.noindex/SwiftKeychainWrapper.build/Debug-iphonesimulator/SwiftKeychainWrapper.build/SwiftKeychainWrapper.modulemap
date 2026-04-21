@@ -1,4 +1,0 @@
-module SwiftKeychainWrapper {
-header "SwiftKeychainWrapper-Swift.h"
-export *
-}

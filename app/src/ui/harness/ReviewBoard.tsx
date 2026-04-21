@@ -19,9 +19,9 @@ const reviewStates: ReviewState[] = [
     seedsLocalState: true,
   },
   {
-    title: 'Flow: pick brokers',
-    route: '/capture/flow-brokers?qa=1',
-    description: 'First-run broker selection inside setup flow.',
+    title: 'Flow: starter set',
+    route: '/capture/flow-starter-set?qa=1',
+    description: 'The fixed taster round that replaces onboarding broker selection.',
     seedsLocalState: true,
   },
   {
@@ -43,15 +43,33 @@ const reviewStates: ReviewState[] = [
     seedsLocalState: true,
   },
   {
+    title: 'Flow: beat 1',
+    route: '/capture/flow-beat-sent?qa=1',
+    description: 'Post-send confirmation before the subscription offer.',
+    seedsLocalState: true,
+  },
+  {
+    title: 'Flow: beat 2',
+    route: '/capture/flow-beat-subscribe?qa=1',
+    description: 'Subscription offer, restore path, and later dismissal.',
+    seedsLocalState: true,
+  },
+  {
     title: 'App: review batch',
     route: '/capture/review-batch?qa=1',
     description: 'Post-onboarding batch review and send flow from Home.',
     seedsLocalState: true,
   },
   {
-    title: 'Home: after send',
-    route: '/capture/home-after-send?qa=1',
-    description: 'Sent-state dashboard with queue results after a completed batch.',
+    title: 'Home: unsubscribed',
+    route: '/capture/home-unsubscribed?qa=1',
+    description: 'Dashboard card after the free taster when subscription is inactive.',
+    seedsLocalState: true,
+  },
+  {
+    title: 'Home: subscribed',
+    route: '/capture/home-subscribed?qa=1',
+    description: 'Dashboard card after the free taster when subscription is active.',
     seedsLocalState: true,
   },
   {
@@ -64,6 +82,12 @@ const reviewStates: ReviewState[] = [
     title: 'Settings',
     route: '/capture/settings?qa=1',
     description: 'Profile, diagnostics, disconnect, and local-data controls.',
+    seedsLocalState: true,
+  },
+  {
+    title: 'Settings: subscription',
+    route: '/capture/settings-subscription?qa=1',
+    description: 'Top-level subscription management with restore and Apple billing copy.',
     seedsLocalState: true,
   },
 ]

@@ -1,5 +1,11 @@
-import { getSelectedBrokerIds, loadBrokers, setSelectedBrokerIds } from './brokerStore'
-import { clearFlowProgress } from './flowProgress'
+import {
+  filterSelectableBrokers,
+  getSelectedBrokerIds,
+  loadBrokers,
+  loadStarterBrokerIds,
+  setSelectedBrokerIds,
+} from './brokerStore'
+import { setOnboardingSentCount } from './flowProgress'
 import { getSendFailureMessage, sendAll } from './sendQueue'
 import { getQueue } from './queueStore'
 import { clearUserProfileDraft, setUserProfile, type UserProfile } from './userProfile'
@@ -9,13 +15,21 @@ type BatchSendResult = {
   failureMessage: string | null
 }
 
-export async function executeBatchSend(profile: UserProfile): Promise<BatchSendResult> {
+export async function executeBatchSend(
+  profile: UserProfile,
+  targetBrokerIds?: string[],
+): Promise<BatchSendResult> {
   await setUserProfile(profile)
   await clearUserProfileDraft()
 
   const brokers = await loadBrokers()
   const selectedIds = await getSelectedBrokerIds()
-  const targetIds = selectedIds.length > 0 ? selectedIds : brokers.map((broker) => broker.id)
+  const targetIds =
+    targetBrokerIds && targetBrokerIds.length > 0
+      ? targetBrokerIds
+      : selectedIds.length > 0
+        ? selectedIds
+        : brokers.map((broker) => broker.id)
   const summary = await sendAll(brokers, targetIds)
 
   const updatedQueue = await getQueue()
@@ -38,9 +52,17 @@ export async function executeBatchSend(profile: UserProfile): Promise<BatchSendR
 }
 
 export async function completeOnboardingSend(profile: UserProfile) {
-  const result = await executeBatchSend(profile)
+  const starterBrokerIds = await loadStarterBrokerIds()
+  const result = await executeBatchSend(profile, starterBrokerIds)
   if (result.sentCount > 0) {
-    await clearFlowProgress()
+    const brokers = await loadBrokers()
+    const updatedQueue = await getQueue()
+    const remainingCatalogIds = filterSelectableBrokers(brokers, updatedQueue).map((broker) => broker.id)
+
+    await Promise.all([
+      setSelectedBrokerIds(remainingCatalogIds),
+      setOnboardingSentCount(result.sentCount),
+    ])
   }
   return result
 }

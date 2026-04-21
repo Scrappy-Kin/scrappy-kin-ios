@@ -6,35 +6,32 @@ import {
 } from 'ionicons/icons'
 import { useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
-import BrokerSelectionPanel from '../components/BrokerSelectionPanel'
 import { completeOnboardingSend } from '../services/batchSend'
 import {
-  filterSelectableBrokers,
-  getSelectedBrokerIds,
-  loadBrokers,
-  setSelectedBrokerIds,
+  buildBrokerCatalogSummary,
+  loadBrokerCatalogSummary,
+  loadStarterBrokers,
   type Broker,
+  type BrokerCatalogSummary,
 } from '../services/brokerStore'
 import {
   buildDeletionBody,
   buildDeletionSubject,
 } from '../services/emailTemplate'
 import {
+  FLOW_PRIMARY_STEP_IDS,
   FLOW_STEP_IDS,
+  getOnboardingSentCount,
   hasStartedFlow,
   setSavedFlowStep,
+  clearFlowProgress,
   type FlowStepId,
 } from '../services/flowProgress'
 import { connectGmail, getGmailStatus } from '../services/googleAuth'
-import { deriveFallbackTarget, deriveOnboardingRedirect } from '../services/homeState'
-import {
-  buildOnboardingHref,
-  buildSettingsHref,
-  buildTemplateHref,
-  getCurrentRoute,
-  readSuccessTo,
-} from '../services/navigation'
+import { deriveOnboardingRedirect } from '../services/homeState'
+import { buildOnboardingHref, buildSettingsHref, buildTemplateHref, getCurrentRoute, readSuccessTo } from '../services/navigation'
 import { getQueue } from '../services/queueStore'
+import { getSubscriptionSnapshot, purchaseSubscription, restoreSubscriptionPurchases, type SubscriptionSnapshot } from '../services/subscription'
 import {
   getDeletionTemplateDraft,
   resolveDeletionTemplate,
@@ -62,6 +59,7 @@ import AppTopNav from '../ui/patterns/AppTopNav'
 import ReadMoreSheetLink from '../ui/patterns/ReadMoreSheetLink'
 import ReviewAssetCard from '../ui/patterns/ReviewAssetCard'
 import ServerBoundaryClaim from '../ui/patterns/ServerBoundaryClaim'
+import SubscriptionOfferCard from '../ui/patterns/SubscriptionOfferCard'
 
 const emptyProfile: UserProfile = {
   fullName: '',
@@ -77,20 +75,35 @@ type FlowProps = {
 
 type StepConfig = {
   title: ReactNode
+  intro?: ReactNode
+  subtitle?: ReactNode
   render: () => ReactElement
   canContinue?: boolean
   showNext?: boolean
+  nextLabel?: string
+  footer?: ReactNode
   showFooterClaim?: boolean
 }
 
-const stepIds = FLOW_STEP_IDS
+type StepNavConfig = {
+  backHref?: string | null
+  label?: string
+  progressCurrent?: number
+  progressTotal?: number
+}
 
-function getPreviousStep(stepId: FlowStepId) {
-  const currentIndex = stepIds.indexOf(stepId)
+type InlineNotice = {
+  variant: 'error' | 'success' | 'info'
+  title: string
+  body: string
+}
+
+function getPreviousPrimaryStep(stepId: FlowStepId) {
+  const currentIndex = FLOW_PRIMARY_STEP_IDS.indexOf(stepId as (typeof FLOW_PRIMARY_STEP_IDS)[number])
   if (currentIndex <= 0) {
     return null
   }
-  return stepIds[currentIndex - 1]
+  return FLOW_PRIMARY_STEP_IDS[currentIndex - 1]
 }
 
 function getNextStep(stepId: FlowStepId, gmailConnected: boolean) {
@@ -98,12 +111,16 @@ function getNextStep(stepId: FlowStepId, gmailConnected: boolean) {
     return gmailConnected ? 'final-review' : 'gmail-send'
   }
 
-  const currentIndex = stepIds.indexOf(stepId)
-  if (currentIndex < 0 || currentIndex >= stepIds.length - 1) {
+  if (stepId === 'beat-sent') {
+    return 'beat-subscribe'
+  }
+
+  const currentIndex = FLOW_STEP_IDS.indexOf(stepId)
+  if (currentIndex < 0 || currentIndex >= FLOW_STEP_IDS.length - 1) {
     return null
   }
 
-  return stepIds[currentIndex + 1]
+  return FLOW_STEP_IDS[currentIndex + 1]
 }
 
 export default function Flow({ stepId }: FlowProps) {
@@ -112,15 +129,17 @@ export default function Flow({ stepId }: FlowProps) {
   const contentRef = useRef<HTMLIonContentElement | null>(null)
   const currentRoute = getCurrentRoute(location)
   const successTo = readSuccessTo(location.search)
-  const currentIndex = stepIds.indexOf(stepId)
-  const previousStep = getPreviousStep(stepId)
+  const primaryStepIndex = FLOW_PRIMARY_STEP_IDS.indexOf(stepId as (typeof FLOW_PRIMARY_STEP_IDS)[number])
+  const previousPrimaryStep = getPreviousPrimaryStep(stepId)
   const [isReady, setIsReady] = useState(false)
   const [flowStarted, setFlowStarted] = useState(false)
   const [gmailConnected, setGmailConnected] = useState(false)
   const [profileDraft, setProfileDraft] = useState<UserProfile>(emptyProfile)
-  const [brokers, setBrokers] = useState<Broker[]>([])
-  const [selectedBrokerIds, setSelectedBrokerIdsState] = useState<string[]>([])
-  const [failedBrokerIds, setFailedBrokerIds] = useState<string[]>([])
+  const [starterBrokers, setStarterBrokers] = useState<Broker[]>([])
+  const [brokerSummary, setBrokerSummary] = useState<BrokerCatalogSummary>(
+    buildBrokerCatalogSummary([]),
+  )
+  const [onboardingSentCount, setOnboardingSentCountState] = useState(0)
   const [previewBroker, setPreviewBroker] = useState<Broker | null>(null)
   const [oauthError, setOauthError] = useState<string | null>(null)
   const [oauthInFlight, setOauthInFlight] = useState(false)
@@ -128,40 +147,47 @@ export default function Flow({ stepId }: FlowProps) {
   const [sendInFlight, setSendInFlight] = useState(false)
   const [templateDraft, setTemplateDraft] = useState<DeletionTemplateDraft | null>(null)
   const [profileErrors, setProfileErrors] = useState<UserProfileErrors>({})
+  const [subscriptionSnapshot, setSubscriptionSnapshot] = useState<SubscriptionSnapshot | null>(null)
+  const [subscriptionNotice, setSubscriptionNotice] = useState<InlineNotice | null>(null)
+  const [subscriptionBusy, setSubscriptionBusy] = useState<'purchase' | 'restore' | null>(null)
+  const [totalSentCount, setTotalSentCount] = useState(0)
+  const [sentReviewItemCount, setSentReviewItemCount] = useState(0)
 
   async function refreshState() {
-    const [status, profile, nextTemplateDraft, nextFlowStarted, nextBrokers, selectedIds, queue] =
-      await Promise.all([
-        getGmailStatus(),
-        getActiveUserProfile(),
-        getDeletionTemplateDraft(),
-        hasStartedFlow(),
-        loadBrokers(),
-        getSelectedBrokerIds(),
-        getQueue(),
-      ])
-
-    const selectableBrokers = filterSelectableBrokers(nextBrokers, queue)
-    const selectableBrokerIds = new Set(selectableBrokers.map((broker) => broker.id))
-    const filteredSelectedIds = selectedIds.filter((id) => selectableBrokerIds.has(id))
-
-    if (filteredSelectedIds.length !== selectedIds.length) {
-      await setSelectedBrokerIds(filteredSelectedIds)
-    }
+    const [
+      status,
+      profile,
+      nextTemplateDraft,
+      nextFlowStarted,
+      nextStarterBrokers,
+      nextBrokerSummary,
+      nextOnboardingSentCount,
+      nextSubscriptionSnapshot,
+      queue,
+    ] = await Promise.all([
+      getGmailStatus(),
+      getActiveUserProfile(),
+      getDeletionTemplateDraft(),
+      hasStartedFlow(),
+      loadStarterBrokers(),
+      loadBrokerCatalogSummary(),
+      getOnboardingSentCount(),
+      getSubscriptionSnapshot(),
+      getQueue(),
+    ])
 
     setGmailConnected(status.connected)
     setProfileDraft(profile ?? emptyProfile)
     setTemplateDraft(nextTemplateDraft)
     setFlowStarted(nextFlowStarted)
     setProfileErrors({})
-    setBrokers(selectableBrokers)
-    setSelectedBrokerIdsState(filteredSelectedIds)
-    setFailedBrokerIds(queue.filter((item) => item.status === 'failed').map((item) => item.brokerId))
-
-    const selectedBroker = filteredSelectedIds.length
-      ? selectableBrokers.find((broker) => broker.id === filteredSelectedIds[0]) ?? null
-      : null
-    setPreviewBroker(selectedBroker ?? selectableBrokers[0] ?? null)
+    setStarterBrokers(nextStarterBrokers)
+    setBrokerSummary(nextBrokerSummary)
+    setOnboardingSentCountState(nextOnboardingSentCount)
+    setPreviewBroker(nextStarterBrokers[0] ?? null)
+    setSubscriptionSnapshot(nextSubscriptionSnapshot)
+    setTotalSentCount(queue.filter((item) => item.status === 'sent').length)
+    setSentReviewItemCount(queue.filter((item) => item.status === 'sent').length)
     setIsReady(true)
   }
 
@@ -170,37 +196,24 @@ export default function Flow({ stepId }: FlowProps) {
     void refreshState()
   })
 
-  const selectedCount = selectedBrokerIds.length
   const requestReviewValidationErrors = getUserProfileValidationErrors(profileDraft)
   const profileComplete =
     Object.keys(requestReviewValidationErrors).length === 0 &&
-    Boolean(profileDraft.fullName || profileDraft.email || profileDraft.city)
+    Boolean(profileDraft.fullName && profileDraft.email && profileDraft.city)
+
   const flowRedirect = isReady
     ? deriveOnboardingRedirect(
         {
           gmailConnected,
           hasProfile: profileComplete,
-          selectedBrokerIds,
-          brokers,
-          queueSummary: { sent: 0, failed: 0, pending: 0, total: 0 },
-          totalSentCount: 0,
-          sentReviewItemCount: 0,
+          onboardingSentCount,
+          totalSentCount,
+          sentReviewItemCount,
         },
         stepId,
         flowStarted,
       )
     : null
-  const onboardingFallbackHref = isReady
-    ? deriveFallbackTarget({
-        gmailConnected,
-        hasProfile: profileComplete,
-        selectedBrokerIds,
-        brokers,
-        queueSummary: { sent: 0, failed: 0, pending: 0, total: 0 },
-        totalSentCount: 0,
-        sentReviewItemCount: 0,
-      })
-    : undefined
 
   useEffect(() => {
     if (!isReady) {
@@ -217,26 +230,6 @@ export default function Flow({ stepId }: FlowProps) {
       void contentRef.current?.scrollToTop(0)
     })
   }, [currentRoute, flowRedirect, history, isReady, stepId])
-
-  function renderStepContext(
-    summary: string,
-    sheetTitle?: string,
-    sheetBody?: ReactNode,
-    linkLabel?: string,
-  ) {
-    return (
-      <div className="flow-context">
-        <AppText intent="supporting">{summary}</AppText>
-        {sheetTitle && sheetBody ? (
-          <ReadMoreSheetLink
-            label={linkLabel ?? sheetTitle}
-            sheetTitle={sheetTitle}
-            sheetBody={sheetBody}
-          />
-        ) : null}
-      </div>
-    )
-  }
 
   function updateProfile(next: Partial<UserProfile>) {
     setProfileDraft((current) => {
@@ -260,31 +253,6 @@ export default function Flow({ stepId }: FlowProps) {
 
   function normalizeZipInput(value: string) {
     return value.replace(/\D/g, '').slice(0, 4)
-  }
-
-  async function toggleBroker(id: string, checked: boolean) {
-    const next = checked
-      ? [...selectedBrokerIds, id]
-      : selectedBrokerIds.filter((item) => item !== id)
-    setSelectedBrokerIdsState(next)
-    const selectedBroker = next.length
-      ? brokers.find((broker) => broker.id === next[0]) ?? null
-      : null
-    setPreviewBroker(selectedBroker ?? brokers[0] ?? null)
-    await setSelectedBrokerIds(next)
-  }
-
-  async function selectAllBrokers() {
-    const ids = brokers.map((broker) => broker.id)
-    setSelectedBrokerIdsState(ids)
-    setPreviewBroker(brokers[0] ?? null)
-    await setSelectedBrokerIds(ids)
-  }
-
-  async function clearAllBrokers() {
-    setSelectedBrokerIdsState([])
-    setPreviewBroker(brokers[0] ?? null)
-    await setSelectedBrokerIds([])
   }
 
   function validateProfile(profile: UserProfile) {
@@ -343,15 +311,7 @@ export default function Flow({ stepId }: FlowProps) {
     }
   }
 
-  function renderSummary(summary: string) {
-    return (
-      <div className="flow-context">
-        <AppText intent="supporting">{summary}</AppText>
-      </div>
-    )
-  }
-
-  async function handleSendSelected() {
+  async function handleSendStarterRound() {
     try {
       setSendError(null)
       setSendInFlight(true)
@@ -361,13 +321,62 @@ export default function Flow({ stepId }: FlowProps) {
         setSendError(result.failureMessage ?? 'Emails didn’t send.')
         return
       }
-      history.replace('/home')
-      return
+
+      history.replace(buildOnboardingHref('beat-sent'))
     } catch (error) {
       setSendError((error as Error).message ?? 'Send failed.')
     } finally {
       setSendInFlight(false)
     }
+  }
+
+  async function handleSubscribe() {
+    setSubscriptionNotice(null)
+    setSubscriptionBusy('purchase')
+    const result = await purchaseSubscription()
+    setSubscriptionSnapshot(result.snapshot)
+    setSubscriptionBusy(null)
+
+    if (result.status === 'cancelled') {
+      return
+    }
+
+    if (result.status === 'error') {
+      setSubscriptionNotice({
+        variant: 'error',
+        title: 'Subscription didn’t start',
+        body: result.message,
+      })
+      return
+    }
+
+    await clearFlowProgress()
+    history.replace('/home')
+  }
+
+  async function handleRestorePurchases() {
+    setSubscriptionNotice(null)
+    setSubscriptionBusy('restore')
+    const result = await restoreSubscriptionPurchases()
+    setSubscriptionSnapshot(result.snapshot)
+    setSubscriptionBusy(null)
+
+    if (result.status === 'restored' && result.snapshot.active) {
+      await clearFlowProgress()
+      history.replace('/home')
+      return
+    }
+
+    setSubscriptionNotice({
+      variant: result.status === 'restored' ? 'success' : 'error',
+      title: result.status === 'restored' ? 'Purchases restored' : 'Restore didn’t complete',
+      body: result.message,
+    })
+  }
+
+  async function handleBeatLater() {
+    await clearFlowProgress()
+    history.replace('/home')
   }
 
   function goToStep(nextStep: FlowStepId, replace = false) {
@@ -396,6 +405,26 @@ export default function Flow({ stepId }: FlowProps) {
     }
   }
 
+  function renderStepContext(
+    summary: string,
+    sheetTitle?: string,
+    sheetBody?: ReactNode,
+    linkLabel?: string,
+  ) {
+    return (
+      <div className="flow-context">
+        <AppText intent="supporting">{summary}</AppText>
+        {sheetTitle && sheetBody ? (
+          <ReadMoreSheetLink
+            label={linkLabel ?? sheetTitle}
+            sheetTitle={sheetTitle}
+            sheetBody={sheetBody}
+          />
+        ) : null}
+      </div>
+    )
+  }
+
   const resolvedTemplate = resolveDeletionTemplate(profileDraft, templateDraft)
   const previewSignOff = resolvedTemplate.signOff || '[Your name]'
   const previewBodyTopText = `To [broker privacy team],\n\n${resolvedTemplate.intro}\n\nIDENTITY FOR LOOKUP:`
@@ -407,6 +436,29 @@ export default function Flow({ stepId }: FlowProps) {
       /^To .+ Privacy\/Compliance Team,/,
       'To [broker privacy team],',
     )
+  }
+
+  function getStepNavConfig(): StepNavConfig {
+    if (stepId === 'beat-sent') {
+      return {
+        progressCurrent: 1,
+        progressTotal: 1,
+      }
+    }
+
+    if (stepId === 'beat-subscribe') {
+      return {}
+    }
+
+    return {
+      backHref: previousPrimaryStep ? buildOnboardingHref(previousPrimaryStep, successTo) : undefined,
+      label:
+        primaryStepIndex >= 0
+          ? `Step ${primaryStepIndex + 1} of ${FLOW_PRIMARY_STEP_IDS.length}`
+          : undefined,
+      progressCurrent: primaryStepIndex >= 0 ? primaryStepIndex + 1 : undefined,
+      progressTotal: primaryStepIndex >= 0 ? FLOW_PRIMARY_STEP_IDS.length : undefined,
+    }
   }
 
   const steps: Record<FlowStepId, StepConfig> = {
@@ -425,29 +477,19 @@ export default function Flow({ stepId }: FlowProps) {
           </AppText>
           <div className="flow-intro-points">
             <div className="flow-intro-points__item">
-              <div className="app-stack app-stack--tight">
-                <AppText intent="body">
-                  <strong>Data brokers are</strong> companies that collect, package, and sell
-                  people&apos;s personal information.
-                </AppText>
-              </div>
+              <AppText intent="body">
+                <strong>Data brokers are</strong> companies that collect, package, and sell people&apos;s personal information.
+              </AppText>
             </div>
             <div className="flow-intro-points__item">
-              <div className="app-stack app-stack--tight">
-                <AppText intent="body">
-                  <strong>You</strong> choose which data brokers to contact from a curated list,
-                  review the opt-out emails, and approve them before anything is sent.
-                </AppText>
-              </div>
+              <AppText intent="body">
+                <strong>You</strong> review the opt-out emails, approve them, and send from your own Gmail account.
+              </AppText>
             </div>
             <div className="flow-intro-points__item">
-              <div className="app-stack app-stack--tight">
-                <AppText intent="body">
-                  <strong>Scrappy Kin sends from your Gmail so you stay in control.</strong> We
-                  only ask for permission to send emails, and you approve every email before
-                  it&apos;s sent. By design, we cannot read your inbox or manage your mailbox.
-                </AppText>
-              </div>
+              <AppText intent="body">
+                <strong>Scrappy Kin is built to keep you in control.</strong> We only ask for send permission. We cannot read your inbox or manage your mailbox.
+              </AppText>
             </div>
           </div>
         </div>
@@ -455,25 +497,34 @@ export default function Flow({ stepId }: FlowProps) {
       canContinue: true,
       showFooterClaim: false,
     },
-    brokers: {
-      title: 'Pick brokers',
+    'starter-set': {
+      title: 'Your first round is ready.',
+      intro: 'Removing your data isn’t a one-time fix. Brokers re-add you. It’s an ongoing practice — like weeding.',
+      subtitle: '$5/year — first round on us.',
       render: () => (
-        <BrokerSelectionPanel
-          brokers={brokers}
-          selectedIds={selectedBrokerIds}
-          failedBrokerIds={failedBrokerIds}
-          onToggle={toggleBroker}
-          onSelectAll={selectAllBrokers}
-          onClearAll={clearAllBrokers}
-          context={
-            <AppText intent="supporting">
-              Feel free to start with one or two brokers, or select more if you already know what
-              you want to send.
-            </AppText>
-          }
-        />
+        <section className="app-section-shell">
+          <AppSegmentedCard>
+            <AppSegmentedCardSection>
+              <AppText intent="label">Your starter set</AppText>
+              <div className="app-stack">
+                {starterBrokers.map((broker) => (
+                  <div className="flow-access-row" key={broker.id}>
+                    <AppIcon icon={checkmarkCircle} size="sm" tone="primary" ariaLabel="Included" />
+                    <AppText intent="body">{broker.name}</AppText>
+                  </div>
+                ))}
+              </div>
+            </AppSegmentedCardSection>
+            <AppSegmentedCardSection>
+              <AppText intent="supporting">
+                Most brokers reply within a few days. Keeping rounds small means you can see what’s happening and follow up if needed.
+              </AppText>
+            </AppSegmentedCardSection>
+          </AppSegmentedCard>
+        </section>
       ),
-      canContinue: selectedCount > 0,
+      canContinue: true,
+      footer: <AppText intent="caption">No card. No auto-subscribe.</AppText>,
       showFooterClaim: false,
     },
     'request-review': {
@@ -481,9 +532,7 @@ export default function Flow({ stepId }: FlowProps) {
       render: () => (
         <section className="app-section-shell">
           <AppText intent="supporting">
-            These are the details we recommend based on legal research and broker testing. They
-            usually give brokers enough to find the right record while keeping what you share
-            limited.
+            These are the details we recommend based on legal research and broker testing. They usually give brokers enough to find the right record while keeping what you share limited.
           </AppText>
           <AppText intent="caption">* Required</AppText>
           <div className="flow-request-preview">
@@ -564,7 +613,7 @@ export default function Flow({ stepId }: FlowProps) {
           </AppButton>
         </section>
       ),
-      canContinue: selectedCount > 0 && Object.keys(requestReviewValidationErrors).length === 0,
+      canContinue: Object.keys(requestReviewValidationErrors).length === 0,
       showFooterClaim: false,
     },
     'gmail-send': {
@@ -617,12 +666,10 @@ export default function Flow({ stepId }: FlowProps) {
               <div className="flow-stack">
                 <AppText intent="body">Scrappy Kin is built to keep you in control.</AppText>
                 <AppText intent="body">
-                  Instead of asking you to trust a new Scrappy Kin inbox with your personal data, we
-                  send from an account you already know and manage.
+                  Instead of asking you to trust a new Scrappy Kin inbox with your personal data, we send from an account you already know and manage.
                 </AppText>
                 <AppText intent="body">
-                  That keeps the line clear: you approve each batch, the emails go out from you, and
-                  your data stays off our servers.
+                  That keeps the line clear: you approve each batch, the emails go out from you, and your data stays off our servers.
                 </AppText>
               </div>,
               'Why use your Gmail account?',
@@ -634,8 +681,7 @@ export default function Flow({ stepId }: FlowProps) {
                 <div className="flow-access-row">
                   <AppIcon icon={checkmarkCircle} size="sm" tone="primary" ariaLabel="Allowed" />
                   <AppText intent="body">
-                    <strong>Send</strong> opt-out emails from your Gmail account after you approve
-                    each batch.
+                    <strong>Send</strong> opt-out emails from your Gmail account after you approve each batch.
                   </AppText>
                 </div>
               </AppSegmentedCardSection>
@@ -653,23 +699,6 @@ export default function Flow({ stepId }: FlowProps) {
                 {oauthError}
               </AppNotice>
             ) : null}
-            {sendError ? (
-              <AppNotice
-                variant="error"
-                title="Emails didn’t send"
-                actions={
-                  <AppButton
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => history.push(buildSettingsHref('gmail', currentRoute))}
-                  >
-                    Review Gmail settings
-                  </AppButton>
-                }
-              >
-                {sendError}
-              </AppNotice>
-            ) : null}
             <AppButton onClick={handleConnectGmail} disabled={oauthInFlight}>
               {oauthError ? 'Retry Google sign-in' : 'Continue to Google'}
             </AppButton>
@@ -681,8 +710,8 @@ export default function Flow({ stepId }: FlowProps) {
       title: 'Final review',
       render: () => (
         <section className="app-section-shell">
-          {renderSummary(
-            'Review the broker list and the email below. If it looks right, this batch will send from your connected Gmail account.',
+          {renderStepContext(
+            'Review the starter broker list and the email below. If it looks right, this batch will send from your connected Gmail account.',
           )}
           <ReviewAssetCard
             title="Gmail connected"
@@ -699,21 +728,9 @@ export default function Flow({ stepId }: FlowProps) {
           >
             <AppText intent="body">Send-only access is ready. No inbox access.</AppText>
           </ReviewAssetCard>
-          <ReviewAssetCard
-            title={selectedCount > 0 ? `${selectedCount} brokers selected` : 'No brokers selected'}
-            action={
-              <button
-                type="button"
-                className="review-asset-card__icon-action"
-                aria-label="Edit brokers"
-                onClick={() => goToStep('brokers')}
-              >
-                <AppIcon icon={createOutline} size="sm" />
-              </button>
-            }
-          >
+          <ReviewAssetCard title={`${starterBrokers.length} brokers in your first round`}>
             <AppText intent="body">
-              Review or change the broker list before you send the batch.
+              Your starter set is ready. The first round is fixed here so you can review and send without configuring anything extra.
             </AppText>
           </ReviewAssetCard>
           <ReviewAssetCard
@@ -757,17 +774,86 @@ export default function Flow({ stepId }: FlowProps) {
               {sendError}
             </AppNotice>
           ) : null}
-          <AppButton onClick={handleSendSelected} disabled={sendInFlight || !gmailConnected}>
-            {sendInFlight ? 'Sending...' : `✉️ Send ${selectedCount || ''} opt-out emails`.trim()}
+          <AppButton onClick={handleSendStarterRound} disabled={sendInFlight || !gmailConnected}>
+            {sendInFlight ? 'Sending...' : `✉️ Send ${starterBrokers.length} opt-out emails`}
           </AppButton>
           <ServerBoundaryClaim />
         </section>
       ),
       showNext: false,
     },
+    'beat-sent': {
+      title: 'Requests sent.',
+      render: () => (
+        <section className="app-section-shell">
+          <ReviewAssetCard title="What happens next" icon={checkmarkCircle}>
+            <AppText intent="body">
+              Most brokers reply within a few days. Replies go directly to your inbox.
+            </AppText>
+          </ReviewAssetCard>
+        </section>
+      ),
+      subtitle: `${onboardingSentCount} opt-out emails went from your Gmail account.`,
+      showNext: false,
+      footer: (
+        <AppButton onClick={() => goToStep('beat-subscribe')} fullWidth>
+          Done
+        </AppButton>
+      ),
+      showFooterClaim: false,
+    },
+    'beat-subscribe': {
+      title: 'Stay on top of it.',
+      intro: 'Brokers re-add you. The weeds come back.',
+      render: () => (
+        <section className="app-section-shell">
+          <SubscriptionOfferCard brokerSummary={brokerSummary} />
+          {subscriptionSnapshot?.loadError ? (
+            <AppNotice variant="error" title="Subscription unavailable">
+              {subscriptionSnapshot.loadError}
+            </AppNotice>
+          ) : null}
+          {subscriptionNotice ? (
+            <AppNotice variant={subscriptionNotice.variant} title={subscriptionNotice.title}>
+              {subscriptionNotice.body}
+            </AppNotice>
+          ) : null}
+          <div className="app-action-stack">
+            <AppButton
+              fullWidth
+              onClick={() => void handleSubscribe()}
+              loading={subscriptionBusy === 'purchase'}
+              disabled={subscriptionBusy !== null || subscriptionSnapshot?.isAvailable === false}
+            >
+              Subscribe — $5/year
+            </AppButton>
+            <AppButton
+              variant="ghost"
+              fullWidth
+              onClick={() => void handleBeatLater()}
+              disabled={subscriptionBusy !== null}
+            >
+              Later
+            </AppButton>
+            <AppButton
+              variant="secondary"
+              size="sm"
+              onClick={() => void handleRestorePurchases()}
+              loading={subscriptionBusy === 'restore'}
+              disabled={subscriptionBusy !== null}
+            >
+              Restore Purchases
+            </AppButton>
+          </div>
+        </section>
+      ),
+      showNext: false,
+      showFooterClaim: false,
+    },
   }
 
   const step = steps[stepId]
+  const nav = getStepNavConfig()
 
   if (!isReady) {
     return (
@@ -782,25 +868,25 @@ export default function Flow({ stepId }: FlowProps) {
       <IonContent className="page-content" ref={contentRef}>
         <div className="flow-stack">
           <AppTopNav
-            label={`Step ${currentIndex + 1} of ${stepIds.length}`}
-            backHref={previousStep ? buildOnboardingHref(previousStep, successTo) : onboardingFallbackHref}
-            backDisabled={!previousStep}
-            progressCurrent={currentIndex + 1}
-            progressTotal={stepIds.length}
+            label={nav.label}
+            backHref={nav.backHref}
+            progressCurrent={nav.progressCurrent}
+            progressTotal={nav.progressTotal}
             sticky
           />
+          {step.intro ? <AppText intent="intro">{step.intro}</AppText> : null}
           <AppHeading intent="section">{step.title}</AppHeading>
+          {step.subtitle ? <AppText intent="body">{step.subtitle}</AppText> : null}
           {step.render()}
           {step.showNext === false ? null : (
-            <>
-              <div className="flow-actions">
-                <AppButton onClick={() => void goNext()} disabled={step.canContinue === false} fullWidth>
-                  Next
-                </AppButton>
-              </div>
-              {step.showFooterClaim === false ? null : <ServerBoundaryClaim />}
-            </>
+            <div className="flow-actions">
+              <AppButton onClick={() => void goNext()} disabled={step.canContinue === false} fullWidth>
+                {step.nextLabel ?? 'Next'}
+              </AppButton>
+            </div>
           )}
+          {step.footer ?? null}
+          {step.showFooterClaim === false ? null : <ServerBoundaryClaim />}
         </div>
       </IonContent>
     </IonPage>

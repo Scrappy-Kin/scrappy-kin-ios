@@ -1,5 +1,55 @@
 [
   {
+    "id": "spokeo-com",
+    "name": "Spokeo",
+    "domain": "spokeo.com",
+    "contactEmail": "privacy@spokeo.com",
+    "tier": "mega",
+    "inTop30": true,
+    "verifiedResolutions": 1,
+    "starterOrder": 1
+  },
+  {
+    "id": "whitepages-com",
+    "name": "Whitepages",
+    "domain": "whitepages.com",
+    "contactEmail": "privacy@whitepages.com",
+    "tier": "mega",
+    "inTop30": true,
+    "verifiedResolutions": 1,
+    "starterOrder": 2
+  },
+  {
+    "id": "beenverified-com",
+    "name": "BeenVerified",
+    "domain": "beenverified.com",
+    "contactEmail": "privacy@beenverified.com",
+    "tier": "mega",
+    "inTop30": true,
+    "verifiedResolutions": 1,
+    "starterOrder": 3
+  },
+  {
+    "id": "peoplefinders-com",
+    "name": "PeopleFinders",
+    "domain": "peoplefinders.com",
+    "contactEmail": "privacy@peoplefinders.com",
+    "tier": "mega",
+    "inTop30": true,
+    "verifiedResolutions": 1,
+    "starterOrder": 4
+  },
+  {
+    "id": "intelius-com",
+    "name": "Intelius",
+    "domain": "intelius.com",
+    "contactEmail": "support@mailer.intelius.com",
+    "tier": "mega",
+    "inTop30": true,
+    "verifiedResolutions": 1,
+    "starterOrder": 5
+  },
+  {
     "id": "truepeoplesearch-com",
     "name": "Truepeoplesearch",
     "domain": "truepeoplesearch.com",
@@ -28,15 +78,6 @@
     "childCompanies": [
       "Venntel"
     ]
-  },
-  {
-    "id": "spokeo-com",
-    "name": "Spokeo",
-    "domain": "spokeo.com",
-    "contactEmail": "privacy@spokeo.com",
-    "tier": "mega",
-    "inTop30": true,
-    "verifiedResolutions": 1
   },
   {
     "id": "stirista-com",
