@@ -500,7 +500,7 @@ export default function Flow({ stepId }: FlowProps) {
     'starter-set': {
       title: 'Your first round is ready.',
       intro: 'Removing your data isn’t a one-time fix. Brokers re-add you. It’s an ongoing practice — like weeding.',
-      subtitle: '$5/year — first round on us.',
+      subtitle: '$4.99/year — first round on us.',
       render: () => (
         <section className="app-section-shell">
           <AppSegmentedCard>
@@ -825,7 +825,7 @@ export default function Flow({ stepId }: FlowProps) {
               loading={subscriptionBusy === 'purchase'}
               disabled={subscriptionBusy !== null || subscriptionSnapshot?.isAvailable === false}
             >
-              Subscribe — $5/year
+              Subscribe — $4.99/year
             </AppButton>
             <AppButton
               variant="ghost"
