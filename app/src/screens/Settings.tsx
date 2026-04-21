@@ -482,7 +482,7 @@ export default function Settings() {
               loading={subscriptionBusy === 'purchase'}
               disabled={subscriptionBusy !== null || subscriptionSnapshot?.isAvailable === false}
             >
-              Subscribe — $5/year
+              Subscribe — $4.99/year
             </AppButton>
           )}
           <AppButton

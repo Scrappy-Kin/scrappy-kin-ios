@@ -183,7 +183,7 @@ export default function Home() {
                     loading={purchaseInFlight}
                     disabled={purchaseInFlight || Boolean(subscriptionUnavailable)}
                   >
-                    Subscribe — $5/year
+                    Subscribe — $4.99/year
                   </AppButton>
                 )}
                 {canReviewSent ? (
