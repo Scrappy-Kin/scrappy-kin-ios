@@ -1,6 +1,6 @@
 import { IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
 import { checkmarkCircle, createOutline } from 'ionicons/icons'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
 import { isQaStoreKitLane } from '../config/buildInfo'
 import { QA_STOREKIT_SEND_NOTICE } from '../config/qaStoreKit'
@@ -10,9 +10,7 @@ import {
   getSelectedBrokerIds,
   loadBrokers,
   setSelectedBrokerIds as persistSelectedBrokerIds,
-  type Broker,
 } from '../services/brokerStore'
-import { buildDeletionBody, buildDeletionSubject } from '../services/emailTemplate'
 import { getGmailStatus } from '../services/googleAuth'
 import { getCurrentRoute, readReturnTo } from '../services/navigation'
 import { getQueue } from '../services/queueStore'
@@ -20,22 +18,17 @@ import {
   buildTaskHref,
   deriveReviewBatchTaskRedirect,
 } from '../services/taskRoutes'
-import {
-  getDeletionTemplateDraft,
-  resolveDeletionTemplate,
-  type DeletionTemplateDraft,
-} from '../services/templateStore'
 import { getActiveUserProfile, type UserProfile } from '../services/userProfile'
 import AppButton from '../ui/primitives/AppButton'
 import AppHeading from '../ui/primitives/AppHeading'
 import AppIcon from '../ui/primitives/AppIcon'
 import AppNotice from '../ui/primitives/AppNotice'
-import AppSegmentedCard, { AppSegmentedCardSection } from '../ui/primitives/AppSegmentedCard'
 import AppText from '../ui/primitives/AppText'
 import AppTopNav from '../ui/patterns/AppTopNav'
 import ReviewAssetCard from '../ui/patterns/ReviewAssetCard'
 import ServerBoundaryClaim from '../ui/patterns/ServerBoundaryClaim'
 import SettingsShortcut from '../ui/patterns/SettingsShortcut'
+import { useRouteFocus } from '../ui/patterns/useRouteFocus'
 
 const emptyProfile: UserProfile = {
   fullName: '',
@@ -50,22 +43,19 @@ export default function ReviewBatch() {
   const location = useLocation()
   const currentRoute = getCurrentRoute(location)
   const returnTo = readReturnTo(location.search) ?? '/home'
+  const headingRef = useRef<HTMLHeadingElement | null>(null)
   const [isReady, setIsReady] = useState(false)
   const [gmailConnected, setGmailConnected] = useState(false)
   const [profileDraft, setProfileDraft] = useState<UserProfile>(emptyProfile)
-  const [brokers, setBrokers] = useState<Broker[]>([])
   const [selectedBrokerIds, setSelectedBrokerIds] = useState<string[]>([])
-  const [previewBroker, setPreviewBroker] = useState<Broker | null>(null)
-  const [templateDraft, setTemplateDraft] = useState<DeletionTemplateDraft | null>(null)
   const [sendError, setSendError] = useState<string | null>(null)
   const [sendInFlight, setSendInFlight] = useState(false)
   const isQaStoreKit = isQaStoreKitLane()
 
   async function refreshState() {
-    const [status, profile, nextTemplateDraft, nextBrokers, selectedIds, queue] = await Promise.all([
+    const [status, profile, nextBrokers, selectedIds, queue] = await Promise.all([
       getGmailStatus(),
       getActiveUserProfile(),
-      getDeletionTemplateDraft(),
       loadBrokers(),
       getSelectedBrokerIds(),
       getQueue(),
@@ -74,21 +64,21 @@ export default function ReviewBatch() {
     const selectableBrokers = filterSelectableBrokers(nextBrokers, queue)
     const selectableBrokerIds = new Set(selectableBrokers.map((broker) => broker.id))
     const filteredSelectedIds = selectedIds.filter((id) => selectableBrokerIds.has(id))
+    const nextSelectedIds =
+      filteredSelectedIds.length > 0
+        ? filteredSelectedIds
+        : selectableBrokers.map((broker) => broker.id)
 
-    if (filteredSelectedIds.length !== selectedIds.length) {
-      await persistSelectedBrokerIds(filteredSelectedIds)
+    if (
+      nextSelectedIds.length !== selectedIds.length ||
+      nextSelectedIds.some((id, index) => id !== selectedIds[index])
+    ) {
+      await persistSelectedBrokerIds(nextSelectedIds)
     }
-
-    const selectedBroker = filteredSelectedIds.length
-      ? selectableBrokers.find((broker) => broker.id === filteredSelectedIds[0]) ?? null
-      : null
 
     setGmailConnected(status.connected)
     setProfileDraft(profile ?? emptyProfile)
-    setTemplateDraft(nextTemplateDraft)
-    setBrokers(selectableBrokers)
-    setSelectedBrokerIds(filteredSelectedIds)
-    setPreviewBroker(selectedBroker ?? selectableBrokers[0] ?? null)
+    setSelectedBrokerIds(nextSelectedIds)
     setIsReady(true)
   }
 
@@ -108,8 +98,6 @@ export default function ReviewBatch() {
         {
           gmailConnected,
           hasProfile: profileComplete,
-          selectedBrokerIds,
-          brokers,
         },
         currentRoute,
         returnTo,
@@ -123,11 +111,13 @@ export default function ReviewBatch() {
     history.replace(reviewRedirect)
   }, [currentRoute, history, isReady, reviewRedirect])
 
+  useRouteFocus(currentRoute, isReady && (!reviewRedirect || reviewRedirect === currentRoute), headingRef)
+
   async function handleSendSelected() {
     try {
       setSendError(null)
       setSendInFlight(true)
-      const result = await executeBatchSend(profileDraft)
+      const result = await executeBatchSend(profileDraft, selectedBrokerIds)
       if (result.sentCount === 0) {
         setSendError(result.failureMessage ?? 'Emails didn’t send.')
         await refreshState()
@@ -139,16 +129,6 @@ export default function ReviewBatch() {
     } finally {
       setSendInFlight(false)
     }
-  }
-
-  const resolvedTemplate = resolveDeletionTemplate(profileDraft, templateDraft)
-
-  function previewBodyText(referenceId?: string) {
-    if (!previewBroker) return ''
-    return buildDeletionBody(previewBroker, profileDraft, referenceId, resolvedTemplate).replace(
-      /^To .+ Privacy\/Compliance Team,/,
-      'To [broker privacy team],',
-    )
   }
 
   if (!isReady) {
@@ -164,7 +144,9 @@ export default function ReviewBatch() {
       <IonContent className="page-content">
         <div className="app-screen-shell">
           <AppTopNav backHref={returnTo} action={<SettingsShortcut />} />
-          <AppHeading intent="section">Review next batch</AppHeading>
+          <AppHeading intent="section" level={1} ref={headingRef} tabIndex={-1}>
+            Review next batch
+          </AppHeading>
           <section className="app-section-shell">
             <AppText intent="supporting">
               Review the broker list and the email below. If it looks right, this batch will send
@@ -195,33 +177,17 @@ export default function ReviewBatch() {
                 </button>
               }
             >
-              <AppText intent="body">Send-only access is ready. No inbox access.</AppText>
+              <AppText intent="body">Send-only access is active. Scrappy Kin cannot read your inbox.</AppText>
             </ReviewAssetCard>
             <ReviewAssetCard
-              title={
-                selectedBrokerIds.length > 0
-                  ? `${selectedBrokerIds.length} brokers selected`
-                  : 'No brokers selected'
-              }
-              action={
-                <button
-                  type="button"
-                  className="review-asset-card__icon-action"
-                  aria-label="Edit brokers"
-                  onClick={() =>
-                    history.push(buildTaskHref('edit_brokers_for_batch', { returnTo: currentRoute }))
-                  }
-                >
-                  <AppIcon icon={createOutline} size="sm" />
-                </button>
-              }
+              title={`${selectedBrokerIds.length} brokers in this batch`}
             >
               <AppText intent="body">
-                Review or change the broker list before you send the batch.
+                This batch uses the remaining brokers that have not already been sent.
               </AppText>
             </ReviewAssetCard>
             <ReviewAssetCard
-              title="Email preview"
+              title="Email wording ready"
               action={
                 <button
                   type="button"
@@ -235,16 +201,9 @@ export default function ReviewBatch() {
                 </button>
               }
             >
-              <AppSegmentedCard>
-                <AppSegmentedCardSection>
-                  <AppText intent="label">Subject</AppText>
-                  <AppText intent="body">{buildDeletionSubject('ABC123')}</AppText>
-                </AppSegmentedCardSection>
-                <AppSegmentedCardSection>
-                  <AppText intent="label">Body</AppText>
-                  <pre className="flow-email-plaintext">{previewBodyText('ABC123')}</pre>
-                </AppSegmentedCardSection>
-              </AppSegmentedCard>
+              <AppText intent="body">
+                Everything is ready to go. Make a last edit if you want, or send this batch as is.
+              </AppText>
             </ReviewAssetCard>
             {sendError ? (
               <AppNotice
@@ -270,7 +229,10 @@ export default function ReviewBatch() {
                 {sendError}
               </AppNotice>
             ) : null}
-            <AppButton onClick={handleSendSelected} disabled={sendInFlight || !gmailConnected}>
+            <AppButton
+              onClick={handleSendSelected}
+              disabled={sendInFlight || !gmailConnected || selectedBrokerIds.length === 0}
+            >
               {sendInFlight
                 ? 'Sending...'
                 : `✉️ Send ${selectedBrokerIds.length || ''} opt-out emails`.trim()}
