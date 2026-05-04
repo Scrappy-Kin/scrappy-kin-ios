@@ -8,6 +8,7 @@ import { useEffect, useRef, useState, type ReactElement, type ReactNode } from '
 import { useHistory, useLocation } from 'react-router-dom'
 import { isQaStoreKitLane } from '../config/buildInfo'
 import { QA_STOREKIT_SEND_NOTICE } from '../config/qaStoreKit'
+import { SUBSCRIPTION_PRICE_BUTTON_LABEL } from '../config/subscription'
 import { completeOnboardingSend } from '../services/batchSend'
 import {
   buildBrokerCatalogSummary,
@@ -17,7 +18,6 @@ import {
   type BrokerCatalogSummary,
 } from '../services/brokerStore'
 import {
-  buildDeletionBody,
   buildDeletionSubject,
 } from '../services/emailTemplate'
 import {
@@ -50,6 +50,7 @@ import {
   type UserProfileField,
 } from '../services/userProfile'
 import AppButton from '../ui/primitives/AppButton'
+import AppBulletRow from '../ui/primitives/AppBulletRow'
 import AppHeading from '../ui/primitives/AppHeading'
 import AppIcon from '../ui/primitives/AppIcon'
 import AppInput from '../ui/primitives/AppInput'
@@ -58,10 +59,12 @@ import AppSegmentedCard, { AppSegmentedCardSection } from '../ui/primitives/AppS
 import AppText from '../ui/primitives/AppText'
 import GmailConnectionStatusCard from '../ui/patterns/GmailConnectionStatusCard'
 import AppTopNav from '../ui/patterns/AppTopNav'
-import ReadMoreSheetLink from '../ui/patterns/ReadMoreSheetLink'
 import ReviewAssetCard from '../ui/patterns/ReviewAssetCard'
 import ServerBoundaryClaim from '../ui/patterns/ServerBoundaryClaim'
+import SubscriptionBillingClaim from '../ui/patterns/SubscriptionBillingClaim'
+import SubscriptionDiagnosticsNotice from '../ui/patterns/SubscriptionDiagnosticsNotice'
 import SubscriptionOfferCard from '../ui/patterns/SubscriptionOfferCard'
+import { useRouteFocus } from '../ui/patterns/useRouteFocus'
 
 const emptyProfile: UserProfile = {
   fullName: '',
@@ -77,12 +80,14 @@ type FlowProps = {
 
 type StepConfig = {
   title: ReactNode
+  accessibilityTitle?: string
   intro?: ReactNode
   subtitle?: ReactNode
   render: () => ReactElement
   canContinue?: boolean
   showNext?: boolean
   nextLabel?: string
+  nextAccessibilityDescription?: string
   footer?: ReactNode
   showFooterClaim?: boolean
 }
@@ -129,6 +134,9 @@ export default function Flow({ stepId }: FlowProps) {
   const history = useHistory()
   const location = useLocation()
   const contentRef = useRef<HTMLIonContentElement | null>(null)
+  const headingRef = useRef<HTMLHeadingElement | null>(null)
+  const navLabelRef = useRef<HTMLSpanElement | null>(null)
+  const nextDescriptionId = 'flow-next-description'
   const currentRoute = getCurrentRoute(location)
   const successTo = readSuccessTo(location.search)
   const primaryStepIndex = FLOW_PRIMARY_STEP_IDS.indexOf(stepId as (typeof FLOW_PRIMARY_STEP_IDS)[number])
@@ -142,7 +150,6 @@ export default function Flow({ stepId }: FlowProps) {
     buildBrokerCatalogSummary([]),
   )
   const [onboardingSentCount, setOnboardingSentCountState] = useState(0)
-  const [previewBroker, setPreviewBroker] = useState<Broker | null>(null)
   const [oauthError, setOauthError] = useState<string | null>(null)
   const [oauthInFlight, setOauthInFlight] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
@@ -187,7 +194,6 @@ export default function Flow({ stepId }: FlowProps) {
     setStarterBrokers(nextStarterBrokers)
     setBrokerSummary(nextBrokerSummary)
     setOnboardingSentCountState(nextOnboardingSentCount)
-    setPreviewBroker(nextStarterBrokers[0] ?? null)
     setSubscriptionSnapshot(nextSubscriptionSnapshot)
     setTotalSentCount(queue.filter((item) => item.status === 'sent').length)
     setSentReviewItemCount(queue.filter((item) => item.status === 'sent').length)
@@ -217,6 +223,7 @@ export default function Flow({ stepId }: FlowProps) {
         flowStarted,
       )
     : null
+  const shouldFocusCurrentStep = isReady && (!flowRedirect || flowRedirect === currentRoute)
 
   useEffect(() => {
     if (!isReady) {
@@ -233,6 +240,8 @@ export default function Flow({ stepId }: FlowProps) {
       void contentRef.current?.scrollToTop(0)
     })
   }, [currentRoute, flowRedirect, history, isReady, stepId])
+
+  useRouteFocus(stepId, shouldFocusCurrentStep, navLabelRef, headingRef)
 
   function updateProfile(next: Partial<UserProfile>) {
     setProfileDraft((current) => {
@@ -313,6 +322,9 @@ export default function Flow({ stepId }: FlowProps) {
       setOauthInFlight(false)
     }
   }
+
+  const subscribeButtonLabel =
+    subscriptionSnapshot?.product.buttonPriceLabel ?? SUBSCRIPTION_PRICE_BUTTON_LABEL
 
   async function handleSendStarterRound() {
     try {
@@ -408,22 +420,10 @@ export default function Flow({ stepId }: FlowProps) {
     }
   }
 
-  function renderStepContext(
-    summary: string,
-    sheetTitle?: string,
-    sheetBody?: ReactNode,
-    linkLabel?: string,
-  ) {
+  function renderStepContext(summary: string) {
     return (
       <div className="flow-context">
         <AppText intent="supporting">{summary}</AppText>
-        {sheetTitle && sheetBody ? (
-          <ReadMoreSheetLink
-            label={linkLabel ?? sheetTitle}
-            sheetTitle={sheetTitle}
-            sheetBody={sheetBody}
-          />
-        ) : null}
       </div>
     )
   }
@@ -432,14 +432,6 @@ export default function Flow({ stepId }: FlowProps) {
   const previewSignOff = resolvedTemplate.signOff || '[Your name]'
   const previewBodyTopText = `To [broker privacy team],\n\n${resolvedTemplate.intro}\n\nIDENTITY FOR LOOKUP:`
   const previewBodyBottomText = `WHAT I'M REQUESTING:\n${resolvedTemplate.requestBlock}\n\n${previewSignOff}`
-
-  function previewBodyText(referenceId?: string) {
-    if (!previewBroker || Object.keys(requestReviewValidationErrors).length > 0) return ''
-    return buildDeletionBody(previewBroker, profileDraft, referenceId, resolvedTemplate).replace(
-      /^To .+ Privacy\/Compliance Team,/,
-      'To [broker privacy team],',
-    )
-  }
 
   function getStepNavConfig(): StepNavConfig {
     if (stepId === 'beat-sent') {
@@ -466,6 +458,7 @@ export default function Flow({ stepId }: FlowProps) {
 
   const steps: Record<FlowStepId, StepConfig> = {
     intro: {
+      accessibilityTitle: 'Take Back Your Privacy, On Your Terms',
       title: (
         <>
           Take Back Your Privacy,
@@ -480,17 +473,26 @@ export default function Flow({ stepId }: FlowProps) {
           </AppText>
           <div className="flow-intro-points">
             <div className="flow-intro-points__item">
-              <AppText intent="body">
+              <AppText
+                intent="body"
+                accessibilityLabel="Data brokers are companies that collect, package, and sell people's personal information."
+              >
                 <strong>Data brokers are</strong> companies that collect, package, and sell people&apos;s personal information.
               </AppText>
             </div>
             <div className="flow-intro-points__item">
-              <AppText intent="body">
+              <AppText
+                intent="body"
+                accessibilityLabel="You review the opt-out emails, approve them, and send from your own Gmail account."
+              >
                 <strong>You</strong> review the opt-out emails, approve them, and send from your own Gmail account.
               </AppText>
             </div>
             <div className="flow-intro-points__item">
-              <AppText intent="body">
+              <AppText
+                intent="body"
+                accessibilityLabel="Scrappy Kin is built to keep you in control. We only ask for send permission. We cannot read your inbox or manage your mailbox."
+              >
                 <strong>Scrappy Kin is built to keep you in control.</strong> We only ask for send permission. We cannot read your inbox or manage your mailbox.
               </AppText>
             </div>
@@ -512,7 +514,7 @@ export default function Flow({ stepId }: FlowProps) {
               <div className="app-stack">
                 {starterBrokers.map((broker) => (
                   <div className="flow-access-row" key={broker.id}>
-                    <AppIcon icon={checkmarkCircle} size="sm" tone="primary" ariaLabel="Included" />
+                    <AppIcon icon={checkmarkCircle} size="sm" tone="primary" />
                     <AppText intent="body">{broker.name}</AppText>
                   </div>
                 ))}
@@ -527,7 +529,7 @@ export default function Flow({ stepId }: FlowProps) {
         </section>
       ),
       canContinue: true,
-      footer: <AppText intent="caption">No card. No auto-subscribe.</AppText>,
+      nextAccessibilityDescription: 'No card. No auto-subscribe.',
       showFooterClaim: false,
     },
     'request-review': {
@@ -537,7 +539,6 @@ export default function Flow({ stepId }: FlowProps) {
           <AppText intent="supporting">
             These are the details we recommend based on legal research and broker testing. They usually give brokers enough to find the right record while keeping what you share limited.
           </AppText>
-          <AppText intent="caption">* Required</AppText>
           <div className="flow-request-preview">
             <AppSegmentedCard>
               <AppSegmentedCardSection>
@@ -620,7 +621,7 @@ export default function Flow({ stepId }: FlowProps) {
       showFooterClaim: false,
     },
     'gmail-send': {
-      title: 'Connect Gmail to send',
+      title: 'Connect Your Gmail',
       render: () =>
         gmailConnected ? (
           <section className="app-section-shell">
@@ -663,40 +664,33 @@ export default function Flow({ stepId }: FlowProps) {
           </section>
         ) : (
           <section className="app-section-shell">
-            {renderStepContext(
-              'We use your Gmail account so the opt-out emails go out from you, not from a Scrappy Kin mailbox.',
-              'Why use your Gmail account?',
-              <div className="flow-stack">
-                <AppText intent="body">Scrappy Kin is built to keep you in control.</AppText>
-                <AppText intent="body">
-                  Instead of asking you to trust a new Scrappy Kin inbox with your personal data, we send from an account you already know and manage.
-                </AppText>
-                <AppText intent="body">
-                  That keeps the line clear: you approve each batch, the emails go out from you, and your data stays off our servers.
-                </AppText>
-              </div>,
-              'Why use your Gmail account?',
-            )}
-            <AppText intent="body">Google will show its permission screen next.</AppText>
-            <AppText intent="label">This access will</AppText>
+            <AppText intent="body">Scrappy Kin is built to keep you in control.</AppText>
+            <AppText intent="body">
+              We do not ask you to trust a Scrappy Kin inbox with your personal data. The app sends opt-out emails from your Gmail account after you approve each batch.
+            </AppText>
+            <AppText intent="body">
+              That keeps the boundary clear: you approve the emails, Google sends them, brokers see the request coming from you, and your data never passes through Scrappy Kin servers.
+            </AppText>
+            <AppText intent="label">What Gmail access does</AppText>
             <AppSegmentedCard>
               <AppSegmentedCardSection>
-                <div className="flow-access-row">
-                  <AppIcon icon={checkmarkCircle} size="sm" tone="primary" ariaLabel="Allowed" />
-                  <AppText intent="body">
-                    <strong>Send</strong> opt-out emails from your Gmail account after you approve each batch.
-                  </AppText>
-                </div>
+                <AppBulletRow
+                  label="Allows Scrappy Kin to send opt-out emails from your Gmail account"
+                  subtext="Only after you approve each batch."
+                  accessibilityLabel="Allows Scrappy Kin to send opt-out emails from your Gmail account. Only after you approve each batch."
+                />
               </AppSegmentedCardSection>
               <AppSegmentedCardSection>
-                <div className="flow-access-row">
-                  <AppIcon icon={closeCircle} size="sm" tone="danger" ariaLabel="Not allowed" />
-                  <AppText intent="body">
-                    <strong>Not</strong> allow Scrappy Kin to read, delete, or export your email
-                  </AppText>
-                </div>
+                <AppBulletRow
+                  icon={closeCircle}
+                  tone="danger"
+                  label="Does not allow Scrappy Kin to read, delete, or export your email"
+                  subtext="We do not ask Google for that access."
+                  accessibilityLabel="Does not allow Scrappy Kin to read, delete, or export your email. We do not ask Google for that access."
+                />
               </AppSegmentedCardSection>
             </AppSegmentedCard>
+            <AppText intent="body">Google will show its permission screen next.</AppText>
             {oauthError ? (
               <AppNotice variant="error" title="Sign-in didn’t finish">
                 {oauthError}
@@ -708,6 +702,7 @@ export default function Flow({ stepId }: FlowProps) {
           </section>
         ),
       showNext: false,
+      showFooterClaim: false,
     },
     'final-review': {
       title: 'Final review',
@@ -734,7 +729,7 @@ export default function Flow({ stepId }: FlowProps) {
               </button>
             }
           >
-            <AppText intent="body">Send-only access is ready. No inbox access.</AppText>
+            <AppText intent="body">Send-only access is active. Scrappy Kin cannot read your inbox.</AppText>
           </ReviewAssetCard>
           <ReviewAssetCard title={`${starterBrokers.length} brokers in your first round`}>
             <AppText intent="body">
@@ -742,7 +737,7 @@ export default function Flow({ stepId }: FlowProps) {
             </AppText>
           </ReviewAssetCard>
           <ReviewAssetCard
-            title="Email preview"
+            title="Email wording ready"
             action={
               <button
                 type="button"
@@ -754,16 +749,9 @@ export default function Flow({ stepId }: FlowProps) {
               </button>
             }
           >
-            <AppSegmentedCard>
-              <AppSegmentedCardSection>
-                <AppText intent="label">Subject</AppText>
-                <AppText intent="body">{buildDeletionSubject('ABC123')}</AppText>
-              </AppSegmentedCardSection>
-              <AppSegmentedCardSection>
-                <AppText intent="label">Body</AppText>
-                <pre className="flow-email-plaintext">{previewBodyText('ABC123')}</pre>
-              </AppSegmentedCardSection>
-            </AppSegmentedCard>
+            <AppText intent="body">
+              Everything is ready to go. Make a last edit if you want, or send this round as is.
+            </AppText>
           </ReviewAssetCard>
           {sendError ? (
             <AppNotice
@@ -816,12 +804,17 @@ export default function Flow({ stepId }: FlowProps) {
       intro: 'Brokers re-add you. The weeds come back.',
       render: () => (
         <section className="app-section-shell">
-          <SubscriptionOfferCard brokerSummary={brokerSummary} />
+          <SubscriptionOfferCard
+            brokerSummary={brokerSummary}
+            product={subscriptionSnapshot?.product}
+          />
+          <SubscriptionBillingClaim />
           {subscriptionSnapshot?.loadError ? (
             <AppNotice variant="error" title="Subscription unavailable">
               {subscriptionSnapshot.loadError}
             </AppNotice>
           ) : null}
+          <SubscriptionDiagnosticsNotice snapshot={subscriptionSnapshot} />
           {subscriptionNotice ? (
             <AppNotice variant={subscriptionNotice.variant} title={subscriptionNotice.title}>
               {subscriptionNotice.body}
@@ -834,7 +827,7 @@ export default function Flow({ stepId }: FlowProps) {
               loading={subscriptionBusy === 'purchase'}
               disabled={subscriptionBusy !== null || subscriptionSnapshot?.isAvailable === false}
             >
-              Subscribe — $4.99/year
+              Subscribe — {subscribeButtonLabel}
             </AppButton>
             <AppButton
               variant="ghost"
@@ -881,21 +874,44 @@ export default function Flow({ stepId }: FlowProps) {
             backHref={nav.backHref}
             progressCurrent={nav.progressCurrent}
             progressTotal={nav.progressTotal}
+            ref={navLabelRef}
             sticky
           />
-          {step.intro ? <AppText intent="intro">{step.intro}</AppText> : null}
-          <AppHeading intent="section">{step.title}</AppHeading>
-          {step.subtitle ? <AppText intent="body">{step.subtitle}</AppText> : null}
-          {step.render()}
-          {step.showNext === false ? null : (
-            <div className="flow-actions">
-              <AppButton onClick={() => void goNext()} disabled={step.canContinue === false} fullWidth>
-                {step.nextLabel ?? 'Next'}
-              </AppButton>
-            </div>
-          )}
-          {step.footer ?? null}
-          {step.showFooterClaim === false ? null : <ServerBoundaryClaim />}
+          <div className="flow-stack">
+            {step.intro ? <AppText intent="intro">{step.intro}</AppText> : null}
+            <AppHeading
+              intent="section"
+              level={1}
+              accessibilityLabel={step.accessibilityTitle}
+              ref={headingRef}
+              tabIndex={-1}
+            >
+              {step.title}
+            </AppHeading>
+            {step.subtitle ? <AppText intent="body">{step.subtitle}</AppText> : null}
+            {step.render()}
+            {step.showNext === false ? null : (
+              <div className="flow-actions">
+                {step.nextAccessibilityDescription ? (
+                  <AppText intent="caption">
+                    <span id={nextDescriptionId}>{step.nextAccessibilityDescription}</span>
+                  </AppText>
+                ) : null}
+                <AppButton
+                  onClick={() => void goNext()}
+                  disabled={step.canContinue === false}
+                  accessibilityDescriptionId={
+                    step.nextAccessibilityDescription ? nextDescriptionId : undefined
+                  }
+                  fullWidth
+                >
+                  {step.nextLabel ?? 'Next'}
+                </AppButton>
+              </div>
+            )}
+            {step.footer ?? null}
+            {step.showFooterClaim === false ? null : <ServerBoundaryClaim />}
+          </div>
         </div>
       </IonContent>
     </IonPage>
