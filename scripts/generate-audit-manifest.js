@@ -87,10 +87,6 @@ const auditTiers = {
       purpose: 'Primary onboarding flow and audit prompt UI.'
     },
     {
-      path: 'app/src/screens/Brokers.tsx',
-      purpose: 'Broker selection UI and tier grouping.'
-    },
-    {
       path: 'app/src/screens/Home.tsx',
       purpose: 'Home screen content and quick actions.'
     }

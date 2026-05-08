@@ -1,0 +1,47 @@
+import { isQaStoreKitLane } from '../../config/buildInfo'
+import type { SubscriptionSnapshot } from '../../services/subscription'
+import AppNotice from '../primitives/AppNotice'
+import './subscription-diagnostics-notice.css'
+
+type SubscriptionDiagnosticsNoticeProps = {
+  snapshot: SubscriptionSnapshot | null
+}
+
+function formatList(values: string[] | undefined) {
+  if (!values || values.length === 0) return 'none'
+  return values.join(', ')
+}
+
+export default function SubscriptionDiagnosticsNotice({
+  snapshot,
+}: SubscriptionDiagnosticsNoticeProps) {
+  if (!isQaStoreKitLane() || !snapshot?.diagnostics) {
+    return null
+  }
+
+  const diagnostics = snapshot.diagnostics
+  const lines = [
+    `Bundle: ${diagnostics.bundleIdentifier ?? 'unknown'}`,
+    `Version: ${diagnostics.appVersion ?? 'unknown'} (${diagnostics.appBuild ?? 'unknown'})`,
+    `Requested: ${formatList(diagnostics.requestedProductIds)}`,
+    `Returned: ${diagnostics.returnedProductCount} (${formatList(diagnostics.returnedProductIds)})`,
+    `Product load: ${diagnostics.productLoadCompleted ? 'completed' : 'not completed'}`,
+    `Entitlements: ${diagnostics.entitlementLookupCompleted ? 'checked' : 'not checked'} (${formatList(diagnostics.activeProductIds)})`,
+  ]
+
+  if (diagnostics.productLoadErrorDomain || diagnostics.productLoadErrorMessage) {
+    lines.push(
+      `Error: ${diagnostics.productLoadErrorDomain ?? 'unknown'} ${diagnostics.productLoadErrorCode ?? ''} ${diagnostics.productLoadErrorMessage ?? ''}`.trim(),
+    )
+  }
+
+  return (
+    <AppNotice variant="warning" title="QA StoreKit diagnostics">
+      <span className="subscription-diagnostics-notice">
+        {lines.map((line) => (
+          <span key={line}>{line}</span>
+        ))}
+      </span>
+    </AppNotice>
+  )
+}

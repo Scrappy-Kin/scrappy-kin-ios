@@ -5,34 +5,302 @@ import { chromium, devices, firefox } from 'playwright'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
-const repoRoot = path.resolve(__dirname, '..', '..')
+const appRoot = path.resolve(__dirname, '..')
 
-const baseUrl = process.env.CAPTURE_BASE_URL ?? 'http://127.0.0.1:4173'
+const baseUrl = process.env.CAPTURE_BASE_URL ?? 'http://localhost:4173'
 const browserName = process.env.CAPTURE_BROWSER ?? 'chromium'
 const executablePath = process.env.CAPTURE_EXECUTABLE_PATH
-const outputDir =
-  process.env.CAPTURE_OUTPUT_DIR ??
-  path.join(repoRoot, 'docs', 'strategy', 'local-ui-review-screens')
+const outputDirs = process.env.CAPTURE_OUTPUT_DIR
+  ? [process.env.CAPTURE_OUTPUT_DIR]
+  : [
+      path.join(appRoot, 'public', 'review-artifacts'),
+      path.join(appRoot, 'dist', 'review-artifacts'),
+    ]
 
 const device = devices['iPhone 14']
 const defaultViewport = { ...device.viewport }
 
-const pages = [
-  { path: '/home', file: '01-home.png' },
-  { path: '/brokers', file: '02-brokers.png' },
-  { path: '/settings', file: '03-settings.png' },
-  { path: '/flow', file: '04-flow-step-1-intro.png' },
+const capturePlan = [
+  {
+    id: 'flow-intro',
+    title: 'Flow: intro',
+    description: 'Trust framing and the first guided setup step.',
+    group: 'onboarding',
+    route: '/capture/flow-intro?qa=1',
+    file: '01-flow-intro.png',
+  },
+  {
+    id: 'flow-starter-set',
+    title: 'Flow: starter set',
+    description: 'The fixed taster round that replaces onboarding broker selection.',
+    group: 'onboarding',
+    route: '/capture/flow-starter-set?qa=1',
+    file: '02-flow-starter-set.png',
+  },
+  {
+    id: 'flow-request-review',
+    title: 'Flow: email review',
+    description: 'Template, inline fields, and the editable opt-out email artifact.',
+    group: 'onboarding',
+    route: '/capture/flow-request-review?qa=1',
+    file: '03-flow-request-review.png',
+  },
+  {
+    id: 'flow-gmail-send',
+    title: 'Flow: Gmail connect',
+    description: 'Send-only consent explanation before Google auth.',
+    group: 'onboarding',
+    route: '/capture/flow-gmail-send?qa=1',
+    file: '04-flow-gmail-send.png',
+  },
+  {
+    id: 'flow-final-review',
+    title: 'Flow: final review',
+    description: 'Connected Gmail, broker summary, and final send checkpoint.',
+    group: 'onboarding',
+    route: '/capture/flow-final-review?qa=1',
+    file: '05-flow-final-review.png',
+  },
+  {
+    id: 'flow-beat-sent',
+    title: 'Flow: beat 1',
+    description: 'Post-send confirmation before the subscription offer.',
+    group: 'subscription',
+    route: '/capture/flow-beat-sent?qa=1',
+    file: '06-flow-beat-sent.png',
+  },
+  {
+    id: 'flow-beat-subscribe',
+    title: 'Flow: beat 2',
+    description: 'Subscription offer, restore path, and later dismissal.',
+    group: 'subscription',
+    route: '/capture/flow-beat-subscribe?qa=1',
+    file: '07-flow-beat-subscribe.png',
+  },
+  {
+    id: 'review-batch',
+    title: 'App: review batch',
+    description: 'Post-onboarding batch review and send flow from Home.',
+    group: 'dashboard',
+    route: '/capture/review-batch?qa=1',
+    file: '08-review-batch.png',
+  },
+  {
+    id: 'home-unsubscribed',
+    title: 'Home: unsubscribed',
+    description: 'Dashboard card after the free taster when subscription is inactive.',
+    group: 'dashboard',
+    route: '/capture/home-unsubscribed?qa=1',
+    file: '09-home-unsubscribed.png',
+  },
+  {
+    id: 'home-subscribed',
+    title: 'Home: subscribed',
+    description: 'Dashboard card after the free taster when subscription is active.',
+    group: 'dashboard',
+    route: '/capture/home-subscribed?qa=1',
+    file: '10-home-subscribed.png',
+  },
+  {
+    id: 'settings',
+    title: 'Settings',
+    description: 'Top-level Settings entry point for profile, Gmail, subscription, privacy, diagnostics, and support.',
+    group: 'settings',
+    route: '/capture/settings?qa=1',
+    file: '11-settings-home.png',
+  },
+  {
+    id: 'settings-subscription',
+    title: 'Settings: subscription',
+    description: 'Top-level subscription management with restore and Apple billing copy.',
+    group: 'settings',
+    route: '/capture/settings-subscription?qa=1',
+    file: '12-settings-subscription.png',
+  },
+  {
+    id: 'settings-profile',
+    title: 'Settings: profile',
+    description: 'Editable personal details used in broker opt-out emails.',
+    group: 'settings',
+    route: '/capture/settings-profile?qa=1',
+    file: '13-settings-profile.png',
+  },
+  {
+    id: 'settings-privacy',
+    title: 'Settings: privacy',
+    description: 'On-device data and deletion controls.',
+    group: 'settings',
+    route: '/capture/settings-privacy?qa=1',
+    file: '14-settings-privacy.png',
+  },
+  {
+    id: 'settings-diagnostics',
+    title: 'Settings: diagnostics',
+    description: 'Local diagnostics capture, export, and wipe actions.',
+    group: 'settings',
+    route: '/capture/settings-diagnostics?qa=1',
+    file: '15-settings-diagnostics.png',
+  },
+  {
+    id: 'settings-support',
+    title: 'Settings: support',
+    description: 'Help, legal links, support email, and build metadata on one surface.',
+    group: 'settings',
+    route: '/capture/settings-support?qa=1',
+    file: '16-settings-support.png',
+  },
 ]
 
-const seededProfile = {
-  fullName: 'Your name',
-  email: 'your@email.com',
-  city: 'Your city',
-  state: 'TX',
-  partialZip: '7870',
+function parseArgs(argv) {
+  const options = {
+    group: null,
+    id: null,
+    list: false,
+    help: false,
+  }
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index]
+    if (arg === '--group') {
+      options.group = argv[index + 1] ?? null
+      index += 1
+      continue
+    }
+    if (arg === '--id') {
+      options.id = argv[index + 1] ?? null
+      index += 1
+      continue
+    }
+    if (arg === '--list') {
+      options.list = true
+      continue
+    }
+    if (arg === '--help' || arg === '-h') {
+      options.help = true
+    }
+  }
+
+  return options
 }
 
-const seededBrokerIds = ['truepeoplesearch-com', 'data-axle-com']
+function printHelp() {
+  console.log(`Usage:
+  npm run capture:screens
+  npm run capture:screens -- --group onboarding
+  npm run capture:screens -- --group subscription
+  npm run capture:screens -- --group dashboard
+  npm run capture:screens -- --group settings
+  npm run capture:screens -- --id flow-beat-subscribe
+  npm run capture:screens -- --list`)
+}
+
+function selectCapturePlan(options) {
+  let entries = capturePlan
+
+  if (options.group) {
+    entries = entries.filter((entry) => entry.group === options.group)
+  }
+
+  if (options.id) {
+    entries = entries.filter((entry) => entry.id === options.id)
+  }
+
+  return entries
+}
+
+function isFilteredRun(options) {
+  return Boolean(options.group || options.id)
+}
+
+async function readExistingManifest() {
+  const manifestPath = path.join(outputDirs[0], 'manifest.json')
+
+  try {
+    const raw = await fs.readFile(manifestPath, 'utf8')
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed?.captures)) {
+      return null
+    }
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+function mergeCaptures(existingCaptures, nextCaptures) {
+  const replacedIds = new Set(nextCaptures.map((entry) => entry.id))
+  const merged = [
+    ...existingCaptures.filter((entry) => !replacedIds.has(entry.id)),
+    ...nextCaptures,
+  ]
+  const planOrder = new Map(capturePlan.map((entry, index) => [entry.id, index]))
+
+  merged.sort((left, right) => {
+    const leftOrder = planOrder.get(left.id) ?? Number.MAX_SAFE_INTEGER
+    const rightOrder = planOrder.get(right.id) ?? Number.MAX_SAFE_INTEGER
+    return leftOrder - rightOrder
+  })
+
+  return merged
+}
+
+async function resolveBrowserLaunchOptions() {
+  if (executablePath) {
+    return { executablePath }
+  }
+
+  return {}
+}
+
+async function launchBrowser() {
+  const launchOptions = {
+    headless: true,
+    ...(await resolveBrowserLaunchOptions()),
+  }
+
+  if (browserName === 'firefox') {
+    return firefox.launch(launchOptions)
+  }
+
+  try {
+    return await chromium.launch(launchOptions)
+  } catch (cause) {
+    if (
+      executablePath ||
+      !(cause instanceof Error) ||
+      !cause.message.includes('Executable doesn\'t exist')
+    ) {
+      throw cause
+    }
+
+    const fallbackExecutable = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+    await fs.access(fallbackExecutable)
+    return chromium.launch({
+      headless: true,
+      executablePath: fallbackExecutable,
+    })
+  }
+}
+
+async function ensureAppIsReachable() {
+  let response
+
+  try {
+    response = await fetch(baseUrl)
+  } catch {
+    throw new Error(
+      `Could not reach ${baseUrl}. Start the dev preview first with: cd app && npm run preview:dev`,
+    )
+  }
+
+  if (!response.ok) {
+    throw new Error(`Preview app responded with ${response.status} at ${baseUrl}`)
+  }
+}
+
+function normalizeText(text) {
+  return text.replace(/\s+/g, ' ').trim()
+}
 
 async function preparePageForCapture(page) {
   return page.evaluate((viewportHeight) => {
@@ -64,154 +332,91 @@ async function preparePageForCapture(page) {
   }, defaultViewport.height)
 }
 
-async function ensureAppIsReachable() {
-  const response = await fetch(baseUrl)
-  if (!response.ok) {
-    throw new Error(`Preview app responded with ${response.status} at ${baseUrl}`)
-  }
-}
-
-function normalizeText(text) {
-  return text.replace(/\s+/g, ' ').trim()
-}
-
-async function captureRoute(page, routePath, fileName, summaries) {
+async function captureEntry(page, entry, captures) {
   await page.setViewportSize(defaultViewport)
-  await page.goto(`${baseUrl}${routePath}`, { waitUntil: 'networkidle' })
-  await page.waitForTimeout(400)
+  await page.goto(`${baseUrl}${entry.route}`, { waitUntil: 'networkidle' })
+  await page.waitForTimeout(450)
+
   const viewportHeight = await preparePageForCapture(page)
   await page.setViewportSize({ width: defaultViewport.width, height: viewportHeight })
-  await page.waitForTimeout(100)
-  const destination = path.join(outputDir, fileName)
-  await page.screenshot({ path: destination })
-  const bodyText = normalizeText(await page.locator('body').innerText())
-  summaries.push({ file: fileName, route: routePath, summary: bodyText.slice(0, 500) })
-  console.log(`${fileName} <- ${routePath}`)
-}
+  await page.waitForTimeout(120)
 
-async function captureFlowStep(page, fileName, summaries) {
-  await page.waitForTimeout(300)
-  const viewportHeight = await preparePageForCapture(page)
-  await page.setViewportSize({ width: defaultViewport.width, height: viewportHeight })
-  await page.waitForTimeout(100)
-  const destination = path.join(outputDir, fileName)
-  await page.screenshot({ path: destination })
-  const bodyText = normalizeText(await page.locator('body').innerText())
-  summaries.push({ file: fileName, route: page.url().replace(baseUrl, ''), summary: bodyText.slice(0, 500) })
-  console.log(`${fileName} <- ${page.url()}`)
-}
-
-async function captureCurrentPage(page, fileName, summaries) {
-  await captureFlowStep(page, fileName, summaries)
-}
-
-async function openFlowStep(page, nextClicks) {
-  await page.setViewportSize(defaultViewport)
-  await page.goto(`${baseUrl}/flow`, { waitUntil: 'networkidle' })
-  await page.waitForTimeout(300)
-  for (let index = 0; index < nextClicks; index += 1) {
-    await page.getByRole('button', { name: 'Next' }).click()
-    await page.waitForTimeout(300)
-  }
-}
-
-async function wipeLocalAppState(page) {
-  await page.goto(`${baseUrl}/`, { waitUntil: 'networkidle' })
-  await page.evaluate(() => {
-    localStorage.clear()
-    sessionStorage.clear()
-  })
-}
-
-async function seedPostAuthState(page) {
-  await page.goto(`${baseUrl}/`, { waitUntil: 'networkidle' })
-  await page.evaluate(
-    async ({ profile, brokerIds }) => {
-      const secureStore = await import('/src/services/secureStore.ts')
-      await secureStore.setEncrypted('user_profile', profile)
-      await secureStore.setEncrypted('selected_brokers', brokerIds)
-    },
-    { profile: seededProfile, brokerIds: seededBrokerIds },
+  const screenshotBuffer = await page.screenshot()
+  await Promise.all(
+    outputDirs.map((outputDir) =>
+      fs.writeFile(path.join(outputDir, entry.file), screenshotBuffer),
+    ),
   )
-}
+  const bodyText = normalizeText(await page.locator('body').innerText())
 
-async function seedConnectedState(page) {
-  await seedPostAuthState(page)
-  await page.evaluate(async () => {
-    const secureStore = await import('/src/services/secureStore.ts')
-    await secureStore.setEncrypted('gmail_tokens', {
-      accessToken: 'mock-access-token',
-      expiresAt: Date.now() + 60 * 60 * 1000,
-    })
+  captures.push({
+    id: entry.id,
+    title: entry.title,
+    description: entry.description,
+    group: entry.group,
+    route: entry.route,
+    file: entry.file,
+    imagePath: `/review-artifacts/${entry.file}`,
+    summary: bodyText.slice(0, 280),
   })
-}
 
-async function mockSuccessfulGmailSend(page) {
-  await page.route('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ id: `mock-${Date.now()}` }),
-    })
-  })
+  console.log(`${entry.file} <- ${entry.route}`)
 }
 
 async function main() {
-  await ensureAppIsReachable()
-  await fs.mkdir(outputDir, { recursive: true })
+  const options = parseArgs(process.argv.slice(2))
 
-  const browserType = browserName === 'firefox' ? firefox : chromium
-  const browser = await browserType.launch({
-    headless: true,
-    ...(executablePath ? { executablePath } : {}),
-  })
+  if (options.help) {
+    printHelp()
+    return
+  }
+
+  if (options.list) {
+    console.log(JSON.stringify(capturePlan, null, 2))
+    return
+  }
+
+  const selectedEntries = selectCapturePlan(options)
+  if (selectedEntries.length === 0) {
+    throw new Error('No capture entries matched the requested filters.')
+  }
+  const filteredRun = isFilteredRun(options)
+
+  await ensureAppIsReachable()
+  await Promise.all(outputDirs.map((outputDir) => fs.mkdir(outputDir, { recursive: true })))
+
+  const browser = await launchBrowser()
   const context = await browser.newContext({ ...device })
   const page = await context.newPage()
-  const summaries = []
+  const captures = []
 
   try {
-    await wipeLocalAppState(page)
-
-    for (const entry of pages) {
-      await captureRoute(page, entry.path, entry.file, summaries)
+    for (const entry of selectedEntries) {
+      await captureEntry(page, entry, captures)
     }
 
-    await openFlowStep(page, 1)
-    await captureFlowStep(page, '05-flow-step-2-brokers.png', summaries)
+    const existingManifest = filteredRun ? await readExistingManifest() : null
+    const mergedCaptures = existingManifest
+      ? mergeCaptures(existingManifest.captures, captures)
+      : captures
 
-    await wipeLocalAppState(page)
-    await seedPostAuthState(page)
-
-    await openFlowStep(page, 2)
-    await captureFlowStep(page, '06-flow-step-3-request-review.png', summaries)
-
-    await openFlowStep(page, 3)
-    await captureFlowStep(page, '07-flow-step-4-gmail-send.png', summaries)
-
-    await wipeLocalAppState(page)
-    await seedConnectedState(page)
-
-    await openFlowStep(page, 4)
-    await captureFlowStep(page, '08-flow-step-5-final-review.png', summaries)
-
-    await mockSuccessfulGmailSend(page)
-    await page.getByRole('button', { name: 'Send selected requests' }).click()
-    await page.waitForURL(`${baseUrl}/home`)
-    await page.waitForFunction(
-      ({ expectedSummary, expectedButton }) => {
-        const text = document.body.innerText
-        return text.includes(expectedSummary) && text.includes(expectedButton)
-      },
+    const manifest = JSON.stringify(
       {
-        expectedSummary: 'Sent: 2 · Failed: 0 · Pending: 0',
-        expectedButton: 'Send selected requests',
+        generatedAt: new Date().toISOString(),
+        baseUrl,
+        outputDir: outputDirs[0],
+        captures: mergedCaptures,
       },
+      null,
+      2,
     )
-    await captureCurrentPage(page, '09-home-after-send.png', summaries)
-
-    const manifestPath = path.join(outputDir, 'manifest.json')
-    await fs.writeFile(manifestPath, JSON.stringify({ baseUrl, outputDir, captures: summaries }, null, 2))
-    console.log(`manifest.json <- ${manifestPath}`)
+    await Promise.all(
+      outputDirs.map(async (outputDir) => {
+        const manifestPath = path.join(outputDir, 'manifest.json')
+        await fs.writeFile(manifestPath, manifest)
+        console.log(`manifest.json <- ${manifestPath}`)
+      }),
+    )
   } finally {
     await browser.close()
   }

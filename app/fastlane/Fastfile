@@ -1,0 +1,89 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Build, verify, install, and launch the QA StoreKit lane on a connected iPhone via QADevice."
+  lane :qa_device do
+    sh("npm run ios:install:qa-storekit:device")
+  end
+
+  desc "Fast web-only QADevice loop: rebuild web assets, copy them into iOS, install, and launch."
+  lane :qa_device_fast do
+    sh("npm run ios:install:qa-storekit:device:fast")
+  end
+
+  desc "Build, verify, install, and launch the QA StoreKit lane on a simulator."
+  lane :qa_simulator do
+    sh("npm run ios:install:qa-storekit")
+  end
+
+  desc "Build the production Release archive for App Store Connect without uploading."
+  lane :prod_archive do
+    build_release_archive
+  end
+
+  desc "Build the production Release archive and upload it to TestFlight. Requires SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1."
+  lane :prod_testflight do
+    ensure_prod_testflight_allowed!
+    build_release_archive
+
+    api_key = app_store_connect_api_key_from_env
+    upload_options = {
+      ipa: Actions.lane_context[SharedValues::IPA_OUTPUT_PATH],
+      skip_waiting_for_build_processing: true
+    }
+    upload_options[:api_key] = api_key if api_key
+
+    upload_to_testflight(upload_options)
+  end
+
+  private_lane :build_release_archive do
+    sh("npm run ios:sync:prod")
+
+    build_ios_app(
+      project: "ios/App/App.xcodeproj",
+      scheme: "Scrappy Kin Prod",
+      configuration: "Release",
+      export_method: "app-store",
+      clean: true,
+      derived_data_path: ENV.fetch("IOS_DERIVED_DATA_PATH", "fastlane/derived_data"),
+      output_directory: "fastlane/build",
+      output_name: "ScrappyKin.ipa",
+      export_options: {
+        method: "app-store",
+        signingStyle: "manual",
+        teamID: ENV.fetch("IOS_DEVELOPMENT_TEAM", "TF64W577SD"),
+        provisioningProfiles: {
+          "com.scrappykin.ios" => "Scrappy Kin Prod"
+        }
+      }
+    )
+  end
+end
+
+def ensure_prod_testflight_allowed!
+  return if ENV["SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT"] == "1"
+
+  UI.user_error!(
+    [
+      "Refusing to upload a production TestFlight build without explicit approval.",
+      "This lane uses Release/production and can send real broker emails.",
+      "Rerun with SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 only for a release-candidate TestFlight build."
+    ].join("\n")
+  )
+end
+
+def app_store_connect_api_key_from_env
+  key_id = ENV["APP_STORE_CONNECT_API_KEY_ID"]
+  issuer_id = ENV["APP_STORE_CONNECT_ISSUER_ID"]
+  key_path = ENV["APP_STORE_CONNECT_API_KEY_PATH"]
+
+  return nil if [key_id, issuer_id, key_path].any? { |value| value.to_s.empty? }
+
+  app_store_connect_api_key(
+    key_id: key_id,
+    issuer_id: issuer_id,
+    key_filepath: key_path,
+    duration: 1200,
+    in_house: false
+  )
+end

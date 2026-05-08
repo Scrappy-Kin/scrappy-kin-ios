@@ -15,6 +15,27 @@ const TOKEN_KEY = 'gmail_tokens'
 const OAUTH_PENDING_KEY = 'gmail_oauth_pending'
 const OAUTH_PENDING_TTL_MS = 10 * 60 * 1000
 let oauthInFlight = false
+let oauthBrowserOpen = false
+const oauthBrowserListeners = new Set<() => void>()
+
+function setOAuthBrowserOpen(open: boolean) {
+  if (oauthBrowserOpen === open) return
+  oauthBrowserOpen = open
+  for (const listener of oauthBrowserListeners) {
+    listener()
+  }
+}
+
+export function getOAuthBrowserOpenSnapshot() {
+  return oauthBrowserOpen
+}
+
+export function subscribeOAuthBrowserOpen(listener: () => void) {
+  oauthBrowserListeners.add(listener)
+  return () => {
+    oauthBrowserListeners.delete(listener)
+  }
+}
 
 type TokenPayload = {
   accessToken: string
@@ -150,6 +171,7 @@ export async function connectGmail() {
     })
     const url = `${AUTH_URL}?${authParams.toString()}`
 
+    setOAuthBrowserOpen(true)
     await Browser.open({ url })
 
     const code = await waitForOAuthRedirect(state, oauthConfig.redirectUri)
@@ -187,6 +209,7 @@ export async function connectGmail() {
     })
   } finally {
     oauthInFlight = false
+    setOAuthBrowserOpen(false)
     await removeEncrypted(OAUTH_PENDING_KEY)
   }
 }
@@ -194,14 +217,17 @@ export async function connectGmail() {
 export async function disconnectGmail() {
   const tokens = await getEncrypted<TokenPayload>(TOKEN_KEY)
   const token = tokens?.refreshToken || tokens?.accessToken
-  if (token) {
-    await fetch(REVOKE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ token }).toString(),
-    })
+  try {
+    if (token) {
+      await fetch(REVOKE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ token }).toString(),
+      })
+    }
+  } finally {
+    await removeEncrypted(TOKEN_KEY)
   }
-  await removeEncrypted(TOKEN_KEY)
 }
 
 async function refreshAccessToken(refreshToken: string) {

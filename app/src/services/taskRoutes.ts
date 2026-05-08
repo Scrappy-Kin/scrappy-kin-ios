@@ -1,7 +1,5 @@
-import type { Broker } from './brokerStore'
 import type { FlowStepId } from './flowProgress'
 import {
-  buildBrokersHref,
   buildGmailHref,
   buildOnboardingHref,
   buildReviewBatchHref,
@@ -14,7 +12,6 @@ export type TaskIntent =
   | 'onboarding'
   | 'review_next_batch'
   | 'repair_gmail'
-  | 'edit_brokers_for_batch'
   | 'edit_template_for_batch'
   | 'edit_profile_for_batch'
   | 'review_sent'
@@ -31,8 +28,6 @@ type TaskRouteInput = {
 export type TaskRouteStateInput = {
   gmailConnected: boolean
   hasProfile: boolean
-  selectedBrokerIds: string[]
-  brokers: Broker[]
 }
 
 type TaskRouteDefinition = {
@@ -51,11 +46,6 @@ const TASK_ROUTES: Record<TaskIntent, TaskRouteDefinition> = {
   repair_gmail: {
     href: ({ returnTo, successTo }) => buildGmailHref(returnTo ?? '/home', successTo ?? returnTo ?? '/home'),
     successHref: ({ successTo, returnTo }) => successTo ?? returnTo ?? '/home',
-  },
-  edit_brokers_for_batch: {
-    href: ({ returnTo }) => buildBrokersHref(returnTo ?? '/home'),
-    successHref: ({ returnTo }) => returnTo ?? '/home',
-    editBehavior: 'autosave',
   },
   edit_template_for_batch: {
     href: ({ returnTo }) => buildTemplateHref(returnTo ?? '/home'),
@@ -90,10 +80,6 @@ export function deriveNextBatchTaskTarget(
 ) {
   const reviewBatchHref = buildTaskHref('review_next_batch', { returnTo })
 
-  if (input.selectedBrokerIds.length === 0) {
-    return buildTaskHref('edit_brokers_for_batch', { returnTo: reviewBatchHref })
-  }
-
   if (!input.hasProfile) {
     return buildTaskHref('edit_profile_for_batch', { returnTo: reviewBatchHref })
   }
@@ -110,10 +96,6 @@ export function deriveReviewBatchTaskRedirect(
   currentRoute: string,
   returnTo: string | null = '/home',
 ) {
-  if (input.selectedBrokerIds.length === 0) {
-    return buildTaskHref('edit_brokers_for_batch', { returnTo })
-  }
-
   if (!input.hasProfile) {
     return buildTaskHref('edit_profile_for_batch', { returnTo: currentRoute })
   }

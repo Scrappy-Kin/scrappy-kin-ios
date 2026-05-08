@@ -11,6 +11,8 @@ type AppButtonProps = {
   disabled?: boolean
   loading?: boolean
   fullWidth?: boolean
+  accessibilityLabel?: string
+  accessibilityDescriptionId?: string
   onClick?: () => void
   iconStart?: ReactNode
   iconEnd?: ReactNode
@@ -30,6 +32,8 @@ export default function AppButton({
   disabled = false,
   loading = false,
   fullWidth = false,
+  accessibilityLabel,
+  accessibilityDescriptionId,
   onClick,
   iconStart,
   iconEnd,
@@ -49,6 +53,8 @@ export default function AppButton({
       disabled={disabled || loading}
       onClick={onClick}
       aria-busy={loading}
+      aria-label={accessibilityLabel}
+      aria-describedby={accessibilityDescriptionId}
     >
       {loading ? (
         <IonSpinner className="app-button__spinner" name="lines-small" />

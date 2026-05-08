@@ -1,0 +1,9 @@
+.subscription-diagnostics-notice {
+  display: grid;
+  gap: var(--space-1);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-sm);
+  overflow-wrap: anywhere;
+  text-transform: none;
+}

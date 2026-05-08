@@ -31,7 +31,6 @@ function toAppRoute(urlString: string) {
     '/home',
     '/flow',
     '/onboarding',
-    '/brokers',
     '/gmail',
     '/review-batch',
     '/settings',

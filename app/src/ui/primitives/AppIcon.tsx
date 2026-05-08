@@ -26,7 +26,24 @@ const toneClassMap: Record<IconTone, string> = {
 export default function AppIcon({ icon, size = 'md', tone = 'neutral', ariaLabel }: AppIconProps) {
   const classes = ['app-icon', sizeClassMap[size], toneClassMap[tone]].join(' ')
 
+  if (!ariaLabel) {
+    return (
+      <span aria-hidden="true">
+        <IonIcon
+          className={classes}
+          aria-hidden="true"
+          icon={icon}
+        />
+      </span>
+    )
+  }
+
   return (
-    <IonIcon className={classes} aria-label={ariaLabel} aria-hidden={!ariaLabel} icon={icon} />
+    <IonIcon
+      className={classes}
+      aria-label={ariaLabel}
+      aria-hidden={undefined}
+      icon={icon}
+    />
   )
 }

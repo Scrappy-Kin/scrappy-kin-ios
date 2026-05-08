@@ -8,6 +8,7 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
     public let jsName = "Subscription"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "getProducts", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "diagnoseProducts", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getEntitlement", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "purchase", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "restorePurchases", returnType: CAPPluginReturnPromise)
@@ -38,13 +39,45 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
                 let sortedProducts = products.sorted {
                     (orderMap[$0.id] ?? Int.max) < (orderMap[$1.id] ?? Int.max)
                 }
+                var diagnostics = Self.baseProductDiagnostics(productIds: productIds)
+                diagnostics["productLoadCompleted"] = true
+                diagnostics["returnedProductCount"] = sortedProducts.count
+                diagnostics["returnedProductIds"] = sortedProducts.map(\.id)
 
                 call.resolve([
-                    "products": sortedProducts.map(Self.serializeProduct)
+                    "products": sortedProducts.map(Self.serializeProduct),
+                    "diagnostics": diagnostics
                 ])
             } catch {
                 call.reject(error.localizedDescription, "PRODUCT_LOAD_FAILED")
             }
+        }
+    }
+
+    @objc func diagnoseProducts(_ call: CAPPluginCall) {
+        let productIds = call.getArray("productIds", String.self) ?? []
+        Task {
+            var diagnostics = Self.baseProductDiagnostics(productIds: productIds)
+
+            do {
+                let products = try await Product.products(for: productIds)
+                diagnostics["productLoadCompleted"] = true
+                diagnostics["returnedProductCount"] = products.count
+                diagnostics["returnedProductIds"] = products.map(\.id)
+            } catch {
+                let nsError = error as NSError
+                diagnostics["productLoadCompleted"] = false
+                diagnostics["productLoadErrorDomain"] = nsError.domain
+                diagnostics["productLoadErrorCode"] = nsError.code
+                diagnostics["productLoadErrorMessage"] = error.localizedDescription
+            }
+
+            let activeProductIds = await currentEntitlementProductIds(filteredTo: productIds)
+            diagnostics["entitlementLookupCompleted"] = true
+            diagnostics["activeProductIds"] = activeProductIds
+
+            print("StoreKit subscription diagnostics: \(diagnostics)")
+            call.resolve(["diagnostics": diagnostics])
         }
     }
 
@@ -159,6 +192,21 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
             "displayName": product.displayName,
             "description": product.description,
             "displayPrice": product.displayPrice
+        ]
+    }
+
+    private static func baseProductDiagnostics(productIds: [String]) -> [String: Any] {
+        let bundle = Bundle.main
+        return [
+            "requestedProductIds": productIds,
+            "bundleIdentifier": bundle.bundleIdentifier ?? "unknown",
+            "appVersion": bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown",
+            "appBuild": bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown",
+            "productLoadCompleted": false,
+            "returnedProductCount": 0,
+            "returnedProductIds": [],
+            "entitlementLookupCompleted": false,
+            "activeProductIds": []
         ]
     }
 }
