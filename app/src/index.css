@@ -90,9 +90,8 @@ body {
 }
 
 .flow-actions {
-  display: flex;
+  display: grid;
   gap: var(--space-2);
-  justify-content: stretch;
   margin-top: var(--space-4);
 }
 
@@ -217,6 +216,13 @@ body {
 .flow-intro-points {
   display: grid;
   gap: var(--space-4);
+}
+
+.flow-success-illustration {
+  display: block;
+  width: min(100%, 320px);
+  height: auto;
+  justify-self: center;
 }
 
 .flow-intro-points__item {

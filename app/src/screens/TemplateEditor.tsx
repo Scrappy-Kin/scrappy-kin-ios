@@ -1,8 +1,7 @@
 import { IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
-import { buildSettingsHref, readReturnTo } from '../services/navigation'
-import { getTaskEditBehavior } from '../services/taskRoutes'
+import { buildSettingsHref, getCurrentRoute, readReturnTo } from '../services/navigation'
 import {
   getDefaultDeletionTemplate,
   getDeletionTemplateDraft,
@@ -16,6 +15,7 @@ import AppHeading from '../ui/primitives/AppHeading'
 import AppText from '../ui/primitives/AppText'
 import AppTextarea from '../ui/primitives/AppTextarea'
 import AppTopNav from '../ui/patterns/AppTopNav'
+import { useRouteFocus } from '../ui/patterns/useRouteFocus'
 import './template-editor.css'
 
 const emptyProfile: UserProfile = {
@@ -26,18 +26,26 @@ const emptyProfile: UserProfile = {
   partialZip: '',
 }
 
+function getTextareaRows(value: string, minRows: number, maxRows: number) {
+  const estimatedRows = value.split('\n').reduce((total, line) => {
+    return total + Math.max(1, Math.ceil(line.length / 42))
+  }, 0)
+  return Math.min(maxRows, Math.max(minRows, estimatedRows))
+}
+
 export default function TemplateEditor() {
   const history = useHistory()
   const location = useLocation()
+  const currentRoute = getCurrentRoute(location)
   const returnTo = readReturnTo(location.search)
   const fallbackHref = returnTo ?? buildSettingsHref()
+  const headingRef = useRef<HTMLHeadingElement | null>(null)
   const [profile, setProfile] = useState<UserProfile>(emptyProfile)
   const [draft, setDraft] = useState<DeletionTemplateDraft | null>(null)
   const [intro, setIntro] = useState('')
   const [requestBlock, setRequestBlock] = useState('')
   const [signOff, setSignOff] = useState('')
   const [saveMessage, setSaveMessage] = useState('')
-  const editBehavior = getTaskEditBehavior('edit_template_for_batch')
 
   const defaults = useMemo(() => getDefaultDeletionTemplate(profile), [profile])
 
@@ -57,6 +65,8 @@ export default function TemplateEditor() {
     void refreshState()
   })
 
+  useRouteFocus(currentRoute, true, headingRef)
+
   async function handleSave() {
     await saveDeletionTemplateDraft(profile, {
       intro,
@@ -72,44 +82,33 @@ export default function TemplateEditor() {
     setSaveMessage('Saved locally.')
   }
 
-  function restoreBlock(block: 'intro' | 'requestBlock' | 'signOff') {
+  function restoreDefaults() {
     setSaveMessage('')
-    if (block === 'intro') {
-      setIntro(defaults.intro)
-      return
-    }
-    if (block === 'requestBlock') {
-      setRequestBlock(defaults.requestBlock)
-      return
-    }
+    setIntro(defaults.intro)
+    setRequestBlock(defaults.requestBlock)
     setSignOff(defaults.signOff)
   }
 
   const hasCustomWording = Boolean(draft?.intro || draft?.requestBlock || draft?.signOff)
+  const canRestoreDefaults =
+    intro !== defaults.intro ||
+    requestBlock !== defaults.requestBlock ||
+    signOff !== defaults.signOff
 
   return (
     <IonPage>
       <IonContent className="page-content">
         <section className="app-screen-shell template-editor">
           <AppTopNav backHref={fallbackHref} />
-          <AppHeading intent="section">Edit email wording</AppHeading>
+          <AppHeading intent="section" level={1} ref={headingRef} tabIndex={-1}>
+            Edit email wording
+          </AppHeading>
           {saveMessage ? <AppText intent="supporting">{saveMessage}</AppText> : null}
           {hasCustomWording ? (
             <AppText intent="supporting">Custom wording is active.</AppText>
           ) : null}
-          {returnTo && editBehavior === 'explicit_save' ? (
-            <AppText intent="supporting">
-              Save wording to return to your batch review.
-            </AppText>
-          ) : null}
 
           <div className="template-editor__block">
-            <div className="template-editor__header">
-              <AppHeading intent="section">Opening</AppHeading>
-              <AppButton variant="secondary" size="xs" onClick={() => restoreBlock('intro')}>
-                Restore default wording
-              </AppButton>
-            </div>
             <AppTextarea
               label="Opening paragraph"
               value={intro}
@@ -117,53 +116,41 @@ export default function TemplateEditor() {
                 setSaveMessage('')
                 setIntro(value)
               }}
-              rows={5}
-              helpText="Plain text only."
+              rows={getTextareaRows(intro, 3, 7)}
             />
           </div>
 
           <div className="template-editor__block">
-            <div className="template-editor__header">
-              <AppHeading intent="section">Request wording</AppHeading>
-              <AppButton
-                variant="secondary"
-                size="xs"
-                onClick={() => restoreBlock('requestBlock')}
-              >
-                Restore default wording
-              </AppButton>
-            </div>
             <AppTextarea
-              label="Everything below “What I’m requesting”"
+              label="What I’m Requesting"
               value={requestBlock}
               onChange={(value) => {
                 setSaveMessage('')
                 setRequestBlock(value)
               }}
-              rows={12}
-              helpText="Plain text only. Extra blank lines are collapsed when you save."
+              rows={getTextareaRows(requestBlock, 8, 16)}
             />
           </div>
 
           <div className="template-editor__block">
-            <div className="template-editor__header">
-              <AppHeading intent="section">Sign-off</AppHeading>
-              <AppButton variant="secondary" size="xs" onClick={() => restoreBlock('signOff')}>
-                Restore default wording
-              </AppButton>
-            </div>
             <AppTextarea
-              label="Closing name or signature"
+              label="Sign-off"
               value={signOff}
               onChange={(value) => {
                 setSaveMessage('')
                 setSignOff(value)
               }}
-              rows={3}
-              helpText="Defaults to your saved name."
+              rows={getTextareaRows(signOff, 2, 4)}
             />
           </div>
 
+          <AppButton
+            variant="secondary"
+            onClick={restoreDefaults}
+            disabled={!canRestoreDefaults}
+          >
+            Restore default wording
+          </AppButton>
           <AppButton onClick={handleSave}>Save wording</AppButton>
         </section>
       </IonContent>

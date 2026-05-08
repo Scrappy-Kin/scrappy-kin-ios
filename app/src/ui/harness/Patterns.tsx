@@ -129,7 +129,7 @@ export default function Patterns() {
               />
               <ArtifactPanel>
                 <AppText intent="label">Artifact panel</AppText>
-                <AppText intent="body">Subject: Personal Data Deletion Request [SK-ABC123]</AppText>
+                <AppText intent="body">Subject: Personal Data Deletion Request</AppText>
                 <AppText intent="supporting">
                   Plain-text content and embedded form fields belong inside the artifact surface.
                 </AppText>

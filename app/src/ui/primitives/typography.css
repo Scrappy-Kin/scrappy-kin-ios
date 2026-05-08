@@ -10,6 +10,10 @@
   margin: 0;
 }
 
+.app-heading:focus {
+  outline: none;
+}
+
 .app-text__content {
   display: block;
   min-width: 0;
@@ -25,4 +29,21 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.subscription-offer-card__price {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  font-weight: var(--font-weight-regular);
+}
+
+.subscription-offer-card__price-amount {
+  font-size: clamp(3rem, 7vw, 3.75rem);
+  line-height: 0.95;
+}
+
+.subscription-offer-card__price-period {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-md);
 }

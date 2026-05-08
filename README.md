@@ -31,6 +31,8 @@ Local scratch notes are fine, but they are not canonical planning state.
 - `app/` - React + TypeScript UI (Capacitor host)
 - `scripts/` - engineering scripts used by the app/tooling
 - `docs/build-oauth.md` - build-time OAuth and environment contract
+- `docs/qa-policy.md` - explicit QA surface policy and release-boundary rules
+- `docs/ui/accessibility-qa-working-notes.md` - local accessibility QA patterns found during prelaunch testing
 
 ## Auditing the code
 
@@ -69,14 +71,32 @@ OAuth note: if your Google OAuth consent screen is in Testing mode, add your
 Google account to the Test users list in Google Cloud Console.
 
 For build-time OAuth configuration (DEV vs PROD), see `docs/build-oauth.md`.
+For the bend/hold line between local QA, TestFlight, and release, see
+`docs/qa-policy.md`.
 
-For final prelaunch QA that exercises StoreKit without emailing real brokers, use
-the QA StoreKit lane:
+## QA and release commands
 
-```bash
-cd app
-npm run ios:install:qa-storekit
-```
+The safe default for physical-device QA is `QADevice` / `qa-storekit`. It uses
+the production bundle ID, production OAuth, production StoreKit product ID, real
+broker names/counts/order, and sink inbox recipients.
 
-This installs the production bundle ID with broker recipients routed to Scrappy
-Kin test inboxes. See `docs/build-oauth.md` for lane rules and guardrails.
+| Job | Command | Safe to Send? |
+| --- | --- | --- |
+| Local iPhone QA | `cd app && npm run ios:fastlane:qa-device` | Yes |
+| Local iPhone QA, web-only iteration | `cd app && npm run ios:fastlane:qa-device-fast` | Yes |
+| Local simulator QA | `cd app && npm run ios:fastlane:qa-simulator` | Yes |
+| Production archive | `cd app && npm run ios:fastlane:prod-archive` | No |
+| Production TestFlight | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight` | No |
+
+Production TestFlight uses `Release` and can send real broker emails. Use it only
+for release-candidate validation, not safe send QA.
+
+Use the fast iPhone QA command only for JS/TS/CSS/content-only loops. Use the
+normal QADevice command after native iOS, Capacitor config, package/dependency,
+signing, plugin, or StoreKit changes.
+
+The production Fastlane commands read App Store Connect API credentials from
+macOS Keychain services named `scrappy-kin-asc-key-id`,
+`scrappy-kin-asc-issuer-id`, and `scrappy-kin-asc-api-key-p8`. The `.p8`
+contents are written to a temporary file only for the Fastlane process and then
+deleted.

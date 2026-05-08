@@ -61,9 +61,8 @@ textarea.app-input__control {
   font-weight: inherit;
 }
 
-.app-input__required {
-  color: var(--danger);
-  margin-left: var(--space-1);
+.app-input__label {
+  display: block;
 }
 
 .app-input__error {

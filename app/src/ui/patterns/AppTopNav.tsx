@@ -13,6 +13,7 @@ type AppTopNavProps = {
   onBack?: () => void
   backDisabled?: boolean
   label?: string
+  labelAccessibilityHidden?: boolean
   action?: ReactNode
   progressCurrent?: number
   progressTotal?: number
@@ -24,6 +25,7 @@ export default function AppTopNav({
   onBack,
   backDisabled = false,
   label,
+  labelAccessibilityHidden = false,
   action,
   progressCurrent,
   progressTotal,
@@ -74,13 +76,21 @@ export default function AppTopNav({
           ) : null}
         </div>
         <div className="app-top-nav__label-wrap">
-          {label ? <AppText intent="label">{label}</AppText> : null}
+          {label ? (
+            <AppText intent="label">
+              <span aria-hidden={labelAccessibilityHidden}>
+                {label}
+              </span>
+            </AppText>
+          ) : null}
         </div>
         <div className="app-top-nav__slot app-top-nav__slot--trailing">
           {action ?? null}
         </div>
       </div>
-      {showProgress ? <AppProgress current={progressCurrent} total={progressTotal} /> : null}
+      {showProgress ? (
+        <AppProgress current={progressCurrent} total={progressTotal} accessibilityHidden />
+      ) : null}
     </div>
   )
 }

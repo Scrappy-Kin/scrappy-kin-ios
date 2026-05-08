@@ -1,6 +1,8 @@
 import type { Location } from 'history'
 import type { FlowStepId } from './flowProgress'
 
+export type SettingsView = 'profile' | 'gmail' | 'subscription' | 'privacy' | 'diagnostics' | 'support'
+
 export function getCurrentRoute(location: Pick<Location, 'pathname' | 'search'>) {
   return `${location.pathname}${location.search}`
 }
@@ -50,7 +52,7 @@ export function buildReviewBatchHref(returnTo?: string | null) {
 }
 
 export function buildSettingsHref(
-  view?: 'profile' | 'gmail' | 'subscription' | 'privacy' | 'diagnostics' | 'about',
+  view?: SettingsView,
   returnTo?: string | null,
 ) {
   return withParams('/settings', { view, returnTo })
@@ -58,10 +60,6 @@ export function buildSettingsHref(
 
 export function buildTemplateHref(returnTo?: string | null) {
   return withReturnTo('/template', returnTo)
-}
-
-export function buildBrokersHref(returnTo?: string | null) {
-  return withReturnTo('/brokers', returnTo)
 }
 
 export function buildSentReviewHref(returnTo?: string | null) {

@@ -34,10 +34,10 @@ export const phaseAInfoSteps: InfoStep[] = [
     id: 'how-it-works',
     title: 'How it works',
     body: [
-      'Pick brokers.',
+      'Start with a small verified broker set.',
       'Review the opt-out email and fill in only the minimum details needed.',
       'Connect Gmail for send-only access.',
-      'Send selected opt-out emails and track progress.',
+      'Send opt-out emails, then review the next remaining batch when you are ready.',
     ],
   },
 ]

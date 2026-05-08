@@ -51,12 +51,28 @@ function buildPostSendResumeTarget(lastFlowStep?: FlowStepId | null) {
   return buildFlowStepHref('beat-sent')
 }
 
+function shouldResumePostSendFlow(
+  onboardingSentCount: number,
+  lastFlowStep?: FlowStepId | null,
+  flowStarted = false,
+) {
+  if (!flowStarted || onboardingSentCount === 0) {
+    return false
+  }
+
+  return (
+    lastFlowStep === 'final-review' ||
+    lastFlowStep === 'beat-sent' ||
+    lastFlowStep === 'beat-subscribe'
+  )
+}
+
 export function deriveEntryTarget(
   input: DeriveEntryTargetInput,
   lastFlowStep?: FlowStepId | null,
   flowStarted = false,
 ): HomeRedirectTarget | null {
-  if (flowStarted && input.onboardingSentCount > 0) {
+  if (shouldResumePostSendFlow(input.onboardingSentCount, lastFlowStep, flowStarted)) {
     return buildPostSendResumeTarget(lastFlowStep)
   }
 

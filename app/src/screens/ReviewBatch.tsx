@@ -25,6 +25,7 @@ import AppIcon from '../ui/primitives/AppIcon'
 import AppNotice from '../ui/primitives/AppNotice'
 import AppText from '../ui/primitives/AppText'
 import AppTopNav from '../ui/patterns/AppTopNav'
+import { GMAIL_CONNECTED_DESCRIPTION } from '../ui/patterns/GmailAccessExplainer'
 import ReviewAssetCard from '../ui/patterns/ReviewAssetCard'
 import ServerBoundaryClaim from '../ui/patterns/ServerBoundaryClaim'
 import SettingsShortcut from '../ui/patterns/SettingsShortcut'
@@ -177,7 +178,7 @@ export default function ReviewBatch() {
                 </button>
               }
             >
-              <AppText intent="body">Send-only access is active. Scrappy Kin cannot read your inbox.</AppText>
+              <AppText intent="body">{GMAIL_CONNECTED_DESCRIPTION}</AppText>
             </ReviewAssetCard>
             <ReviewAssetCard
               title={`${selectedBrokerIds.length} brokers in this batch`}

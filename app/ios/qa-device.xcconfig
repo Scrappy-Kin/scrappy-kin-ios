@@ -1,0 +1,8 @@
+#include "release.xcconfig"
+
+// Local physical-device QA should mirror production app/runtime settings while
+// remaining development-signable for tethered installs from Xcode or scripts.
+CAPACITOR_DEBUG = false
+PRODUCT_BUNDLE_IDENTIFIER = com.scrappykin.ios
+PRODUCT_NAME = Scrappy Kin
+INFOPLIST_KEY_CFBundleDisplayName = Scrappy Kin
