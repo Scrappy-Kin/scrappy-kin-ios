@@ -1,5 +1,6 @@
-import { useId, type InputHTMLAttributes } from 'react'
+import { useId, useRef, type InputHTMLAttributes } from 'react'
 import AppText from './AppText'
+import { scrollFieldIntoKeyboardSafeView } from './scrollFieldIntoKeyboardSafeView'
 import './input.css'
 
 type AppInputProps = {
@@ -40,24 +41,33 @@ export default function AppInput({
   spellCheck,
 }: AppInputProps) {
   const generatedId = useId()
+  const wrapperRef = useRef<HTMLDivElement | null>(null)
   const baseId = fieldId ?? generatedId
   const descriptionId = error
     ? `${baseId}-error`
     : helpText
       ? `${baseId}-help`
       : undefined
+  const visibleLabel = required ? `${label} (Required)` : label
+
+  function handleFocus() {
+    requestAnimationFrame(() => {
+      void scrollFieldIntoKeyboardSafeView(wrapperRef.current)
+    })
+    window.setTimeout(() => {
+      void scrollFieldIntoKeyboardSafeView(wrapperRef.current)
+    }, 350)
+  }
 
   return (
     <div
       className={`app-input${error ? ' app-input--error' : ''}`}
       data-field-id={fieldId}
+      ref={wrapperRef}
     >
-      <AppText intent="label">
-        <>
-          {label}
-          {required ? <span className="app-input__required">*</span> : null}
-        </>
-      </AppText>
+      <label className="app-input__label" htmlFor={baseId}>
+        <AppText intent="label">{visibleLabel}</AppText>
+      </label>
       <input
         id={baseId}
         className="app-input__control"
@@ -72,7 +82,7 @@ export default function AppInput({
         spellCheck={spellCheck}
         onChange={(event) => onChange(event.target.value)}
         onBlur={onBlur}
-        aria-label={label}
+        onFocus={handleFocus}
         aria-invalid={Boolean(error)}
         aria-required={required}
         aria-describedby={descriptionId}

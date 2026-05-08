@@ -2,47 +2,56 @@ import {
   SUBSCRIPTION_PRICE_DISPLAY,
   SUBSCRIPTION_PRICE_SUBTEXT,
 } from '../../config/subscription'
-import type { BrokerCatalogSummary } from '../../services/brokerStore'
+import type { SubscriptionProduct } from '../../services/subscription'
 import AppBulletRow from '../primitives/AppBulletRow'
-import AppProgress from '../primitives/AppProgress'
 import AppSegmentedCard, { AppSegmentedCardSection } from '../primitives/AppSegmentedCard'
 import AppText from '../primitives/AppText'
 
 type SubscriptionOfferCardProps = {
-  brokerSummary: BrokerCatalogSummary
+  product?: SubscriptionProduct | null
 }
 
-export default function SubscriptionOfferCard({ brokerSummary }: SubscriptionOfferCardProps) {
-  const progressLabel = `${brokerSummary.starterCount} of ${brokerSummary.totalBrokerCount} brokers`
+export default function SubscriptionOfferCard({ product }: SubscriptionOfferCardProps) {
+  const displayPrice = product?.displayPrice ?? SUBSCRIPTION_PRICE_DISPLAY
+  const priceSubtext = product?.priceSubtext ?? SUBSCRIPTION_PRICE_SUBTEXT
+  const priceMatch = displayPrice.match(/^(.*?)(\s*\/.*)$/)
+  const priceAmount = priceMatch?.[1] ?? displayPrice
+  const pricePeriod = priceMatch?.[2] ?? ''
 
   return (
     <AppSegmentedCard>
       <AppSegmentedCardSection>
-        <AppText intent="body" emphasis>
-          {SUBSCRIPTION_PRICE_DISPLAY}
+        <AppText intent="supporting">{priceSubtext}</AppText>
+        <AppText
+          intent="body"
+          className="subscription-offer-card__price"
+          accessibilityLabel={displayPrice}
+        >
+          <span className="subscription-offer-card__price-amount">{priceAmount}</span>
+          {pricePeriod ? (
+            <span className="subscription-offer-card__price-period">{pricePeriod}</span>
+          ) : null}
         </AppText>
-        <AppText intent="supporting">{SUBSCRIPTION_PRICE_SUBTEXT}</AppText>
       </AppSegmentedCardSection>
       <AppSegmentedCardSection>
         <div className="app-stack">
           <AppBulletRow
             label="Access to our full broker list"
-            subtext="Curated, kept current. More coming soon."
+            subtext="Vetted & maintained. More coming soon."
           />
-          <AppBulletRow label="Covers re-sends, every few months" />
           <AppBulletRow
-            label="Your emails go out from your account"
-            subtext="We never see what comes back."
+            label="Covers unlimited resends"
+            subtext="We recommend every 3 months."
+          />
+          <AppBulletRow
+            label="Opt-outs go through your Gmail"
+            subtext="We can't see your personal information."
+          />
+          <AppBulletRow
+            label="Apple handles billing"
+            subtext="We can't see your card or billing details."
           />
         </div>
-      </AppSegmentedCardSection>
-      <AppSegmentedCardSection>
-        <AppProgress
-          current={brokerSummary.starterCount}
-          total={brokerSummary.totalBrokerCount}
-          label={progressLabel}
-          tone="success"
-        />
       </AppSegmentedCardSection>
     </AppSegmentedCard>
   )

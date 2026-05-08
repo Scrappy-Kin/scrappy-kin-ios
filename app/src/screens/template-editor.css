@@ -5,13 +5,5 @@
 
 .template-editor__block {
   display: grid;
-  gap: var(--space-3);
-}
-
-.template-editor__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  flex-wrap: wrap;
+  gap: var(--space-2);
 }

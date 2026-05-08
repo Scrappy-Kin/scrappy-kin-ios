@@ -4,10 +4,10 @@ import {
   IonPage,
   IonRouterOutlet,
 } from '@ionic/react'
+import { Capacitor } from '@capacitor/core'
 import { IonReactRouter } from '@ionic/react-router'
 import { Redirect, Route } from 'react-router-dom'
-import { lazy, Suspense, useEffect, useState, type ComponentType } from 'react'
-import Brokers from './screens/Brokers'
+import { lazy, Suspense, useEffect, useState, useSyncExternalStore, type ComponentType } from 'react'
 import Flow from './screens/Flow'
 import Gmail from './screens/Gmail'
 import Home from './screens/Home'
@@ -16,7 +16,12 @@ import SentEmails from './screens/SentEmails'
 import Settings from './screens/Settings'
 import TemplateEditor from './screens/TemplateEditor'
 import { useOnlineStatus } from './state/useOnlineStatus'
-import { clearStaleOAuthState, getGmailStatus } from './services/googleAuth'
+import {
+  clearStaleOAuthState,
+  getGmailStatus,
+  getOAuthBrowserOpenSnapshot,
+  subscribeOAuthBrowserOpen,
+} from './services/googleAuth'
 import { isDevAppLane, isQaStoreKitLane } from './config/buildInfo'
 import {
   FLOW_STEP_IDS,
@@ -31,14 +36,17 @@ import { getQueue } from './services/queueStore'
 import { getUserProfile } from './services/userProfile'
 import { buildOnboardingHref, readSuccessTo } from './services/navigation'
 
-const DEV_BUNDLE_ENABLED = import.meta.env.DEV
-const DevHarnessHome = DEV_BUNDLE_ENABLED ? lazy(() => import('./ui/harness/HarnessHome')) : null
-const DevReviewBoard = DEV_BUNDLE_ENABLED ? lazy(() => import('./ui/harness/ReviewBoard')) : null
-const DevPatterns = DEV_BUNDLE_ENABLED ? lazy(() => import('./ui/harness/Patterns')) : null
-const DevPrimitives = DEV_BUNDLE_ENABLED ? lazy(() => import('./ui/harness/Primitives')) : null
-const DevTokens = DEV_BUNDLE_ENABLED ? lazy(() => import('./ui/harness/Tokens')) : null
-const DevAppUrlBridge = DEV_BUNDLE_ENABLED ? lazy(() => import('./dev/AppUrlBridge')) : null
-const DevCaptureScenarioRoute = DEV_BUNDLE_ENABLED
+const DEV_SURFACES_ENABLED =
+  import.meta.env.VITE_EXECUTION_LANE === 'dev' ||
+  (!import.meta.env.VITE_EXECUTION_LANE && import.meta.env.DEV)
+const DevHarnessHome = DEV_SURFACES_ENABLED ? lazy(() => import('./ui/harness/HarnessHome')) : null
+const DevScreenshotGallery = DEV_SURFACES_ENABLED ? lazy(() => import('./ui/harness/ScreenshotGallery')) : null
+const DevReviewBoard = DEV_SURFACES_ENABLED ? lazy(() => import('./ui/harness/ReviewBoard')) : null
+const DevPatterns = DEV_SURFACES_ENABLED ? lazy(() => import('./ui/harness/Patterns')) : null
+const DevPrimitives = DEV_SURFACES_ENABLED ? lazy(() => import('./ui/harness/Primitives')) : null
+const DevTokens = DEV_SURFACES_ENABLED ? lazy(() => import('./ui/harness/Tokens')) : null
+const DevAppUrlBridge = DEV_SURFACES_ENABLED ? lazy(() => import('./dev/AppUrlBridge')) : null
+const DevCaptureScenarioRoute = DEV_SURFACES_ENABLED
   ? lazy(() => import('./dev/CaptureScenarioRoute'))
   : null
 
@@ -131,11 +139,6 @@ function LegacyFlowPathRedirect({ stepId }: { stepId: string }) {
   return <Redirect to={target} />
 }
 
-function RoutedBrokers() {
-  const isOnline = useOnlineStatus()
-  return isOnline ? <Brokers /> : <OfflineShell />
-}
-
 function FallbackRedirect() {
   return <Redirect to="/home" />
 }
@@ -163,13 +166,23 @@ export default function App() {
 }
 
 function AppShell() {
-  const [showDevLaneUi, setShowDevLaneUi] = useState(false)
+  const [showDevLaneUi, setShowDevLaneUi] = useState(
+    () => DEV_SURFACES_ENABLED && !Capacitor.isNativePlatform(),
+  )
 
   useEffect(() => {
     clearStaleOAuthState().catch(() => undefined)
   }, [])
 
   useEffect(() => {
+    if (!DEV_SURFACES_ENABLED) {
+      return
+    }
+
+    if (!Capacitor.isNativePlatform()) {
+      return
+    }
+
     let cancelled = false
 
     isDevAppLane().then((visible) => {
@@ -184,7 +197,12 @@ function AppShell() {
   }, [])
 
   const isOnline = useOnlineStatus()
-  const showDevTools = DEV_BUNDLE_ENABLED && showDevLaneUi
+  const oauthBrowserOpen = useSyncExternalStore(
+    subscribeOAuthBrowserOpen,
+    getOAuthBrowserOpenSnapshot,
+    getOAuthBrowserOpenSnapshot,
+  )
+  const showDevTools = DEV_SURFACES_ENABLED && showDevLaneUi
   const showQaStoreKitUi = isQaStoreKitLane()
 
   const devRoutes = showDevTools
@@ -194,6 +212,12 @@ function AppShell() {
           path="/ui-harness"
           render={() => renderLazyDevComponent(DevHarnessHome)}
           key="ui-harness"
+        />,
+        <Route
+          exact
+          path="/ui-harness/screenshots"
+          render={() => renderLazyDevComponent(DevScreenshotGallery)}
+          key="ui-harness-screenshots"
         />,
         <Route
           exact
@@ -242,32 +266,36 @@ function AppShell() {
         </div>
       ) : null}
       {showDevTools ? renderLazyDevComponent(DevAppUrlBridge) : null}
-      <IonRouterOutlet>
-        <Route exact path="/" component={EntryGate} />
-        <Route exact path="/home" component={RoutedHome} />
-        <Route exact path="/gmail" component={Gmail} />
-        <Route exact path="/review-batch" component={ReviewBatch} />
-        <Route exact path="/flow" component={LegacyFlowRedirect} />
-        <Route
-          exact
-          path="/flow/:step"
-          render={({ match }) => <LegacyFlowPathRedirect stepId={match.params.step} />}
-        />
-        {FLOW_STEP_IDS.map((stepId) => (
+      <div
+        aria-hidden={oauthBrowserOpen || undefined}
+        inert={oauthBrowserOpen || undefined}
+      >
+        <IonRouterOutlet>
+          <Route exact path="/" component={EntryGate} />
+          <Route exact path="/home" component={RoutedHome} />
+          <Route exact path="/gmail" component={Gmail} />
+          <Route exact path="/review-batch" component={ReviewBatch} />
+          <Route exact path="/flow" component={LegacyFlowRedirect} />
           <Route
             exact
-            path={`/onboarding/${stepId}`}
-            key={`flow-${stepId}`}
-            render={() => (isOnline ? <Flow stepId={stepId} /> : <OfflineShell />)}
+            path="/flow/:step"
+            render={({ match }) => <LegacyFlowPathRedirect stepId={match.params.step} />}
           />
-        ))}
-        <Route exact path="/brokers" component={RoutedBrokers} />
-        <Route exact path="/sent-emails" component={SentEmails} />
-        <Route exact path="/settings" component={Settings} />
-        <Route exact path="/template" component={TemplateEditor} />
-        {devRoutes}
-        <Route component={FallbackRedirect} />
-      </IonRouterOutlet>
+          {FLOW_STEP_IDS.map((stepId) => (
+            <Route
+              exact
+              path={`/onboarding/${stepId}`}
+              key={`flow-${stepId}`}
+              render={() => (isOnline ? <Flow stepId={stepId} /> : <OfflineShell />)}
+            />
+          ))}
+          <Route exact path="/sent-emails" component={SentEmails} />
+          <Route exact path="/settings" component={Settings} />
+          <Route exact path="/template" component={TemplateEditor} />
+          {devRoutes}
+          <Route component={FallbackRedirect} />
+        </IonRouterOutlet>
+      </div>
     </>
   )
 }

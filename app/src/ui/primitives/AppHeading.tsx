@@ -1,10 +1,14 @@
-import type { ReactNode } from 'react'
+import { forwardRef, type ReactNode } from 'react'
 import './typography.css'
 
 type HeadingIntent = 'hero' | 'lead' | 'section'
+type HeadingLevel = 1 | 2 | 3
 
 type AppHeadingProps = {
   intent: HeadingIntent
+  level?: HeadingLevel
+  accessibilityLabel?: string
+  tabIndex?: number
   children: ReactNode
 }
 
@@ -14,7 +18,22 @@ const headingMap: Record<HeadingIntent, { tag: 'h1' | 'h2' | 'h3'; classes: stri
   section: { tag: 'h3', classes: 't-xl lh-xl w-600 text-primary' },
 }
 
-export default function AppHeading({ intent, children }: AppHeadingProps) {
-  const { tag: Tag, classes } = headingMap[intent]
-  return <Tag className={`app-heading ${classes}`}>{children}</Tag>
-}
+const AppHeading = forwardRef<HTMLHeadingElement, AppHeadingProps>(function AppHeading(
+  { intent, level, accessibilityLabel, tabIndex, children },
+  ref,
+) {
+  const { tag, classes } = headingMap[intent]
+  const Tag = level ? (`h${level}` as const) : tag
+  return (
+    <Tag
+      className={`app-heading ${classes}`}
+      ref={ref}
+      tabIndex={tabIndex}
+      aria-label={accessibilityLabel}
+    >
+      {children}
+    </Tag>
+  )
+})
+
+export default AppHeading

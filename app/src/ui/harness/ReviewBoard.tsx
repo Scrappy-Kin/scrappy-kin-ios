@@ -1,10 +1,14 @@
 import { IonContent, IonPage } from '@ionic/react'
+import { imagesOutline } from 'ionicons/icons'
 import { useMemo, useState } from 'react'
+import { Link, useHistory, useLocation } from 'react-router-dom'
 import AppButton from '../primitives/AppButton'
+import AppIcon from '../primitives/AppIcon'
 import AppText from '../primitives/AppText'
 import './harness.css'
 
 type ReviewState = {
+  id: string
   title: string
   route: string
   description: string
@@ -13,87 +17,129 @@ type ReviewState = {
 
 const reviewStates: ReviewState[] = [
   {
+    id: 'flow-intro',
     title: 'Flow: intro',
     route: '/capture/flow-intro?qa=1',
     description: 'Trust framing and the first guided setup step.',
     seedsLocalState: true,
   },
   {
+    id: 'flow-starter-set',
     title: 'Flow: starter set',
     route: '/capture/flow-starter-set?qa=1',
     description: 'The fixed taster round that replaces onboarding broker selection.',
     seedsLocalState: true,
   },
   {
+    id: 'flow-request-review',
     title: 'Flow: email review',
     route: '/capture/flow-request-review?qa=1',
     description: 'Template, inline fields, and the editable opt-out email artifact.',
     seedsLocalState: true,
   },
   {
+    id: 'flow-gmail-send',
     title: 'Flow: Gmail connect',
     route: '/capture/flow-gmail-send?qa=1',
     description: 'Send-only consent explanation before Google auth.',
     seedsLocalState: true,
   },
   {
+    id: 'flow-final-review',
     title: 'Flow: final review',
     route: '/capture/flow-final-review?qa=1',
     description: 'Connected Gmail, broker summary, and final send checkpoint.',
     seedsLocalState: true,
   },
   {
+    id: 'flow-beat-sent',
     title: 'Flow: beat 1',
     route: '/capture/flow-beat-sent?qa=1',
     description: 'Post-send confirmation before the subscription offer.',
     seedsLocalState: true,
   },
   {
+    id: 'flow-beat-subscribe',
     title: 'Flow: beat 2',
     route: '/capture/flow-beat-subscribe?qa=1',
     description: 'Subscription offer, restore path, and later dismissal.',
     seedsLocalState: true,
   },
   {
+    id: 'review-batch',
     title: 'App: review batch',
     route: '/capture/review-batch?qa=1',
     description: 'Post-onboarding batch review and send flow from Home.',
     seedsLocalState: true,
   },
   {
+    id: 'home-unsubscribed',
     title: 'Home: unsubscribed',
     route: '/capture/home-unsubscribed?qa=1',
     description: 'Dashboard card after the free taster when subscription is inactive.',
     seedsLocalState: true,
   },
   {
+    id: 'home-subscribed',
     title: 'Home: subscribed',
     route: '/capture/home-subscribed?qa=1',
     description: 'Dashboard card after the free taster when subscription is active.',
     seedsLocalState: true,
   },
   {
-    title: 'Brokers: review next batch',
-    route: '/capture/brokers?qa=1',
-    description: 'The same broker selector reused later from the dashboard flow.',
-    seedsLocalState: true,
-  },
-  {
+    id: 'settings',
     title: 'Settings',
     route: '/capture/settings?qa=1',
-    description: 'Profile, diagnostics, disconnect, and local-data controls.',
+    description: 'Top-level Settings entry point for profile, Gmail, subscription, privacy, diagnostics, and support.',
     seedsLocalState: true,
   },
   {
+    id: 'settings-subscription',
     title: 'Settings: subscription',
     route: '/capture/settings-subscription?qa=1',
     description: 'Top-level subscription management with restore and Apple billing copy.',
     seedsLocalState: true,
   },
+  {
+    id: 'settings-profile',
+    title: 'Settings: profile',
+    route: '/capture/settings-profile?qa=1',
+    description: 'Editable personal details used in broker opt-out emails.',
+    seedsLocalState: true,
+  },
+  {
+    id: 'settings-privacy',
+    title: 'Settings: privacy',
+    route: '/capture/settings-privacy?qa=1',
+    description: 'On-device data and deletion controls.',
+    seedsLocalState: true,
+  },
+  {
+    id: 'settings-diagnostics',
+    title: 'Settings: diagnostics',
+    route: '/capture/settings-diagnostics?qa=1',
+    description: 'Local diagnostics capture, export, and wipe actions.',
+    seedsLocalState: true,
+  },
+  {
+    id: 'settings-support',
+    title: 'Settings: support',
+    route: '/capture/settings-support?qa=1',
+    description: 'Help, legal links, support email, and build metadata on one surface.',
+    seedsLocalState: true,
+  },
 ]
 
+function readRequestedState(search: string) {
+  const params = new URLSearchParams(search)
+  const requestedState = params.get('state')
+  return reviewStates.find((state) => state.id === requestedState)?.route ?? reviewStates[0]?.route ?? '/home'
+}
+
 export default function ReviewBoard() {
-  const [selectedRoute, setSelectedRoute] = useState(reviewStates[0]?.route ?? '/home')
+  const history = useHistory()
+  const location = useLocation()
+  const [selectedRoute, setSelectedRoute] = useState(() => readRequestedState(location.search))
   const [previewNonce, setPreviewNonce] = useState(0)
 
   const selectedState = useMemo(
@@ -112,6 +158,9 @@ export default function ReviewBoard() {
   const handleSelectState = (route: string) => {
     setSelectedRoute(route)
     setPreviewNonce((current) => current + 1)
+    const selected = reviewStates.find((state) => state.route === route)
+    const nextSearch = selected ? `?state=${encodeURIComponent(selected.id)}` : ''
+    history.replace(`${location.pathname}${nextSearch}`)
   }
 
   const handleStep = (direction: -1 | 1) => {
@@ -135,12 +184,22 @@ export default function ReviewBoard() {
 
           <section className="review-board-footer">
             <div className="review-board-footer__summary">
-              <AppText intent="body" emphasis>
-                {selectedState?.title ?? 'Preview'}
-              </AppText>
-              <AppText intent="supporting">
-                {selectedIndex + 1} of {reviewStates.length}
-              </AppText>
+              <div className="review-board-footer__summary-copy">
+                <AppText intent="body" emphasis>
+                  {selectedState?.title ?? 'Preview'}
+                </AppText>
+                <AppText intent="supporting">
+                  {selectedIndex + 1} of {reviewStates.length}
+                </AppText>
+              </div>
+              <Link
+                className="review-board-footer__icon-link"
+                to="/ui-harness/screenshots"
+                aria-label="Open screenshot gallery"
+                title="Open screenshot gallery"
+              >
+                <AppIcon icon={imagesOutline} size="sm" />
+              </Link>
             </div>
 
             <div className="review-board-footer__controls">

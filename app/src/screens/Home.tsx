@@ -1,6 +1,7 @@
 import { IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
 import { useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
+import { SUBSCRIPTION_PRICE_BUTTON_LABEL } from '../config/subscription'
 import AppButton from '../ui/primitives/AppButton'
 import AppCard from '../ui/primitives/AppCard'
 import AppHeading from '../ui/primitives/AppHeading'
@@ -24,9 +25,12 @@ import {
   deriveNextBatchTaskTarget,
 } from '../services/taskRoutes'
 import { getSubscriptionSnapshot, purchaseSubscription } from '../services/subscription'
+import type { SubscriptionSnapshot } from '../services/subscription'
 import { getUserProfile } from '../services/userProfile'
 import AppTopNav from '../ui/patterns/AppTopNav'
 import SettingsShortcut from '../ui/patterns/SettingsShortcut'
+import SubscriptionBillingClaim from '../ui/patterns/SubscriptionBillingClaim'
+import SubscriptionDiagnosticsNotice from '../ui/patterns/SubscriptionDiagnosticsNotice'
 
 type HomeCardMode = 'subscribed' | 'unsubscribed' | null
 
@@ -34,7 +38,8 @@ export default function Home() {
   const history = useHistory()
   const location = useLocation()
   const currentRoute = getCurrentRoute(location)
-  const [totalSentCount, setTotalSentCount] = useState(0)
+  const [gmailConnected, setGmailConnected] = useState(false)
+  const [totalSentCount, setTotalSentCount] = useState<number | null>(null)
   const [remainingCount, setRemainingCount] = useState(0)
   const [cardMode, setCardMode] = useState<HomeCardMode>(null)
   const [canReviewSent, setCanReviewSent] = useState(false)
@@ -42,6 +47,7 @@ export default function Home() {
   const [purchaseInFlight, setPurchaseInFlight] = useState(false)
   const [subscriptionError, setSubscriptionError] = useState<string | null>(null)
   const [subscriptionUnavailable, setSubscriptionUnavailable] = useState<string | null>(null)
+  const [subscriptionSnapshot, setSubscriptionSnapshot] = useState<SubscriptionSnapshot | null>(null)
 
   async function refreshHome() {
     const [
@@ -98,18 +104,24 @@ export default function Home() {
       return
     }
 
-    setTotalSentCount(lifetimeSentCount)
+    const nextTotalSentCount = Math.max(
+      lifetimeSentCount,
+      onboardingSentCount,
+      sentItems.length,
+    )
+
+    setTotalSentCount(nextTotalSentCount)
+    setGmailConnected(gmailStatus.connected)
     setRemainingCount(nextState.state.remainingCount)
     setCardMode(nextState.state.mode)
     setCanReviewSent(nextState.state.canReviewSent)
     setSubscriptionUnavailable(subscriptionSnapshot.loadError)
+    setSubscriptionSnapshot(subscriptionSnapshot)
     setNextBatchHref(
       deriveNextBatchTaskTarget(
         {
           gmailConnected: gmailStatus.connected,
           hasProfile: Boolean(profile),
-          selectedBrokerIds: filteredSelectedIds,
-          brokers: selectableBrokers,
         },
         '/home',
       ),
@@ -139,13 +151,16 @@ export default function Home() {
     await refreshHome()
   }
 
+  const subscribeButtonLabel =
+    subscriptionSnapshot?.product.buttonPriceLabel ?? SUBSCRIPTION_PRICE_BUTTON_LABEL
+
   return (
     <IonPage>
       <IonContent className="page-content">
         <div className="app-screen-shell">
           <AppTopNav action={<SettingsShortcut />} />
           <section className="home-hero">
-            <AppHeading intent="hero">{totalSentCount}</AppHeading>
+            <AppHeading intent="hero">{totalSentCount ?? '\u00A0'}</AppHeading>
             <AppText intent="body" emphasis>
               Opt-out emails sent
             </AppText>
@@ -154,9 +169,11 @@ export default function Home() {
           {cardMode ? (
             <AppCard title="Next up">
               <AppText intent="body">
-                {cardMode === 'subscribed'
-                  ? `${remainingCount} brokers available for your next batch.`
-                  : `${remainingCount} more brokers available. Subscribe to send to the full list.`}
+                {!gmailConnected
+                  ? 'Reconnect Gmail before you send your next batch.'
+                  : cardMode === 'subscribed'
+                    ? `${remainingCount} brokers available for your next batch.`
+                    : `${remainingCount} more brokers available. Subscribe to send to the full list.`}
               </AppText>
 
               {subscriptionUnavailable && cardMode === 'unsubscribed' ? (
@@ -164,6 +181,13 @@ export default function Home() {
                   {subscriptionUnavailable}
                 </AppNotice>
               ) : null}
+              {cardMode === 'unsubscribed' ? <SubscriptionBillingClaim /> : null}
+              {!gmailConnected ? (
+                <AppNotice variant="warning" title="Gmail disconnected">
+                  Reconnect Gmail to keep sending from your own account.
+                </AppNotice>
+              ) : null}
+              <SubscriptionDiagnosticsNotice snapshot={subscriptionSnapshot} />
 
               {subscriptionError ? (
                 <AppNotice variant="error" title="Subscription didn’t start">
@@ -172,7 +196,11 @@ export default function Home() {
               ) : null}
 
               <div className="app-stack">
-                {cardMode === 'subscribed' ? (
+                {!gmailConnected ? (
+                  <AppButton fullWidth onClick={() => history.push(nextBatchHref)}>
+                    Reconnect Gmail
+                  </AppButton>
+                ) : cardMode === 'subscribed' ? (
                   <AppButton fullWidth onClick={() => history.push(nextBatchHref)}>
                     Review next batch
                   </AppButton>
@@ -183,7 +211,7 @@ export default function Home() {
                     loading={purchaseInFlight}
                     disabled={purchaseInFlight || Boolean(subscriptionUnavailable)}
                   >
-                    Subscribe — $4.99/year
+                    Subscribe — {subscribeButtonLabel}
                   </AppButton>
                 )}
                 {canReviewSent ? (

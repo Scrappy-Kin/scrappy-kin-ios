@@ -8,6 +8,12 @@ pnpm-debug.log*
 # Build
 /dist/
 /build/
+app/fastlane/build/
+app/fastlane/derived_data/
+app/fastlane/report.xml
+app/fastlane/Preview.html
+app/fastlane/screenshots/
+app/fastlane/test_output/
 
 # Env
 .env
@@ -51,6 +57,8 @@ brand/
 
 # IDE-specific agent skills
 .windsurf/
+.codex/config.toml/
+.codex/config.toml
 
 deliverables/reviews/*.log
 

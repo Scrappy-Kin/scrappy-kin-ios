@@ -2,12 +2,15 @@ import { IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
 import { Browser } from '@capacitor/browser'
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
-import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Redirect, useHistory, useLocation } from 'react-router-dom'
 import { BUILD_MODE, BUILD_SHA, BUILD_TIME, isDevAppLane } from '../config/buildInfo'
+import { SUBSCRIPTION_PRICE_BUTTON_LABEL } from '../config/subscription'
 import {
   buildSettingsHref,
+  type SettingsView as SettingsRouteView,
   buildTemplateHref,
+  buildOnboardingHref,
   readReturnTo,
 } from '../services/navigation'
 import { buildTaskHref } from '../services/taskRoutes'
@@ -19,12 +22,8 @@ import {
   setLogOptIn,
   wipeLogs,
 } from '../services/logStore'
-import { getGmailStatus } from '../services/googleAuth'
+import { disconnectGmail, getGmailStatus } from '../services/googleAuth'
 import { wipeAllLocalData } from '../services/secureStore'
-import {
-  loadBrokerCatalogSummary,
-  type BrokerCatalogSummary,
-} from '../services/brokerStore'
 import {
   getSubscriptionSnapshot,
   purchaseSubscription,
@@ -49,19 +48,15 @@ import AppNotice from '../ui/primitives/AppNotice'
 import AppText from '../ui/primitives/AppText'
 import AppToggle from '../ui/primitives/AppToggle'
 import AppTopNav from '../ui/patterns/AppTopNav'
+import SubscriptionBillingClaim from '../ui/patterns/SubscriptionBillingClaim'
+import SubscriptionDiagnosticsNotice from '../ui/patterns/SubscriptionDiagnosticsNotice'
 import SubscriptionOfferCard from '../ui/patterns/SubscriptionOfferCard'
+import { useRouteFocus } from '../ui/patterns/useRouteFocus'
 import './settings.css'
 
-type SettingsView =
-  | 'home'
-  | 'profile'
-  | 'gmail'
-  | 'subscription'
-  | 'privacy'
-  | 'diagnostics'
-  | 'about'
-
+type SettingsView = 'home' | SettingsRouteView
 type SettingsContentView = Exclude<SettingsView, 'gmail'>
+type SettingsDestinationView = Exclude<SettingsRouteView, 'gmail'>
 
 const emptyProfile: UserProfile = {
   fullName: '',
@@ -72,22 +67,54 @@ const emptyProfile: UserProfile = {
 }
 
 const GMAIL_PERMISSION_HELP_URL = 'https://scrappykin.com/help/gmail-permission/'
+const SUPPORT_HELP_URL = 'https://scrappykin.com/help/'
+const PRIVACY_POLICY_URL = 'https://scrappykin.com/privacy.html'
+const TERMS_URL = 'https://scrappykin.com/tos.html'
+const SUPPORT_EMAIL = 'support@scrappykin.com'
+const SUPPORT_EMAIL_URL = `mailto:${SUPPORT_EMAIL}`
 const DEV_BUNDLE_ENABLED = import.meta.env.DEV
+const SETTINGS_DESTINATIONS = {
+  profile: {
+    title: 'Profile',
+    rowTitle: 'Profile',
+    rowDescription: 'Your name and location used in opt-out emails.',
+  },
+  subscription: {
+    title: 'Subscription',
+    rowTitle: 'Subscription',
+    rowDescription: 'Manage your subscription or restore purchases. Apple handles billing.',
+  },
+  privacy: {
+    title: 'Privacy & local data',
+    rowTitle: 'On-device data and deletion',
+    rowDescription: 'See what stays on this device and delete it.',
+  },
+  diagnostics: {
+    title: 'Diagnostics & build info',
+    rowTitle: 'Diagnostics & build info',
+    rowDescription: 'Export local diagnostics and check the build you are running.',
+  },
+  support: {
+    title: 'Support & policies',
+    rowTitle: 'Support & policies',
+    rowDescription: 'Help, support email, privacy policy, and terms.',
+  },
+} as const satisfies Record<
+  SettingsDestinationView,
+  { title: string; rowTitle: string; rowDescription: string }
+>
 const DevDiagnosticsPanel = DEV_BUNDLE_ENABLED
   ? lazy(() => import('../dev/DevDiagnosticsPanel'))
   : null
 
 function getSettingsView(search: string): SettingsView {
   const view = new URLSearchParams(search).get('view')
-  if (
-    view === 'profile' ||
-    view === 'gmail' ||
-    view === 'subscription' ||
-    view === 'privacy' ||
-    view === 'diagnostics' ||
-    view === 'about'
-  ) {
+
+  if (view === 'gmail') {
     return view
+  }
+  if (view && view in SETTINGS_DESTINATIONS) {
+    return view as SettingsDestinationView
   }
   return 'home'
 }
@@ -99,6 +126,7 @@ export default function Settings() {
   const returnTo = readReturnTo(location.search)
   const settingsHomeHref = buildSettingsHref(undefined, returnTo)
   const settingsExitHref = returnTo ?? '/home'
+  const headingRef = useRef<HTMLHeadingElement | null>(null)
   const [logOptIn, setOptIn] = useState(false)
   const [logOptInExpiresAt, setLogOptInExpiresAt] = useState('')
   const [nowTs, setNowTs] = useState(() => Date.now())
@@ -109,17 +137,15 @@ export default function Settings() {
   const [profileSaved, setProfileSaved] = useState(false)
   const [profileErrors, setProfileErrors] = useState<UserProfileErrors>({})
   const [subscriptionSnapshot, setSubscriptionSnapshot] = useState<SubscriptionSnapshot | null>(null)
-  const [brokerSummary, setBrokerSummary] = useState<BrokerCatalogSummary>({
-    starterCount: 0,
-    totalBrokerCount: 0,
-    remainingBrokerCount: 0,
-  })
   const [subscriptionBusy, setSubscriptionBusy] = useState<'purchase' | 'restore' | null>(null)
   const [subscriptionNotice, setSubscriptionNotice] = useState<{
     variant: 'error' | 'success'
     title: string
     body: string
   } | null>(null)
+  const [localDataDeleted, setLocalDataDeleted] = useState(false)
+  const subscribeButtonLabel =
+    subscriptionSnapshot?.product.buttonPriceLabel ?? SUBSCRIPTION_PRICE_BUTTON_LABEL
 
   async function refreshLogOptIn() {
     const status = await getLogOptInStatus()
@@ -159,12 +185,8 @@ export default function Settings() {
       setProfileSaved(false)
     }
     setProfileErrors({})
-    const [nextSubscriptionSnapshot, nextBrokerSummary] = await Promise.all([
-      getSubscriptionSnapshot(),
-      loadBrokerCatalogSummary(),
-    ])
+    const nextSubscriptionSnapshot = await getSubscriptionSnapshot()
     setSubscriptionSnapshot(nextSubscriptionSnapshot)
-    setBrokerSummary(nextBrokerSummary)
   }
 
   useIonViewWillEnter(() => {
@@ -310,11 +332,30 @@ export default function Settings() {
   async function handleWipeAll() {
     const confirmed = confirm('Delete all local data? This cannot be undone.')
     if (!confirmed) return
+    await disconnectGmail()
     await wipeAllLocalData()
     setGmailConnected(false)
     setProfileDraft(emptyProfile)
     setProfileSaved(false)
-    alert('All local data deleted.')
+    setLocalDataDeleted(true)
+    history.replace(buildSettingsHref('privacy', buildOnboardingHref('intro')))
+  }
+
+  function handlePostDeleteBack() {
+    if (view === 'home') {
+      history.replace(buildOnboardingHref('intro'))
+      return
+    }
+
+    history.replace(buildSettingsHref(undefined, buildOnboardingHref('intro')))
+  }
+
+  function openUrl(url: string) {
+    return Browser.open({ url })
+  }
+
+  function openSupportEmail() {
+    window.location.href = SUPPORT_EMAIL_URL
   }
 
   async function handlePurchaseSubscription() {
@@ -364,15 +405,15 @@ export default function Settings() {
           Adjust your opt-out email details, Gmail connection, privacy controls, and support tools.
         </AppText>
 
-        <AppList header="Request setup">
+        <AppList header="Your opt-out request">
           <AppListRow
-            title="Profile"
-            description="Edit the personal information brokers use to find and opt you out of their databases."
+            title={SETTINGS_DESTINATIONS.profile.rowTitle}
+            description={SETTINGS_DESTINATIONS.profile.rowDescription}
             onClick={() => openView('profile')}
           />
           <AppListRow
             title="Email wording"
-            description="Change the wording of the email template you will send to brokers."
+            description="Review the message you send to brokers."
             onClick={() => history.push(buildTemplateHref(settingsHomeHref))}
           />
         </AppList>
@@ -383,7 +424,7 @@ export default function Settings() {
             description={
               gmailConnected
                 ? 'Connected with send-only access.'
-                : 'Connect or disconnect the Gmail account used for sending.'
+                : 'Connect the Gmail account Scrappy Kin uses to send emails.'
             }
             onClick={() =>
               history.push(
@@ -396,13 +437,26 @@ export default function Settings() {
           />
         </AppList>
 
+        <AppList header="Support">
+          <AppListRow
+            title={SETTINGS_DESTINATIONS.support.rowTitle}
+            description={SETTINGS_DESTINATIONS.support.rowDescription}
+            onClick={() => openView('support')}
+          />
+          <AppListRow
+            title={SETTINGS_DESTINATIONS.diagnostics.rowTitle}
+            description={SETTINGS_DESTINATIONS.diagnostics.rowDescription}
+            onClick={() => openView('diagnostics')}
+          />
+        </AppList>
+
         <AppList header="Subscription">
           <AppListRow
-            title="Subscription"
+            title={SETTINGS_DESTINATIONS.subscription.rowTitle}
             description={
               subscriptionSnapshot?.active
-                ? 'Active on this device. Apple manages billing and renewals.'
-                : 'Subscribe or restore purchases. Apple manages billing.'
+                ? 'Active on this device. Apple handles billing and renewals.'
+                : SETTINGS_DESTINATIONS.subscription.rowDescription
             }
             onClick={() => openView('subscription')}
           />
@@ -410,22 +464,9 @@ export default function Settings() {
 
         <AppList header="Privacy & local data">
           <AppListRow
-            title="On-device data and deletion"
-            description="Review what stays on-device and delete local app data."
+            title={SETTINGS_DESTINATIONS.privacy.rowTitle}
+            description={SETTINGS_DESTINATIONS.privacy.rowDescription}
             onClick={() => openView('privacy')}
-          />
-        </AppList>
-
-        <AppList header="Support">
-          <AppListRow
-            title="Diagnostics"
-            description="Export plain-text diagnostics if you want troubleshooting help."
-            onClick={() => openView('diagnostics')}
-          />
-          <AppListRow
-            title="Support contact and build info"
-            description="Get support contact details and inspect the current build."
-            onClick={() => openView('about')}
           />
         </AppList>
       </section>
@@ -435,9 +476,7 @@ export default function Settings() {
   function renderSubscription() {
     return (
       <section className="app-section-shell">
-        <AppText intent="supporting">
-          Apple manages billing and renewals. Scrappy Kin does not store your card details, billing address, or a separate account profile for subscription access.
-        </AppText>
+        <SubscriptionBillingClaim />
 
         <AppList header="Status">
           <AppListRow
@@ -456,13 +495,16 @@ export default function Settings() {
           />
         </AppList>
 
-        <SubscriptionOfferCard brokerSummary={brokerSummary} />
+        <SubscriptionOfferCard
+          product={subscriptionSnapshot?.product}
+        />
 
         {subscriptionSnapshot?.loadError ? (
           <AppNotice variant="error" title="Subscription unavailable">
             {subscriptionSnapshot.loadError}
           </AppNotice>
         ) : null}
+        <SubscriptionDiagnosticsNotice snapshot={subscriptionSnapshot} />
 
         {subscriptionNotice ? (
           <AppNotice variant={subscriptionNotice.variant} title={subscriptionNotice.title}>
@@ -482,7 +524,7 @@ export default function Settings() {
               loading={subscriptionBusy === 'purchase'}
               disabled={subscriptionBusy !== null || subscriptionSnapshot?.isAvailable === false}
             >
-              Subscribe — $4.99/year
+              Subscribe — {subscribeButtonLabel}
             </AppButton>
           )}
           <AppButton
@@ -494,6 +536,19 @@ export default function Settings() {
             Restore Purchases
           </AppButton>
         </div>
+
+        <AppList header="Policies">
+          <AppListRow
+            title="Privacy Policy"
+            accessibilityHint="Opens web page."
+            onClick={() => void openUrl(PRIVACY_POLICY_URL)}
+          />
+          <AppListRow
+            title="Terms of Service"
+            accessibilityHint="Opens web page."
+            onClick={() => void openUrl(TERMS_URL)}
+          />
+        </AppList>
       </section>
     )
   }
@@ -504,7 +559,6 @@ export default function Settings() {
         <AppText intent="supporting">
           Edit the details used to match your records in the opt-out emails.
         </AppText>
-        <AppText intent="caption">* Required</AppText>
         <AppText intent="supporting">{profileSaved ? 'Saved.' : 'Not saved yet.'}</AppText>
         <AppInput
           label="Full name"
@@ -564,12 +618,29 @@ export default function Settings() {
     return (
       <section className="app-section-shell">
         <AppText intent="supporting">
-          Scrappy Kin keeps your profile, Gmail connection, and send queue on this device.
+          Your profile, Gmail connection, send queue, and diagnostics stay on this device.
         </AppText>
+        {localDataDeleted ? (
+          <AppNotice
+            variant="success"
+            title="Local data deleted"
+            actions={
+              <AppButton
+                variant="secondary"
+                size="sm"
+                onClick={() => history.replace(buildOnboardingHref('intro'))}
+              >
+                Start over
+              </AppButton>
+            }
+          >
+            This device is reset. Scrappy Kin will start fresh the next time you begin setup.
+          </AppNotice>
+        ) : null}
         <AppList header="Local data controls">
           <AppListRow
             title="Delete all local data"
-            description="Remove your saved profile, Gmail connection, diagnostics, and send queue from this device."
+            description="Delete your saved profile, Gmail connection, diagnostics, and send queue from this device."
             onClick={handleWipeAll}
             tone="danger"
           />
@@ -582,7 +653,7 @@ export default function Settings() {
     return (
       <section className="app-section-shell">
         <AppText intent="supporting">
-          Diagnostics are optional and stay local until you choose to export them.
+          Diagnostics stay on this device unless you choose to export them.
         </AppText>
 
         <section className="app-section-shell app-section-shell--compact">
@@ -597,35 +668,10 @@ export default function Settings() {
           ) : null}
         </section>
 
-        <AppList header="Diagnostics actions">
+        <AppList header="Diagnostics">
           <AppListRow title="Export diagnostics (plain text)" onClick={handleExportLogs} />
           <AppListRow title="Download diagnostics file" onClick={handleDownloadLogs} />
           <AppListRow title="Wipe diagnostics" onClick={handleWipeLogs} tone="danger" />
-        </AppList>
-
-        <AppText intent="supporting">
-          These notes never send automatically. Share them only if you want troubleshooting help.
-        </AppText>
-
-        {showInternalTools ? renderDevDiagnosticsPanel() : null}
-      </section>
-    )
-  }
-
-  function renderAbout() {
-    return (
-      <section className="app-section-shell">
-        <AppList header="Support">
-          <AppListRow
-            title="How Scrappy Kin uses Gmail permission"
-            description="Open the plain-language help article."
-            onClick={() => Browser.open({ url: GMAIL_PERMISSION_HELP_URL })}
-          />
-          <AppListRow
-            title="Support email"
-            right={<AppText intent="caption">support@scrappykin.com</AppText>}
-            emphasis={false}
-          />
         </AppList>
 
         <AppList header="Build">
@@ -639,9 +685,55 @@ export default function Settings() {
             right={<AppText intent="caption">{BUILD_MODE}</AppText>}
           />
         </AppList>
+
+        <AppText intent="supporting">
+          These notes never send automatically. Share them only if you want troubleshooting help.
+        </AppText>
+
+        {showInternalTools ? renderDevDiagnosticsPanel() : null}
       </section>
     )
   }
+
+  function renderSupport() {
+    return (
+      <section className="app-section-shell">
+        <AppList header="Support">
+          <AppListRow
+            title="Support email"
+            accessibilityHint="Opens Mail."
+            right={<AppText intent="caption">{SUPPORT_EMAIL}</AppText>}
+            onClick={openSupportEmail}
+          />
+          <AppListRow
+            title="Help"
+            accessibilityHint="Opens web page."
+            onClick={() => void openUrl(SUPPORT_HELP_URL)}
+          />
+          <AppListRow
+            title="How Scrappy Kin uses Gmail permission"
+            accessibilityHint="Opens web page."
+            onClick={() => void openUrl(GMAIL_PERMISSION_HELP_URL)}
+          />
+        </AppList>
+
+        <AppList header="Policies">
+          <AppListRow
+            title="Privacy Policy"
+            accessibilityHint="Opens web page."
+            onClick={() => void openUrl(PRIVACY_POLICY_URL)}
+          />
+          <AppListRow
+            title="Terms of Service"
+            accessibilityHint="Opens web page."
+            onClick={() => void openUrl(TERMS_URL)}
+          />
+        </AppList>
+      </section>
+    )
+  }
+
+  useRouteFocus(view, view !== 'gmail', headingRef)
 
   if (view === 'gmail') {
     return (
@@ -656,11 +748,11 @@ export default function Settings() {
 
   const viewMap: Record<SettingsContentView, { title: string; body: ReactNode }> = {
     home: { title: 'Settings', body: renderHome() },
-    profile: { title: 'Profile', body: renderProfile() },
-    subscription: { title: 'Subscription', body: renderSubscription() },
-    privacy: { title: 'Privacy & local data', body: renderPrivacy() },
-    diagnostics: { title: 'Diagnostics', body: renderDiagnostics() },
-    about: { title: 'Support contact and build info', body: renderAbout() },
+    profile: { title: SETTINGS_DESTINATIONS.profile.title, body: renderProfile() },
+    subscription: { title: SETTINGS_DESTINATIONS.subscription.title, body: renderSubscription() },
+    privacy: { title: SETTINGS_DESTINATIONS.privacy.title, body: renderPrivacy() },
+    diagnostics: { title: SETTINGS_DESTINATIONS.diagnostics.title, body: renderDiagnostics() },
+    support: { title: SETTINGS_DESTINATIONS.support.title, body: renderSupport() },
   }
 
   const screen = viewMap[view as SettingsContentView]
@@ -669,8 +761,13 @@ export default function Settings() {
     <IonPage>
       <IonContent className="page-content">
         <div className="app-screen-shell">
-          <AppTopNav backHref={view === 'home' ? settingsExitHref : settingsHomeHref} />
-          <AppHeading intent="section">{screen.title}</AppHeading>
+          <AppTopNav
+            backHref={view === 'home' ? settingsExitHref : settingsHomeHref}
+            onBack={localDataDeleted ? handlePostDeleteBack : undefined}
+          />
+          <AppHeading intent="section" level={1} ref={headingRef} tabIndex={-1}>
+            {screen.title}
+          </AppHeading>
           {screen.body}
         </div>
       </IonContent>

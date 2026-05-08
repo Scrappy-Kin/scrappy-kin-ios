@@ -7,13 +7,28 @@ import {
   SUBSCRIPTION_PRODUCT_ID,
   isSubscriptionProductConfigured,
 } from '../config/subscription'
-import { isDevAppLane } from '../config/buildInfo'
+import { isDevAppLane, isQaStoreKitLane } from '../config/buildInfo'
 
 type NativeSubscriptionProduct = {
   id: string
   displayName?: string
   description?: string
   displayPrice?: string
+}
+
+export type SubscriptionDiagnostics = {
+  requestedProductIds: string[]
+  returnedProductIds: string[]
+  activeProductIds: string[]
+  bundleIdentifier?: string
+  appVersion?: string
+  appBuild?: string
+  productLoadCompleted: boolean
+  returnedProductCount: number
+  entitlementLookupCompleted: boolean
+  productLoadErrorDomain?: string
+  productLoadErrorCode?: number
+  productLoadErrorMessage?: string
 }
 
 type NativeEntitlementResponse = {
@@ -26,7 +41,11 @@ type NativePurchaseResponse = {
 }
 
 type SubscriptionPlugin = {
-  getProducts(options: { productIds: string[] }): Promise<{ products: NativeSubscriptionProduct[] }>
+  getProducts(options: { productIds: string[] }): Promise<{
+    products: NativeSubscriptionProduct[]
+    diagnostics?: SubscriptionDiagnostics
+  }>
+  diagnoseProducts(options: { productIds: string[] }): Promise<{ diagnostics: SubscriptionDiagnostics }>
   getEntitlement(options: { productIds: string[] }): Promise<NativeEntitlementResponse>
   purchase(options: { productId: string }): Promise<NativePurchaseResponse>
   restorePurchases(): Promise<NativeEntitlementResponse>
@@ -51,6 +70,7 @@ export type SubscriptionSnapshot = {
   isAvailable: boolean
   isConfigured: boolean
   loadError: string | null
+  diagnostics: SubscriptionDiagnostics | null
 }
 
 export type SubscriptionPurchaseResult =
@@ -94,26 +114,47 @@ function buildFallbackProduct(): SubscriptionProduct {
   }
 }
 
+function includesAnnualPeriod(label: string) {
+  return /\b(year|annual|annually)\b/i.test(label)
+}
+
+function buildAnnualPriceDisplay(displayPrice: string) {
+  return includesAnnualPeriod(displayPrice) ? displayPrice : `${displayPrice} / year`
+}
+
+function buildAnnualButtonPriceLabel(displayPrice: string) {
+  return includesAnnualPeriod(displayPrice) ? displayPrice : `${displayPrice}/year`
+}
+
 function normalizeSnapshot(input: {
   active: boolean
   product?: NativeSubscriptionProduct | null
   isAvailable: boolean
   loadError: string | null
+  diagnostics?: SubscriptionDiagnostics | null
 }): SubscriptionSnapshot {
   const fallbackProduct = buildFallbackProduct()
   const nativeProduct = input.product
+  const nativeDisplayPrice = nativeProduct?.displayPrice?.trim()
+  const displayPrice = nativeDisplayPrice
+    ? buildAnnualPriceDisplay(nativeDisplayPrice)
+    : fallbackProduct.displayPrice
+  const buttonPriceLabel = nativeDisplayPrice
+    ? buildAnnualButtonPriceLabel(nativeDisplayPrice)
+    : fallbackProduct.buttonPriceLabel
 
   return {
     active: input.active,
     isAvailable: input.isAvailable,
     isConfigured: isSubscriptionProductConfigured(),
     loadError: input.loadError,
+    diagnostics: input.diagnostics ?? null,
     product: {
       id: nativeProduct?.id ?? fallbackProduct.id,
       displayName: nativeProduct?.displayName?.trim() || fallbackProduct.displayName,
       description: nativeProduct?.description?.trim() || fallbackProduct.description,
-      displayPrice: nativeProduct?.displayPrice?.trim() || fallbackProduct.displayPrice,
-      buttonPriceLabel: fallbackProduct.buttonPriceLabel,
+      displayPrice,
+      buttonPriceLabel,
       priceSubtext: fallbackProduct.priceSubtext,
     },
   }
@@ -152,6 +193,21 @@ function extractMessage(error: unknown, fallback: string) {
   return fallback
 }
 
+async function readSubscriptionDiagnostics(): Promise<SubscriptionDiagnostics | null> {
+  if (!isQaStoreKitLane() || !Capacitor.isNativePlatform() || !isSubscriptionProductConfigured()) {
+    return null
+  }
+
+  try {
+    const response = await SubscriptionNative.diagnoseProducts({
+      productIds: [SUBSCRIPTION_PRODUCT_ID],
+    })
+    return response.diagnostics
+  } catch {
+    return null
+  }
+}
+
 async function readNativeSnapshot(): Promise<SubscriptionSnapshot> {
   if (!Capacitor.isNativePlatform()) {
     return normalizeSnapshot({
@@ -177,18 +233,23 @@ async function readNativeSnapshot(): Promise<SubscriptionSnapshot> {
 
     const product = productResponse.products[0] ?? null
     const active = entitlementResponse.activeProductIds.includes(SUBSCRIPTION_PRODUCT_ID)
+    const diagnostics = product
+      ? productResponse.diagnostics ?? null
+      : (await readSubscriptionDiagnostics()) ?? productResponse.diagnostics ?? null
 
     return normalizeSnapshot({
       active,
       product,
       isAvailable: Boolean(product),
       loadError: product ? null : 'Subscription product couldn’t be loaded.',
+      diagnostics,
     })
   } catch (error) {
     return normalizeSnapshot({
       active: false,
       isAvailable: false,
       loadError: extractMessage(error, 'Subscription status could not be loaded.'),
+      diagnostics: await readSubscriptionDiagnostics(),
     })
   }
 }

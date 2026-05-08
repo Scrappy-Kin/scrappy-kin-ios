@@ -10,6 +10,8 @@ type AppTextProps = {
   emphasis?: boolean
   tone?: TextTone
   truncate?: boolean
+  accessibilityLabel?: string
+  className?: string
   children: ReactNode
 }
 
@@ -26,6 +28,8 @@ export default function AppText({
   emphasis = false,
   tone = 'default',
   truncate = false,
+  accessibilityLabel,
+  className,
   children,
 }: AppTextProps) {
   const classes = [
@@ -34,12 +38,13 @@ export default function AppText({
     emphasis ? 'w-500' : null,
     tone === 'danger' ? 'text-danger' : null,
     truncate ? 'app-text--truncate' : null,
+    className,
   ]
     .filter(Boolean)
     .join(' ')
 
   return (
-    <IonText className={classes}>
+    <IonText className={classes} aria-label={accessibilityLabel}>
       <span className="app-text__content">{children}</span>
     </IonText>
   )

@@ -1,5 +1,5 @@
 import { IonIcon } from '@ionic/react'
-import type { ReactNode } from 'react'
+import { useId, type ReactNode } from 'react'
 import { chevronForward } from 'ionicons/icons'
 import AppText from './AppText'
 import './list.css'
@@ -13,6 +13,7 @@ type AppListRowProps = {
   tone?: 'neutral' | 'primary' | 'danger'
   disabled?: boolean
   emphasis?: boolean
+  accessibilityHint?: string
 }
 
 const toneClassMap: Record<NonNullable<AppListRowProps['tone']>, string> = {
@@ -30,7 +31,9 @@ export default function AppListRow({
   tone = 'neutral',
   disabled = false,
   emphasis = true,
+  accessibilityHint,
 }: AppListRowProps) {
+  const hintId = useId()
   const classes = [
     'app-list__row',
     onClick ? 'app-list__row--interactive' : null,
@@ -57,19 +60,34 @@ export default function AppListRow({
           {right ?? <IonIcon aria-hidden="true" className="app-list__chevron" icon={chevronForward} />}
         </div>
       ) : null}
+      {accessibilityHint ? (
+        <span id={hintId} className="app-list__sr-only">
+          {accessibilityHint}
+        </span>
+      ) : null}
     </>
   )
 
   if (onClick) {
     return (
-      <button className={classes} type="button" onClick={disabled ? undefined : onClick} disabled={disabled}>
+      <button
+        className={classes}
+        type="button"
+        onClick={disabled ? undefined : onClick}
+        disabled={disabled}
+        aria-describedby={accessibilityHint ? hintId : undefined}
+      >
         {content}
       </button>
     )
   }
 
   return (
-    <div className={classes} aria-disabled={disabled || undefined}>
+    <div
+      className={classes}
+      aria-disabled={disabled || undefined}
+      aria-describedby={accessibilityHint ? hintId : undefined}
+    >
       {content}
     </div>
   )

@@ -25,6 +25,9 @@ export default function HarnessHome() {
               <Link className="app-link" to="/ui-harness/review-board">
                 Browser review board
               </Link>
+              <Link className="app-link" to="/ui-harness/screenshots">
+                Screenshot gallery
+              </Link>
               <Link className="app-link" to="/ui-harness/tokens">
                 Tokens
               </Link>

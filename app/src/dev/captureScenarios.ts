@@ -1,6 +1,5 @@
 import { IS_DEV_BUILD } from '../config/buildInfo'
 import {
-  loadBrokers,
   loadStarterBrokerIds,
   setSelectedBrokerIds,
 } from '../services/brokerStore'
@@ -54,28 +53,6 @@ function buildQueue(status: QueueItem['status'], brokerIds: string[]): QueueItem
   }))
 }
 
-function buildRetryPreviewQueue(): QueueItem[] {
-  return [
-    {
-      brokerId: 'spokeo-com',
-      status: 'failed',
-      referenceId: 'ABC123',
-    },
-    {
-      brokerId: 'whitepages-com',
-      status: 'failed',
-      referenceId: 'DEF456',
-    },
-    {
-      brokerId: 'beenverified-com',
-      status: 'sent',
-      referenceId: 'GHI789',
-      gmailMessageId: 'gmail-msg-3',
-      gmailThreadId: 'gmail-thread-3',
-    },
-  ]
-}
-
 async function seedProfileAndSelection() {
   await setUserProfile(seededProfile)
   const starterIds = await loadStarterBrokerIds()
@@ -90,14 +67,11 @@ async function seedConnectedState() {
 async function seedPostSendState(step: 'beat-sent' | 'beat-subscribe' | null) {
   await seedConnectedState()
 
-  const [starterIds, brokers] = await Promise.all([loadStarterBrokerIds(), loadBrokers()])
-  const remainingBrokerIds = brokers
-    .map((broker) => broker.id)
-    .filter((brokerId) => !starterIds.includes(brokerId))
+  const starterIds = await loadStarterBrokerIds()
 
   await setQueue(buildQueue('sent', starterIds))
   await setTotalSentCount(starterIds.length)
-  await setSelectedBrokerIds(remainingBrokerIds)
+  await setSelectedBrokerIds([])
 
   if (step) {
     await setOnboardingSentCount(starterIds.length)
@@ -109,16 +83,6 @@ async function seedPostSendState(step: 'beat-sent' | 'beat-subscribe' | null) {
 
 const captureScenarios: Record<string, CaptureScenarioDefinition> = {
   home: { route: '/home' },
-  brokers: { route: '/brokers' },
-  'brokers-retry-state': {
-    route: '/brokers?returnTo=%2Fhome',
-    seed: async () => {
-      await setUserProfile(seededProfile)
-      await setSelectedBrokerIds(['spokeo-com'])
-      await setQueue(buildRetryPreviewQueue())
-      await setTotalSentCount(1)
-    },
-  },
   settings: {
     route: '/settings',
     seed: async () => {
@@ -130,6 +94,30 @@ const captureScenarios: Record<string, CaptureScenarioDefinition> = {
     seed: async () => {
       await seedPostSendState(null)
       await setDevSubscriptionEntitled(false)
+    },
+  },
+  'settings-profile': {
+    route: '/settings?view=profile',
+    seed: async () => {
+      await setUserProfile(seededProfile)
+    },
+  },
+  'settings-privacy': {
+    route: '/settings?view=privacy',
+    seed: async () => {
+      await setUserProfile(seededProfile)
+    },
+  },
+  'settings-diagnostics': {
+    route: '/settings?view=diagnostics',
+    seed: async () => {
+      await setUserProfile(seededProfile)
+    },
+  },
+  'settings-support': {
+    route: '/settings?view=support',
+    seed: async () => {
+      await setUserProfile(seededProfile)
     },
   },
   'flow-intro': { route: '/onboarding/intro' },

@@ -1,21 +1,18 @@
 import { IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
 import {
   checkmarkCircle,
-  closeCircle,
   createOutline,
 } from 'ionicons/icons'
 import { useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
+import onboardingSuccessIllustration from '../assets/illustrations/onboarding-success.svg'
 import { isQaStoreKitLane } from '../config/buildInfo'
 import { QA_STOREKIT_SEND_NOTICE } from '../config/qaStoreKit'
 import { SUBSCRIPTION_PRICE_BUTTON_LABEL } from '../config/subscription'
 import { completeOnboardingSend } from '../services/batchSend'
 import {
-  buildBrokerCatalogSummary,
-  loadBrokerCatalogSummary,
   loadStarterBrokers,
   type Broker,
-  type BrokerCatalogSummary,
 } from '../services/brokerStore'
 import {
   buildDeletionSubject,
@@ -50,18 +47,17 @@ import {
   type UserProfileField,
 } from '../services/userProfile'
 import AppButton from '../ui/primitives/AppButton'
-import AppBulletRow from '../ui/primitives/AppBulletRow'
 import AppHeading from '../ui/primitives/AppHeading'
 import AppIcon from '../ui/primitives/AppIcon'
 import AppInput from '../ui/primitives/AppInput'
 import AppNotice from '../ui/primitives/AppNotice'
 import AppSegmentedCard, { AppSegmentedCardSection } from '../ui/primitives/AppSegmentedCard'
 import AppText from '../ui/primitives/AppText'
+import GmailAccessExplainer, { GMAIL_CONNECTED_DESCRIPTION } from '../ui/patterns/GmailAccessExplainer'
 import GmailConnectionStatusCard from '../ui/patterns/GmailConnectionStatusCard'
 import AppTopNav from '../ui/patterns/AppTopNav'
 import ReviewAssetCard from '../ui/patterns/ReviewAssetCard'
 import ServerBoundaryClaim from '../ui/patterns/ServerBoundaryClaim'
-import SubscriptionBillingClaim from '../ui/patterns/SubscriptionBillingClaim'
 import SubscriptionDiagnosticsNotice from '../ui/patterns/SubscriptionDiagnosticsNotice'
 import SubscriptionOfferCard from '../ui/patterns/SubscriptionOfferCard'
 import { useRouteFocus } from '../ui/patterns/useRouteFocus'
@@ -81,6 +77,7 @@ type FlowProps = {
 type StepConfig = {
   title: ReactNode
   accessibilityTitle?: string
+  leadVisual?: ReactNode
   intro?: ReactNode
   subtitle?: ReactNode
   render: () => ReactElement
@@ -135,7 +132,6 @@ export default function Flow({ stepId }: FlowProps) {
   const location = useLocation()
   const contentRef = useRef<HTMLIonContentElement | null>(null)
   const headingRef = useRef<HTMLHeadingElement | null>(null)
-  const navLabelRef = useRef<HTMLSpanElement | null>(null)
   const nextDescriptionId = 'flow-next-description'
   const currentRoute = getCurrentRoute(location)
   const successTo = readSuccessTo(location.search)
@@ -146,9 +142,6 @@ export default function Flow({ stepId }: FlowProps) {
   const [gmailConnected, setGmailConnected] = useState(false)
   const [profileDraft, setProfileDraft] = useState<UserProfile>(emptyProfile)
   const [starterBrokers, setStarterBrokers] = useState<Broker[]>([])
-  const [brokerSummary, setBrokerSummary] = useState<BrokerCatalogSummary>(
-    buildBrokerCatalogSummary([]),
-  )
   const [onboardingSentCount, setOnboardingSentCountState] = useState(0)
   const [oauthError, setOauthError] = useState<string | null>(null)
   const [oauthInFlight, setOauthInFlight] = useState(false)
@@ -170,7 +163,6 @@ export default function Flow({ stepId }: FlowProps) {
       nextTemplateDraft,
       nextFlowStarted,
       nextStarterBrokers,
-      nextBrokerSummary,
       nextOnboardingSentCount,
       nextSubscriptionSnapshot,
       queue,
@@ -180,7 +172,6 @@ export default function Flow({ stepId }: FlowProps) {
       getDeletionTemplateDraft(),
       hasStartedFlow(),
       loadStarterBrokers(),
-      loadBrokerCatalogSummary(),
       getOnboardingSentCount(),
       getSubscriptionSnapshot(),
       getQueue(),
@@ -192,7 +183,6 @@ export default function Flow({ stepId }: FlowProps) {
     setFlowStarted(nextFlowStarted)
     setProfileErrors({})
     setStarterBrokers(nextStarterBrokers)
-    setBrokerSummary(nextBrokerSummary)
     setOnboardingSentCountState(nextOnboardingSentCount)
     setSubscriptionSnapshot(nextSubscriptionSnapshot)
     setTotalSentCount(queue.filter((item) => item.status === 'sent').length)
@@ -241,7 +231,7 @@ export default function Flow({ stepId }: FlowProps) {
     })
   }, [currentRoute, flowRedirect, history, isReady, stepId])
 
-  useRouteFocus(stepId, shouldFocusCurrentStep, navLabelRef, headingRef)
+  useRouteFocus(stepId, shouldFocusCurrentStep, headingRef)
 
   function updateProfile(next: Partial<UserProfile>) {
     setProfileDraft((current) => {
@@ -435,10 +425,7 @@ export default function Flow({ stepId }: FlowProps) {
 
   function getStepNavConfig(): StepNavConfig {
     if (stepId === 'beat-sent') {
-      return {
-        progressCurrent: 1,
-        progressTotal: 1,
-      }
+      return {}
     }
 
     if (stepId === 'beat-subscribe') {
@@ -630,7 +617,7 @@ export default function Flow({ stepId }: FlowProps) {
             </AppText>
             <GmailConnectionStatusCard
               connected
-              connectedDescription="Send-only access is active. Scrappy Kin cannot read your inbox."
+              connectedDescription={GMAIL_CONNECTED_DESCRIPTION}
               disconnectedDescription=""
               connectedActions={
                 <div className="flow-stack">
@@ -664,33 +651,7 @@ export default function Flow({ stepId }: FlowProps) {
           </section>
         ) : (
           <section className="app-section-shell">
-            <AppText intent="body">Scrappy Kin is built to keep you in control.</AppText>
-            <AppText intent="body">
-              We do not ask you to trust a Scrappy Kin inbox with your personal data. The app sends opt-out emails from your Gmail account after you approve each batch.
-            </AppText>
-            <AppText intent="body">
-              That keeps the boundary clear: you approve the emails, Google sends them, brokers see the request coming from you, and your data never passes through Scrappy Kin servers.
-            </AppText>
-            <AppText intent="label">What Gmail access does</AppText>
-            <AppSegmentedCard>
-              <AppSegmentedCardSection>
-                <AppBulletRow
-                  label="Allows Scrappy Kin to send opt-out emails from your Gmail account"
-                  subtext="Only after you approve each batch."
-                  accessibilityLabel="Allows Scrappy Kin to send opt-out emails from your Gmail account. Only after you approve each batch."
-                />
-              </AppSegmentedCardSection>
-              <AppSegmentedCardSection>
-                <AppBulletRow
-                  icon={closeCircle}
-                  tone="danger"
-                  label="Does not allow Scrappy Kin to read, delete, or export your email"
-                  subtext="We do not ask Google for that access."
-                  accessibilityLabel="Does not allow Scrappy Kin to read, delete, or export your email. We do not ask Google for that access."
-                />
-              </AppSegmentedCardSection>
-            </AppSegmentedCard>
-            <AppText intent="body">Google will show its permission screen next.</AppText>
+            <GmailAccessExplainer showGooglePermissionHint />
             {oauthError ? (
               <AppNotice variant="error" title="Sign-in didn’t finish">
                 {oauthError}
@@ -729,7 +690,7 @@ export default function Flow({ stepId }: FlowProps) {
               </button>
             }
           >
-            <AppText intent="body">Send-only access is active. Scrappy Kin cannot read your inbox.</AppText>
+            <AppText intent="body">{GMAIL_CONNECTED_DESCRIPTION}</AppText>
           </ReviewAssetCard>
           <ReviewAssetCard title={`${starterBrokers.length} brokers in your first round`}>
             <AppText intent="body">
@@ -780,35 +741,47 @@ export default function Flow({ stepId }: FlowProps) {
       showFooterClaim: false,
     },
     'beat-sent': {
-      title: 'Requests sent.',
+      title: 'Congrats!',
+      leadVisual: (
+        <img
+          className="flow-success-illustration"
+          src={onboardingSuccessIllustration}
+          alt=""
+          aria-hidden="true"
+        />
+      ),
       render: () => (
-        <section className="app-section-shell">
-          <ReviewAssetCard title="What happens next" icon={checkmarkCircle}>
+        <section className="app-section-shell app-stack--loose">
+          <AppText intent="body">
+            You just exercised your right to tell {onboardingSentCount} brokers that you don't want
+            your personal data in their databases. How's it feel?
+          </AppText>
+          <section className="app-section-shell app-stack--tight">
+            <AppHeading intent="section" level={2}>
+              Next up:
+            </AppHeading>
             <AppText intent="body">
-              Most brokers reply within a few days. Replies go directly to your inbox.
+              Most brokers reply within a few days. Replies go directly to your Gmail inbox.
             </AppText>
-          </ReviewAssetCard>
+          </section>
         </section>
       ),
-      subtitle: `${onboardingSentCount} opt-out emails went from your Gmail account.`,
       showNext: false,
       footer: (
         <AppButton onClick={() => goToStep('beat-subscribe')} fullWidth>
-          Done
+          Next
         </AppButton>
       ),
       showFooterClaim: false,
     },
     'beat-subscribe': {
       title: 'Stay on top of it.',
-      intro: 'Brokers re-add you. The weeds come back.',
+      intro: undefined,
       render: () => (
         <section className="app-section-shell">
           <SubscriptionOfferCard
-            brokerSummary={brokerSummary}
             product={subscriptionSnapshot?.product}
           />
-          <SubscriptionBillingClaim />
           {subscriptionSnapshot?.loadError ? (
             <AppNotice variant="error" title="Subscription unavailable">
               {subscriptionSnapshot.loadError}
@@ -856,6 +829,10 @@ export default function Flow({ stepId }: FlowProps) {
 
   const step = steps[stepId]
   const nav = getStepNavConfig()
+  const baseAccessibilityTitle =
+    step.accessibilityTitle ?? (typeof step.title === 'string' ? step.title : undefined)
+  const headingAccessibilityLabel =
+    nav.label && baseAccessibilityTitle ? `${nav.label}. ${baseAccessibilityTitle}` : baseAccessibilityTitle
 
   if (!isReady) {
     return (
@@ -872,17 +849,18 @@ export default function Flow({ stepId }: FlowProps) {
           <AppTopNav
             label={nav.label}
             backHref={nav.backHref}
+            labelAccessibilityHidden={Boolean(nav.label && headingAccessibilityLabel)}
             progressCurrent={nav.progressCurrent}
             progressTotal={nav.progressTotal}
-            ref={navLabelRef}
             sticky
           />
           <div className="flow-stack">
+            {step.leadVisual ?? null}
             {step.intro ? <AppText intent="intro">{step.intro}</AppText> : null}
             <AppHeading
               intent="section"
               level={1}
-              accessibilityLabel={step.accessibilityTitle}
+              accessibilityLabel={headingAccessibilityLabel}
               ref={headingRef}
               tabIndex={-1}
             >
