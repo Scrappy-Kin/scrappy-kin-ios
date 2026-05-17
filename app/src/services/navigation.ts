@@ -39,10 +39,6 @@ export function buildOnboardingHref(step: FlowStepId, successTo?: string | null)
   return withParams(`/onboarding/${step}`, { successTo })
 }
 
-export function buildFlowHref(step: FlowStepId, successTo?: string | null) {
-  return buildOnboardingHref(step, successTo)
-}
-
 export function buildGmailHref(returnTo?: string | null, successTo?: string | null) {
   return withParams('/gmail', { returnTo, successTo })
 }

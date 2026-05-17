@@ -1,6 +1,6 @@
 import { IonContent, IonPage } from '@ionic/react'
 import { imagesOutline } from 'ionicons/icons'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useHistory, useLocation } from 'react-router-dom'
 import AppButton from '../primitives/AppButton'
 import AppIcon from '../primitives/AppIcon'
@@ -20,7 +20,7 @@ const reviewStates: ReviewState[] = [
     id: 'flow-intro',
     title: 'Flow: intro',
     route: '/capture/flow-intro?qa=1',
-    description: 'Trust framing and the first guided setup step.',
+    description: 'Longform onboarding intro, trust stance, and disclosure entry points.',
     seedsLocalState: true,
   },
   {
@@ -67,9 +67,9 @@ const reviewStates: ReviewState[] = [
   },
   {
     id: 'review-batch',
-    title: 'App: review batch',
+    title: 'App: review round',
     route: '/capture/review-batch?qa=1',
-    description: 'Post-onboarding batch review and send flow from Home.',
+    description: 'Post-onboarding round review and send flow from Home.',
     seedsLocalState: true,
   },
   {
@@ -130,17 +130,38 @@ const reviewStates: ReviewState[] = [
   },
 ]
 
+const legacyStateAliases: Record<string, string> = {
+  'flow-data-brokers': 'flow-intro',
+  'flow-privacy-terms': 'flow-intro',
+}
+
 function readRequestedState(search: string) {
   const params = new URLSearchParams(search)
   const requestedState = params.get('state')
-  return reviewStates.find((state) => state.id === requestedState)?.route ?? reviewStates[0]?.route ?? '/home'
+  const resolvedStateId = requestedState ? (legacyStateAliases[requestedState] ?? requestedState) : null
+  const selectedState = reviewStates.find((state) => state.id === resolvedStateId) ?? reviewStates[0]
+
+  return {
+    route: selectedState?.route ?? '/home',
+    stateId: selectedState?.id ?? null,
+  }
 }
 
 export default function ReviewBoard() {
   const history = useHistory()
   const location = useLocation()
-  const [selectedRoute, setSelectedRoute] = useState(() => readRequestedState(location.search))
   const [previewNonce, setPreviewNonce] = useState(0)
+  const { route: selectedRoute, stateId: selectedStateId } = useMemo(
+    () => readRequestedState(location.search),
+    [location.search],
+  )
+
+  useEffect(() => {
+    const requestedState = new URLSearchParams(location.search).get('state')
+    if (selectedStateId && requestedState !== selectedStateId) {
+      history.replace(`${location.pathname}?state=${encodeURIComponent(selectedStateId)}`)
+    }
+  }, [history, location.pathname, location.search, selectedStateId])
 
   const selectedState = useMemo(
     () => reviewStates.find((state) => state.route === selectedRoute) ?? reviewStates[0],
@@ -156,7 +177,6 @@ export default function ReviewBoard() {
   )
 
   const handleSelectState = (route: string) => {
-    setSelectedRoute(route)
     setPreviewNonce((current) => current + 1)
     const selected = reviewStates.find((state) => state.route === route)
     const nextSearch = selected ? `?state=${encodeURIComponent(selected.id)}` : ''

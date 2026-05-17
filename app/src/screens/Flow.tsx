@@ -1,22 +1,13 @@
-import { IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
-import {
-  checkmarkCircle,
-  createOutline,
-} from 'ionicons/icons'
-import { useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react'
-import { useHistory, useLocation } from 'react-router-dom'
-import onboardingSuccessIllustration from '../assets/illustrations/onboarding-success.svg'
+import { IonContent, IonPage, useIonRouter, useIonViewWillEnter } from '@ionic/react'
+import { useEffect, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { isQaStoreKitLane } from '../config/buildInfo'
-import { QA_STOREKIT_SEND_NOTICE } from '../config/qaStoreKit'
 import { SUBSCRIPTION_PRICE_BUTTON_LABEL } from '../config/subscription'
 import { completeOnboardingSend } from '../services/batchSend'
 import {
   loadStarterBrokers,
   type Broker,
 } from '../services/brokerStore'
-import {
-  buildDeletionSubject,
-} from '../services/emailTemplate'
 import {
   FLOW_PRIMARY_STEP_IDS,
   FLOW_STEP_IDS,
@@ -48,19 +39,12 @@ import {
 } from '../services/userProfile'
 import AppButton from '../ui/primitives/AppButton'
 import AppHeading from '../ui/primitives/AppHeading'
-import AppIcon from '../ui/primitives/AppIcon'
-import AppInput from '../ui/primitives/AppInput'
-import AppNotice from '../ui/primitives/AppNotice'
-import AppSegmentedCard, { AppSegmentedCardSection } from '../ui/primitives/AppSegmentedCard'
 import AppText from '../ui/primitives/AppText'
-import GmailAccessExplainer, { GMAIL_CONNECTED_DESCRIPTION } from '../ui/patterns/GmailAccessExplainer'
-import GmailConnectionStatusCard from '../ui/patterns/GmailConnectionStatusCard'
 import AppTopNav from '../ui/patterns/AppTopNav'
-import ReviewAssetCard from '../ui/patterns/ReviewAssetCard'
 import ServerBoundaryClaim from '../ui/patterns/ServerBoundaryClaim'
-import SubscriptionDiagnosticsNotice from '../ui/patterns/SubscriptionDiagnosticsNotice'
-import SubscriptionOfferCard from '../ui/patterns/SubscriptionOfferCard'
 import { useRouteFocus } from '../ui/patterns/useRouteFocus'
+import { scrollFieldIntoKeyboardSafeView } from '../ui/primitives/scrollFieldIntoKeyboardSafeView'
+import { buildFlowSteps, type FlowInlineNotice } from './flow/flowSteps'
 
 const emptyProfile: UserProfile = {
   fullName: '',
@@ -74,32 +58,9 @@ type FlowProps = {
   stepId: FlowStepId
 }
 
-type StepConfig = {
-  title: ReactNode
-  accessibilityTitle?: string
-  leadVisual?: ReactNode
-  intro?: ReactNode
-  subtitle?: ReactNode
-  render: () => ReactElement
-  canContinue?: boolean
-  showNext?: boolean
-  nextLabel?: string
-  nextAccessibilityDescription?: string
-  footer?: ReactNode
-  showFooterClaim?: boolean
-}
-
 type StepNavConfig = {
   backHref?: string | null
   label?: string
-  progressCurrent?: number
-  progressTotal?: number
-}
-
-type InlineNotice = {
-  variant: 'error' | 'success' | 'info'
-  title: string
-  body: string
 }
 
 function getPreviousPrimaryStep(stepId: FlowStepId) {
@@ -128,7 +89,7 @@ function getNextStep(stepId: FlowStepId, gmailConnected: boolean) {
 }
 
 export default function Flow({ stepId }: FlowProps) {
-  const history = useHistory()
+  const ionRouter = useIonRouter()
   const location = useLocation()
   const contentRef = useRef<HTMLIonContentElement | null>(null)
   const headingRef = useRef<HTMLHeadingElement | null>(null)
@@ -136,6 +97,8 @@ export default function Flow({ stepId }: FlowProps) {
   const currentRoute = getCurrentRoute(location)
   const successTo = readSuccessTo(location.search)
   const primaryStepIndex = FLOW_PRIMARY_STEP_IDS.indexOf(stepId as (typeof FLOW_PRIMARY_STEP_IDS)[number])
+  const isIntroStep = stepId === 'intro'
+  const isCountedSetupStep = primaryStepIndex > 0
   const previousPrimaryStep = getPreviousPrimaryStep(stepId)
   const [isReady, setIsReady] = useState(false)
   const [flowStarted, setFlowStarted] = useState(false)
@@ -150,7 +113,7 @@ export default function Flow({ stepId }: FlowProps) {
   const [templateDraft, setTemplateDraft] = useState<DeletionTemplateDraft | null>(null)
   const [profileErrors, setProfileErrors] = useState<UserProfileErrors>({})
   const [subscriptionSnapshot, setSubscriptionSnapshot] = useState<SubscriptionSnapshot | null>(null)
-  const [subscriptionNotice, setSubscriptionNotice] = useState<InlineNotice | null>(null)
+  const [subscriptionNotice, setSubscriptionNotice] = useState<FlowInlineNotice | null>(null)
   const [subscriptionBusy, setSubscriptionBusy] = useState<'purchase' | 'restore' | null>(null)
   const [totalSentCount, setTotalSentCount] = useState(0)
   const [sentReviewItemCount, setSentReviewItemCount] = useState(0)
@@ -221,7 +184,7 @@ export default function Flow({ stepId }: FlowProps) {
     }
 
     if (flowRedirect && flowRedirect !== currentRoute) {
-      history.replace(flowRedirect)
+      ionRouter.push(flowRedirect, 'root', 'replace')
       return
     }
 
@@ -229,7 +192,7 @@ export default function Flow({ stepId }: FlowProps) {
     requestAnimationFrame(() => {
       void contentRef.current?.scrollToTop(0)
     })
-  }, [currentRoute, flowRedirect, history, isReady, stepId])
+  }, [currentRoute, flowRedirect, ionRouter, isReady, stepId])
 
   useRouteFocus(stepId, shouldFocusCurrentStep, headingRef)
 
@@ -283,12 +246,14 @@ export default function Flow({ stepId }: FlowProps) {
     if (!firstInvalid) return
 
     const wrapper = document.querySelector(`[data-field-id="${firstInvalid}"]`) as HTMLElement | null
-    wrapper?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    void scrollFieldIntoKeyboardSafeView(wrapper)
     const input = wrapper?.querySelector('input, textarea') as
       | HTMLInputElement
       | HTMLTextAreaElement
       | null
-    input?.focus()
+    window.requestAnimationFrame(() => {
+      input?.focus()
+    })
   }
 
   async function handleConnectGmail() {
@@ -300,10 +265,10 @@ export default function Flow({ stepId }: FlowProps) {
       setGmailConnected(status.connected)
       if (status.connected) {
         if (successTo) {
-          history.replace(successTo)
+          ionRouter.push(successTo, 'root', 'replace')
           return
         }
-        history.push(buildOnboardingHref('final-review'))
+        ionRouter.push(buildOnboardingHref('final-review'), 'forward', 'push')
       }
     } catch (error) {
       const message = (error as Error).message ?? 'Sign-in didn’t finish. Please try again.'
@@ -327,7 +292,7 @@ export default function Flow({ stepId }: FlowProps) {
         return
       }
 
-      history.replace(buildOnboardingHref('beat-sent'))
+      ionRouter.push(buildOnboardingHref('beat-sent'), 'root', 'replace')
     } catch (error) {
       setSendError((error as Error).message ?? 'Send failed.')
     } finally {
@@ -356,7 +321,7 @@ export default function Flow({ stepId }: FlowProps) {
     }
 
     await clearFlowProgress()
-    history.replace('/home')
+    ionRouter.push('/home', 'root', 'replace')
   }
 
   async function handleRestorePurchases() {
@@ -368,7 +333,7 @@ export default function Flow({ stepId }: FlowProps) {
 
     if (result.status === 'restored' && result.snapshot.active) {
       await clearFlowProgress()
-      history.replace('/home')
+      ionRouter.push('/home', 'root', 'replace')
       return
     }
 
@@ -381,16 +346,16 @@ export default function Flow({ stepId }: FlowProps) {
 
   async function handleBeatLater() {
     await clearFlowProgress()
-    history.replace('/home')
+    ionRouter.push('/home', 'root', 'replace')
   }
 
   function goToStep(nextStep: FlowStepId, replace = false) {
     const href = buildOnboardingHref(nextStep)
     if (replace) {
-      history.replace(href)
+      ionRouter.push(href, 'root', 'replace')
       return
     }
-    history.push(href)
+    ionRouter.push(href, 'forward', 'push')
   }
 
   async function goNext() {
@@ -410,16 +375,11 @@ export default function Flow({ stepId }: FlowProps) {
     }
   }
 
-  function renderStepContext(summary: string) {
-    return (
-      <div className="flow-context">
-        <AppText intent="supporting">{summary}</AppText>
-      </div>
-    )
-  }
-
   const resolvedTemplate = resolveDeletionTemplate(profileDraft, templateDraft)
-  const previewSignOff = resolvedTemplate.signOff || '[Your name]'
+  const previewSignOff =
+    templateDraft?.signOff?.trim()
+      ? resolvedTemplate.signOff
+      : profileDraft.fullName.trim() || '[Your name]'
   const previewBodyTopText = `To [broker privacy team],\n\n${resolvedTemplate.intro}\n\nIDENTITY FOR LOOKUP:`
   const previewBodyBottomText = `WHAT I'M REQUESTING:\n${resolvedTemplate.requestBlock}\n\n${previewSignOff}`
 
@@ -435,397 +395,44 @@ export default function Flow({ stepId }: FlowProps) {
     return {
       backHref: previousPrimaryStep ? buildOnboardingHref(previousPrimaryStep, successTo) : undefined,
       label:
-        primaryStepIndex >= 0
-          ? `Step ${primaryStepIndex + 1} of ${FLOW_PRIMARY_STEP_IDS.length}`
+        isCountedSetupStep
+          ? `Step ${primaryStepIndex} of ${FLOW_PRIMARY_STEP_IDS.length - 1}`
           : undefined,
-      progressCurrent: primaryStepIndex >= 0 ? primaryStepIndex + 1 : undefined,
-      progressTotal: primaryStepIndex >= 0 ? FLOW_PRIMARY_STEP_IDS.length : undefined,
     }
   }
 
-  const steps: Record<FlowStepId, StepConfig> = {
-    intro: {
-      accessibilityTitle: 'Take Back Your Privacy, On Your Terms',
-      title: (
-        <>
-          Take Back Your Privacy,
-          <br />
-          On Your Terms
-        </>
-      ),
-      render: () => (
-        <div className="flow-stack">
-          <AppText intent="body">
-            Scrappy Kin helps you send opt-out emails to data brokers from your own Gmail account.
-          </AppText>
-          <div className="flow-intro-points">
-            <div className="flow-intro-points__item">
-              <AppText
-                intent="body"
-                accessibilityLabel="Data brokers are companies that collect, package, and sell people's personal information."
-              >
-                <strong>Data brokers are</strong> companies that collect, package, and sell people&apos;s personal information.
-              </AppText>
-            </div>
-            <div className="flow-intro-points__item">
-              <AppText
-                intent="body"
-                accessibilityLabel="You review the opt-out emails, approve them, and send from your own Gmail account."
-              >
-                <strong>You</strong> review the opt-out emails, approve them, and send from your own Gmail account.
-              </AppText>
-            </div>
-            <div className="flow-intro-points__item">
-              <AppText
-                intent="body"
-                accessibilityLabel="Scrappy Kin is built to keep you in control. We only ask for send permission. We cannot read your inbox or manage your mailbox."
-              >
-                <strong>Scrappy Kin is built to keep you in control.</strong> We only ask for send permission. We cannot read your inbox or manage your mailbox.
-              </AppText>
-            </div>
-          </div>
-        </div>
-      ),
-      canContinue: true,
-      showFooterClaim: false,
-    },
-    'starter-set': {
-      title: 'Your first round is ready.',
-      intro: 'Removing your data isn’t a one-time fix. Brokers re-add you. It’s an ongoing practice — like weeding.',
-      subtitle: '$4.99/year — first round on us.',
-      render: () => (
-        <section className="app-section-shell">
-          <AppSegmentedCard>
-            <AppSegmentedCardSection>
-              <AppText intent="label">Your starter set</AppText>
-              <div className="app-stack">
-                {starterBrokers.map((broker) => (
-                  <div className="flow-access-row" key={broker.id}>
-                    <AppIcon icon={checkmarkCircle} size="sm" tone="primary" />
-                    <AppText intent="body">{broker.name}</AppText>
-                  </div>
-                ))}
-              </div>
-            </AppSegmentedCardSection>
-            <AppSegmentedCardSection>
-              <AppText intent="supporting">
-                Most brokers reply within a few days. Keeping rounds small means you can see what’s happening and follow up if needed.
-              </AppText>
-            </AppSegmentedCardSection>
-          </AppSegmentedCard>
-        </section>
-      ),
-      canContinue: true,
-      nextAccessibilityDescription: 'No card. No auto-subscribe.',
-      showFooterClaim: false,
-    },
-    'request-review': {
-      title: 'Review your opt-out email',
-      render: () => (
-        <section className="app-section-shell">
-          <AppText intent="supporting">
-            These are the details we recommend based on legal research and broker testing. They usually give brokers enough to find the right record while keeping what you share limited.
-          </AppText>
-          <div className="flow-request-preview">
-            <AppSegmentedCard>
-              <AppSegmentedCardSection>
-                <AppText intent="label">Subject</AppText>
-                <AppText intent="body">{buildDeletionSubject()}</AppText>
-              </AppSegmentedCardSection>
-              <AppSegmentedCardSection>
-                <AppText intent="label">Body</AppText>
-                <pre className="flow-email-plaintext">{previewBodyTopText}</pre>
-              </AppSegmentedCardSection>
-              <AppSegmentedCardSection>
-                <div className="form-stack">
-                  <AppInput
-                    label="Full name"
-                    fieldId="fullName"
-                    required
-                    value={profileDraft.fullName}
-                    onChange={(value) => updateProfile({ fullName: value })}
-                    onBlur={() => validateProfileField('fullName')}
-                    error={profileErrors.fullName}
-                  />
-                  <AppInput
-                    label="Email"
-                    fieldId="email"
-                    required
-                    value={profileDraft.email}
-                    onChange={(value) => updateProfile({ email: value })}
-                    type="email"
-                    inputMode="email"
-                    autoCapitalize="none"
-                    autoCorrect="off"
-                    autoComplete="email"
-                    spellCheck={false}
-                    onBlur={() => validateProfileField('email')}
-                    error={profileErrors.email}
-                  />
-                  <AppInput
-                    label="City"
-                    fieldId="city"
-                    required
-                    value={profileDraft.city}
-                    onChange={(value) => updateProfile({ city: value })}
-                    onBlur={() => validateProfileField('city')}
-                    error={profileErrors.city}
-                  />
-                  <AppInput
-                    label="State"
-                    fieldId="state"
-                    value={profileDraft.state}
-                    onChange={(value) => updateProfile({ state: value.toUpperCase() })}
-                    autoCapitalize="characters"
-                    placeholder="CA"
-                  />
-                  <AppInput
-                    label="Zip Code (first 4 digits)"
-                    fieldId="partialZip"
-                    value={profileDraft.partialZip}
-                    onChange={(value) => updateProfile({ partialZip: normalizeZipInput(value) })}
-                    inputMode="numeric"
-                    maxLength={4}
-                    placeholder="1234"
-                  />
-                </div>
-              </AppSegmentedCardSection>
-              <AppSegmentedCardSection>
-                <pre className="flow-email-plaintext">{previewBodyBottomText}</pre>
-              </AppSegmentedCardSection>
-            </AppSegmentedCard>
-          </div>
-          <AppButton
-            variant="secondary"
-            size="sm"
-            onClick={() => history.push(buildTemplateHref(currentRoute))}
-          >
-            Edit wording
-          </AppButton>
-        </section>
-      ),
-      canContinue: Object.keys(requestReviewValidationErrors).length === 0,
-      showFooterClaim: false,
-    },
-    'gmail-send': {
-      title: 'Connect Your Gmail',
-      render: () =>
-        gmailConnected ? (
-          <section className="app-section-shell">
-            <AppText intent="supporting">
-              Gmail is already connected and ready to send from your account.
-            </AppText>
-            <GmailConnectionStatusCard
-              connected
-              connectedDescription={GMAIL_CONNECTED_DESCRIPTION}
-              disconnectedDescription=""
-              connectedActions={
-                <div className="flow-stack">
-                  <AppButton onClick={() => goToStep('final-review')}>Continue to final review</AppButton>
-                  <AppButton
-                    variant="secondary"
-                    onClick={() => history.push(buildSettingsHref('gmail', currentRoute))}
-                  >
-                    Manage in Settings
-                  </AppButton>
-                </div>
-              }
-            />
-            {sendError ? (
-              <AppNotice
-                variant="error"
-                title="Emails didn’t send"
-                actions={
-                  <AppButton
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => history.push(buildSettingsHref('gmail', currentRoute))}
-                  >
-                    Review Gmail settings
-                  </AppButton>
-                }
-              >
-                {sendError}
-              </AppNotice>
-            ) : null}
-          </section>
-        ) : (
-          <section className="app-section-shell">
-            <GmailAccessExplainer showGooglePermissionHint />
-            {oauthError ? (
-              <AppNotice variant="error" title="Sign-in didn’t finish">
-                {oauthError}
-              </AppNotice>
-            ) : null}
-            <AppButton onClick={handleConnectGmail} disabled={oauthInFlight}>
-              {oauthError ? 'Retry Google sign-in' : 'Continue to Google'}
-            </AppButton>
-          </section>
-        ),
-      showNext: false,
-      showFooterClaim: false,
-    },
-    'final-review': {
-      title: 'Final review',
-      render: () => (
-        <section className="app-section-shell">
-          {renderStepContext(
-            'Review the starter broker list and the email below. If it looks right, this batch will send from your connected Gmail account.',
-          )}
-          {isQaStoreKit ? (
-            <AppNotice variant="warning" title="QA send lane">
-              {QA_STOREKIT_SEND_NOTICE}
-            </AppNotice>
-          ) : null}
-          <ReviewAssetCard
-            title="Gmail connected"
-            icon={checkmarkCircle}
-            action={
-              <button
-                type="button"
-                className="flow-inline-link"
-                onClick={() => history.push(buildSettingsHref('gmail', currentRoute))}
-              >
-                Manage in Settings
-              </button>
-            }
-          >
-            <AppText intent="body">{GMAIL_CONNECTED_DESCRIPTION}</AppText>
-          </ReviewAssetCard>
-          <ReviewAssetCard title={`${starterBrokers.length} brokers in your first round`}>
-            <AppText intent="body">
-              Your starter set is ready. The first round is fixed here so you can review and send without configuring anything extra.
-            </AppText>
-          </ReviewAssetCard>
-          <ReviewAssetCard
-            title="Email wording ready"
-            action={
-              <button
-                type="button"
-                className="review-asset-card__icon-action"
-                aria-label="Edit opt-out email"
-                onClick={() => goToStep('request-review')}
-              >
-                <AppIcon icon={createOutline} size="sm" />
-              </button>
-            }
-          >
-            <AppText intent="body">
-              Everything is ready to go. Make a last edit if you want, or send this round as is.
-            </AppText>
-          </ReviewAssetCard>
-          {sendError ? (
-            <AppNotice
-              variant="error"
-              title="Emails didn’t send"
-              actions={
-                <AppButton
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => history.push(buildSettingsHref('gmail', currentRoute))}
-                >
-                  Review Gmail settings
-                </AppButton>
-              }
-            >
-              {sendError}
-            </AppNotice>
-          ) : null}
-          <AppButton onClick={handleSendStarterRound} disabled={sendInFlight || !gmailConnected}>
-            {sendInFlight ? 'Sending...' : `✉️ Send ${starterBrokers.length} opt-out emails`}
-          </AppButton>
-          <ServerBoundaryClaim />
-        </section>
-      ),
-      showNext: false,
-      showFooterClaim: false,
-    },
-    'beat-sent': {
-      title: 'Congrats!',
-      leadVisual: (
-        <img
-          className="flow-success-illustration"
-          src={onboardingSuccessIllustration}
-          alt=""
-          aria-hidden="true"
-        />
-      ),
-      render: () => (
-        <section className="app-section-shell app-stack--loose">
-          <AppText intent="body">
-            You just exercised your right to tell {onboardingSentCount} brokers that you don't want
-            your personal data in their databases. How's it feel?
-          </AppText>
-          <section className="app-section-shell app-stack--tight">
-            <AppHeading intent="section" level={2}>
-              Next up:
-            </AppHeading>
-            <AppText intent="body">
-              Most brokers reply within a few days. Replies go directly to your Gmail inbox.
-            </AppText>
-          </section>
-        </section>
-      ),
-      showNext: false,
-      footer: (
-        <AppButton onClick={() => goToStep('beat-subscribe')} fullWidth>
-          Next
-        </AppButton>
-      ),
-      showFooterClaim: false,
-    },
-    'beat-subscribe': {
-      title: 'Stay on top of it.',
-      intro: undefined,
-      render: () => (
-        <section className="app-section-shell">
-          <SubscriptionOfferCard
-            product={subscriptionSnapshot?.product}
-          />
-          {subscriptionSnapshot?.loadError ? (
-            <AppNotice variant="error" title="Subscription unavailable">
-              {subscriptionSnapshot.loadError}
-            </AppNotice>
-          ) : null}
-          <SubscriptionDiagnosticsNotice snapshot={subscriptionSnapshot} />
-          {subscriptionNotice ? (
-            <AppNotice variant={subscriptionNotice.variant} title={subscriptionNotice.title}>
-              {subscriptionNotice.body}
-            </AppNotice>
-          ) : null}
-          <div className="app-action-stack">
-            <AppButton
-              fullWidth
-              onClick={() => void handleSubscribe()}
-              loading={subscriptionBusy === 'purchase'}
-              disabled={subscriptionBusy !== null || subscriptionSnapshot?.isAvailable === false}
-            >
-              Subscribe — {subscribeButtonLabel}
-            </AppButton>
-            <AppButton
-              variant="ghost"
-              fullWidth
-              onClick={() => void handleBeatLater()}
-              disabled={subscriptionBusy !== null}
-            >
-              Later
-            </AppButton>
-            <AppButton
-              variant="secondary"
-              size="sm"
-              onClick={() => void handleRestorePurchases()}
-              loading={subscriptionBusy === 'restore'}
-              disabled={subscriptionBusy !== null}
-            >
-              Restore Purchases
-            </AppButton>
-          </div>
-        </section>
-      ),
-      showNext: false,
-      showFooterClaim: false,
-    },
-  }
+  const steps = buildFlowSteps({
+    starterBrokers,
+    profileDraft,
+    profileErrors,
+    requestReviewCanContinue: Object.keys(requestReviewValidationErrors).length === 0,
+    previewBodyTopText,
+    previewBodyBottomText,
+    gmailConnected,
+    oauthError,
+    oauthInFlight,
+    sendError,
+    sendInFlight,
+    onboardingSentCount,
+    isQaStoreKit,
+    subscriptionSnapshot,
+    subscriptionNotice,
+    subscriptionBusy,
+    subscribeButtonLabel,
+    updateProfile,
+    normalizeZipInput,
+    validateProfileField,
+    onEditTemplate: () => ionRouter.push(buildTemplateHref(currentRoute), 'forward', 'push'),
+    onManageGmail: () => ionRouter.push(buildSettingsHref('gmail', currentRoute), 'forward', 'push'),
+    onConnectGmail: () => void handleConnectGmail(),
+    onContinueToFinalReview: () => goToStep('final-review'),
+    onEditEmailWording: () => goToStep('request-review'),
+    onSendStarterRound: () => void handleSendStarterRound(),
+    onContinueToSubscribe: () => goToStep('beat-subscribe'),
+    onSubscribe: () => void handleSubscribe(),
+    onLater: () => void handleBeatLater(),
+    onRestorePurchases: () => void handleRestorePurchases(),
+  })
 
   const step = steps[stepId]
   const nav = getStepNavConfig()
@@ -846,14 +453,14 @@ export default function Flow({ stepId }: FlowProps) {
     <IonPage>
       <IonContent className="page-content" ref={contentRef}>
         <div className="flow-stack">
-          <AppTopNav
-            label={nav.label}
-            backHref={nav.backHref}
-            labelAccessibilityHidden={Boolean(nav.label && headingAccessibilityLabel)}
-            progressCurrent={nav.progressCurrent}
-            progressTotal={nav.progressTotal}
-            sticky
-          />
+          {isIntroStep ? null : (
+            <AppTopNav
+              label={nav.label}
+              backHref={nav.backHref}
+              labelAccessibilityHidden={Boolean(nav.label && headingAccessibilityLabel)}
+              sticky
+            />
+          )}
           <div className="flow-stack">
             {step.leadVisual ?? null}
             {step.intro ? <AppText intent="intro">{step.intro}</AppText> : null}
@@ -878,6 +485,7 @@ export default function Flow({ stepId }: FlowProps) {
                 <AppButton
                   onClick={() => void goNext()}
                   disabled={step.canContinue === false}
+                  softDisabled={step.nextSoftDisabled}
                   accessibilityDescriptionId={
                     step.nextAccessibilityDescription ? nextDescriptionId : undefined
                   }

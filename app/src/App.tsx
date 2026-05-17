@@ -6,7 +6,7 @@ import {
 } from '@ionic/react'
 import { Capacitor } from '@capacitor/core'
 import { IonReactRouter } from '@ionic/react-router'
-import { Redirect, Route } from 'react-router-dom'
+import { Redirect, Route, useParams } from 'react-router-dom'
 import { lazy, Suspense, useEffect, useState, useSyncExternalStore, type ComponentType } from 'react'
 import Flow from './screens/Flow'
 import Gmail from './screens/Gmail'
@@ -24,7 +24,6 @@ import {
 } from './services/googleAuth'
 import { isDevAppLane, isQaStoreKitLane } from './config/buildInfo'
 import {
-  FLOW_STEP_IDS,
   getOnboardingSentCount,
   getSavedFlowStep,
   hasStartedFlow,
@@ -34,7 +33,7 @@ import { deriveEntryTarget } from './services/homeState'
 import { getTotalSentCount } from './services/metricsStore'
 import { getQueue } from './services/queueStore'
 import { getUserProfile } from './services/userProfile'
-import { buildOnboardingHref, readSuccessTo } from './services/navigation'
+import { buildOnboardingHref } from './services/navigation'
 
 const DEV_SURFACES_ENABLED =
   import.meta.env.VITE_EXECUTION_LANE === 'dev' ||
@@ -118,25 +117,15 @@ function EntryGate() {
   return <Redirect to={target} />
 }
 
-function LegacyFlowRedirect() {
-  const search = window.location.search
-  const params = new URLSearchParams(search)
-  const requestedStep = params.get('step')
-  const successTo = readSuccessTo(search)
-  const normalizedStep = requestedStep === 'brokers' ? 'starter-set' : requestedStep
-  const target = isFlowStepId(normalizedStep)
-    ? buildOnboardingHref(normalizedStep, successTo)
-    : buildOnboardingHref('intro')
-  return <Redirect to={target} />
-}
+function OnboardingRoute() {
+  const isOnline = useOnlineStatus()
+  const { stepId } = useParams<{ stepId: string }>()
 
-function LegacyFlowPathRedirect({ stepId }: { stepId: string }) {
-  const successTo = readSuccessTo(window.location.search)
-  const normalizedStep = stepId === 'brokers' ? 'starter-set' : stepId
-  const target = isFlowStepId(normalizedStep)
-    ? buildOnboardingHref(normalizedStep, successTo)
-    : buildOnboardingHref('intro')
-  return <Redirect to={target} />
+  if (!isFlowStepId(stepId)) {
+    return <Redirect to={buildOnboardingHref('intro')} />
+  }
+
+  return isOnline ? <Flow stepId={stepId} /> : <OfflineShell />
 }
 
 function FallbackRedirect() {
@@ -196,7 +185,6 @@ function AppShell() {
     }
   }, [])
 
-  const isOnline = useOnlineStatus()
   const oauthBrowserOpen = useSyncExternalStore(
     subscribeOAuthBrowserOpen,
     getOAuthBrowserOpenSnapshot,
@@ -275,20 +263,7 @@ function AppShell() {
           <Route exact path="/home" component={RoutedHome} />
           <Route exact path="/gmail" component={Gmail} />
           <Route exact path="/review-batch" component={ReviewBatch} />
-          <Route exact path="/flow" component={LegacyFlowRedirect} />
-          <Route
-            exact
-            path="/flow/:step"
-            render={({ match }) => <LegacyFlowPathRedirect stepId={match.params.step} />}
-          />
-          {FLOW_STEP_IDS.map((stepId) => (
-            <Route
-              exact
-              path={`/onboarding/${stepId}`}
-              key={`flow-${stepId}`}
-              render={() => (isOnline ? <Flow stepId={stepId} /> : <OfflineShell />)}
-            />
-          ))}
+          <Route exact path="/onboarding/:stepId" component={OnboardingRoute} />
           <Route exact path="/sent-emails" component={SentEmails} />
           <Route exact path="/settings" component={Settings} />
           <Route exact path="/template" component={TemplateEditor} />
