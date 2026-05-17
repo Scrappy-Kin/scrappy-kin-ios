@@ -29,7 +29,6 @@ function toAppRoute(urlString: string) {
 
   const allowedRoots = [
     '/home',
-    '/flow',
     '/onboarding',
     '/gmail',
     '/review-batch',

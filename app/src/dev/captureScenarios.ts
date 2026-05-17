@@ -130,7 +130,8 @@ const captureScenarios: Record<string, CaptureScenarioDefinition> = {
   'flow-request-review': {
     route: '/onboarding/request-review',
     seed: async () => {
-      await seedProfileAndSelection()
+      const starterIds = await loadStarterBrokerIds()
+      await setSelectedBrokerIds(starterIds)
       await setSavedFlowStep('request-review')
     },
   },

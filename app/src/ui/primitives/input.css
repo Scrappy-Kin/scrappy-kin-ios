@@ -65,6 +65,17 @@ textarea.app-input__control {
   display: block;
 }
 
+.app-input__label-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.app-input__label-note {
+  color: var(--neutral-700);
+}
+
 .app-input__error {
   display: flex;
   align-items: center;

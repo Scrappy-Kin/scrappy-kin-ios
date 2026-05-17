@@ -17,22 +17,17 @@ export default function GmailAccessExplainer({
 }: GmailAccessExplainerProps) {
   return (
     <section className="app-section-shell">
-      <AppText intent="body">Scrappy Kin is built to keep you in control.</AppText>
       <AppText intent="body">
-        We do not ask you to trust a Scrappy Kin inbox with your personal data. The app sends
-        opt-out emails from your Gmail account after you approve each batch.
-      </AppText>
-      <AppText intent="body">
-        That keeps the boundary clear: you approve the emails, Google sends them, brokers see the
-        request coming from you, and your data never passes through Scrappy Kin servers.
+        Opt-out emails go from your Gmail account, not ours. You approve each round, and your
+        data doesn&apos;t pass through Scrappy Kin servers.
       </AppText>
       <AppText intent="label">What Gmail access does</AppText>
       <AppSegmentedCard>
         <AppSegmentedCardSection>
           <AppBulletRow
             label="Allows Scrappy Kin to send opt-out emails from your Gmail account"
-            subtext="Only after you approve each batch."
-            accessibilityLabel="Allows Scrappy Kin to send opt-out emails from your Gmail account. Only after you approve each batch."
+            subtext="Only after you approve each round."
+            accessibilityLabel="Allows Scrappy Kin to send opt-out emails from your Gmail account. Only after you approve each round."
           />
         </AppSegmentedCardSection>
         <AppSegmentedCardSection>
@@ -40,13 +35,13 @@ export default function GmailAccessExplainer({
             icon={closeCircle}
             tone="danger"
             label="Does not allow Scrappy Kin to read, delete, or export your email"
-            subtext="We do not ask Google for that access."
-            accessibilityLabel="Does not allow Scrappy Kin to read, delete, or export your email. We do not ask Google for that access."
+            subtext="We don't request those permissions."
+            accessibilityLabel="Does not allow Scrappy Kin to read, delete, or export your email. We don't request those permissions."
           />
         </AppSegmentedCardSection>
       </AppSegmentedCard>
       {showGooglePermissionHint ? (
-        <AppText intent="body">Google will show its permission screen next.</AppText>
+        <AppText intent="body">Google will show its own permission screen next.</AppText>
       ) : null}
     </section>
   )

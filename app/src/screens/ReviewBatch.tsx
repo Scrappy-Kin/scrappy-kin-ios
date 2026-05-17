@@ -146,11 +146,11 @@ export default function ReviewBatch() {
         <div className="app-screen-shell">
           <AppTopNav backHref={returnTo} action={<SettingsShortcut />} />
           <AppHeading intent="section" level={1} ref={headingRef} tabIndex={-1}>
-            Review next batch
+            Review next round
           </AppHeading>
           <section className="app-section-shell">
             <AppText intent="supporting">
-              Review the broker list and the email below. If it looks right, this batch will send
+              Review the broker list and the email below. If it looks right, this round will send
               from your connected Gmail account.
             </AppText>
             {isQaStoreKit ? (
@@ -181,10 +181,10 @@ export default function ReviewBatch() {
               <AppText intent="body">{GMAIL_CONNECTED_DESCRIPTION}</AppText>
             </ReviewAssetCard>
             <ReviewAssetCard
-              title={`${selectedBrokerIds.length} brokers in this batch`}
+              title={`${selectedBrokerIds.length} brokers in this round`}
             >
               <AppText intent="body">
-                This batch uses the remaining brokers that have not already been sent.
+                This round uses the remaining brokers that have not already been sent.
               </AppText>
             </ReviewAssetCard>
             <ReviewAssetCard
@@ -203,7 +203,7 @@ export default function ReviewBatch() {
               }
             >
               <AppText intent="body">
-                Everything is ready to go. Make a last edit if you want, or send this batch as is.
+                Everything is ready to go. Make a last edit if you want, or send this round as is.
               </AppText>
             </ReviewAssetCard>
             {sendError ? (

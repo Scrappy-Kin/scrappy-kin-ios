@@ -5,6 +5,7 @@ import './input.css'
 
 type AppInputProps = {
   label: string
+  labelNote?: string
   value: string
   onChange: (value: string) => void
   placeholder?: string
@@ -24,6 +25,7 @@ type AppInputProps = {
 
 export default function AppInput({
   label,
+  labelNote,
   value,
   onChange,
   placeholder,
@@ -66,7 +68,14 @@ export default function AppInput({
       ref={wrapperRef}
     >
       <label className="app-input__label" htmlFor={baseId}>
-        <AppText intent="label">{visibleLabel}</AppText>
+        <span className="app-input__label-row">
+          <AppText intent="label">{visibleLabel}</AppText>
+          {labelNote ? (
+            <span className="app-input__label-note">
+              <AppText intent="caption">{labelNote}</AppText>
+            </span>
+          ) : null}
+        </span>
       </label>
       <input
         id={baseId}

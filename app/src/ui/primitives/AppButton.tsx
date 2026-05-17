@@ -9,6 +9,7 @@ type AppButtonProps = {
   variant?: ButtonVariant
   size?: ButtonSize
   disabled?: boolean
+  softDisabled?: boolean
   loading?: boolean
   fullWidth?: boolean
   accessibilityLabel?: string
@@ -30,6 +31,7 @@ export default function AppButton({
   variant = 'primary',
   size = 'md',
   disabled = false,
+  softDisabled = false,
   loading = false,
   fullWidth = false,
   accessibilityLabel,
@@ -40,7 +42,12 @@ export default function AppButton({
   children,
 }: AppButtonProps) {
   const { color, fill } = variantStyles[variant]
-  const classes = ['app-button', `app-button--${size}`, fullWidth ? 'app-button--full' : '']
+  const classes = [
+    'app-button',
+    `app-button--${size}`,
+    fullWidth ? 'app-button--full' : '',
+    softDisabled ? 'app-button--soft-disabled' : '',
+  ]
     .filter(Boolean)
     .join(' ')
 
@@ -53,6 +60,7 @@ export default function AppButton({
       disabled={disabled || loading}
       onClick={onClick}
       aria-busy={loading}
+      aria-disabled={softDisabled || disabled || loading}
       aria-label={accessibilityLabel}
       aria-describedby={accessibilityDescriptionId}
     >
