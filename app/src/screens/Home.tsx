@@ -170,9 +170,9 @@ export default function Home() {
             <AppCard title="Next up">
               <AppText intent="body">
                 {!gmailConnected
-                  ? 'Reconnect Gmail before you send your next batch.'
+                  ? 'Reconnect Gmail before you send your next round.'
                   : cardMode === 'subscribed'
-                    ? `${remainingCount} brokers available for your next batch.`
+                    ? `${remainingCount} brokers available for your next round.`
                     : `${remainingCount} more brokers available. Subscribe to send to the full list.`}
               </AppText>
 
@@ -202,7 +202,7 @@ export default function Home() {
                   </AppButton>
                 ) : cardMode === 'subscribed' ? (
                   <AppButton fullWidth onClick={() => history.push(nextBatchHref)}>
-                    Review next batch
+                    Review next round
                   </AppButton>
                 ) : (
                   <AppButton

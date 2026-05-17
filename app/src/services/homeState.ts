@@ -84,7 +84,11 @@ export function deriveEntryTarget(
     return buildFlowStepHref('intro')
   }
 
-  if (lastFlowStep === 'intro' || lastFlowStep === null || typeof lastFlowStep === 'undefined') {
+  if (lastFlowStep === null || typeof lastFlowStep === 'undefined') {
+    return buildFlowStepHref('intro')
+  }
+
+  if (lastFlowStep === 'intro') {
     return buildFlowStepHref('starter-set')
   }
 

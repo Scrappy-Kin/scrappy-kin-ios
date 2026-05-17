@@ -63,3 +63,11 @@
 .app-button--full {
   width: 100%;
 }
+
+.app-button--soft-disabled {
+  opacity: 0.56;
+}
+
+.app-button--soft-disabled::part(native) {
+  cursor: pointer;
+}

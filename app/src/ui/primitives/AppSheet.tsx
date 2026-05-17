@@ -17,6 +17,7 @@ export default function AppSheet({ title, open, onDismiss, children }: AppSheetP
       onDidDismiss={onDismiss}
       initialBreakpoint={0.5}
       breakpoints={[0, 0.5, 0.9]}
+      handle={false}
       className="app-sheet"
     >
       <div className="app-sheet__content">

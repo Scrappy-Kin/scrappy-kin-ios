@@ -62,7 +62,13 @@ export default function AppTopNav({
   }
 
   return (
-    <div className={`app-top-nav${sticky ? ' app-top-nav--sticky' : ''}`}>
+    <div
+      className={[
+        'app-top-nav',
+        sticky ? 'app-top-nav--sticky' : '',
+        showBack ? '' : 'app-top-nav--no-back',
+      ].filter(Boolean).join(' ')}
+    >
       <div className="app-top-nav__row">
         <div className="app-top-nav__slot app-top-nav__slot--leading">
           {showBack ? (

@@ -24,7 +24,7 @@ const capturePlan = [
   {
     id: 'flow-intro',
     title: 'Flow: intro',
-    description: 'Trust framing and the first guided setup step.',
+    description: 'Longform onboarding intro, trust stance, and disclosure entry points.',
     group: 'onboarding',
     route: '/capture/flow-intro?qa=1',
     file: '01-flow-intro.png',
@@ -244,6 +244,43 @@ function mergeCaptures(existingCaptures, nextCaptures) {
   return merged
 }
 
+async function removeFiles(outputDir, fileNames) {
+  await Promise.all(
+    fileNames.map(async (fileName) => {
+      try {
+        await fs.unlink(path.join(outputDir, fileName))
+      } catch (error) {
+        if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
+          return
+        }
+        throw error
+      }
+    }),
+  )
+}
+
+async function pruneStaleArtifacts(existingManifest, nextCaptures) {
+  const nextFiles = new Set(nextCaptures.map((entry) => entry.file))
+  const staleFiles = (existingManifest?.captures ?? [])
+    .map((entry) => entry.file)
+    .filter((fileName) => !nextFiles.has(fileName))
+
+  if (staleFiles.length === 0) {
+    return
+  }
+
+  await Promise.all(outputDirs.map((outputDir) => removeFiles(outputDir, staleFiles)))
+}
+
+async function resetOutputDirs(existingManifest) {
+  const knownFiles = new Set(capturePlan.map((entry) => entry.file))
+  for (const fileName of existingManifest?.captures ?? []) {
+    knownFiles.add(fileName.file)
+  }
+  const removableFiles = [...knownFiles, 'manifest.json']
+  await Promise.all(outputDirs.map((outputDir) => removeFiles(outputDir, removableFiles)))
+}
+
 async function resolveBrowserLaunchOptions() {
   if (executablePath) {
     return { executablePath }
@@ -381,9 +418,15 @@ async function main() {
     throw new Error('No capture entries matched the requested filters.')
   }
   const filteredRun = isFilteredRun(options)
+  const existingManifest = await readExistingManifest()
 
   await ensureAppIsReachable()
   await Promise.all(outputDirs.map((outputDir) => fs.mkdir(outputDir, { recursive: true })))
+  if (filteredRun) {
+    await pruneStaleArtifacts(existingManifest, selectedEntries)
+  } else {
+    await resetOutputDirs(existingManifest)
+  }
 
   const browser = await launchBrowser()
   const context = await browser.newContext({ ...device })
@@ -395,8 +438,7 @@ async function main() {
       await captureEntry(page, entry, captures)
     }
 
-    const existingManifest = filteredRun ? await readExistingManifest() : null
-    const mergedCaptures = existingManifest
+    const mergedCaptures = filteredRun && existingManifest
       ? mergeCaptures(existingManifest.captures, captures)
       : captures
 

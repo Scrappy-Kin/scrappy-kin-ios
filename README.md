@@ -8,8 +8,8 @@ Current product surface:
 - stores the Gmail token locally on your device
 - keeps Gmail content off Scrappy Kin servers
 - protects local app data using your device’s built-in secure storage and encryption
-- lets you review the message batch before you send it
-- sends only after you choose brokers and start the batch yourself
+- lets you review prepared message batches before you send them
+- sends only after you start a prepared batch yourself
 - includes no analytics SDKs, no third-party tracking tools, and no automatic crash reporting
 - keeps optional diagnostics local unless you manually export and share them
 
@@ -32,7 +32,8 @@ Local scratch notes are fine, but they are not canonical planning state.
 - `scripts/` - engineering scripts used by the app/tooling
 - `docs/build-oauth.md` - build-time OAuth and environment contract
 - `docs/qa-policy.md` - explicit QA surface policy and release-boundary rules
-- `docs/ui/accessibility-qa-working-notes.md` - local accessibility QA patterns found during prelaunch testing
+- `docs/ui/accessibility-guidelines.md` - operational iOS accessibility rules and handoff checklist
+- `docs/ui/accessibility-qa-working-notes.md` - scratchpad for unresolved accessibility QA findings
 
 ## Auditing the code
 
