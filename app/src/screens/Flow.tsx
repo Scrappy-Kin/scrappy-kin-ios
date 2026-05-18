@@ -120,37 +120,52 @@ export default function Flow({ stepId }: FlowProps) {
   const isQaStoreKit = isQaStoreKitLane()
 
   async function refreshState() {
-    const [
-      status,
-      profile,
-      nextTemplateDraft,
-      nextFlowStarted,
-      nextStarterBrokers,
-      nextOnboardingSentCount,
-      nextSubscriptionSnapshot,
-      queue,
-    ] = await Promise.all([
-      getGmailStatus(),
-      getActiveUserProfile(),
-      getDeletionTemplateDraft(),
-      hasStartedFlow(),
-      loadStarterBrokers(),
-      getOnboardingSentCount(),
-      getSubscriptionSnapshot(),
-      getQueue(),
-    ])
+    try {
+      const [
+        status,
+        profile,
+        nextTemplateDraft,
+        nextFlowStarted,
+        nextStarterBrokers,
+        nextOnboardingSentCount,
+        nextSubscriptionSnapshot,
+        queue,
+      ] = await Promise.all([
+        getGmailStatus(),
+        getActiveUserProfile(),
+        getDeletionTemplateDraft(),
+        hasStartedFlow(),
+        loadStarterBrokers(),
+        getOnboardingSentCount(),
+        getSubscriptionSnapshot(),
+        getQueue(),
+      ])
 
-    setGmailConnected(status.connected)
-    setProfileDraft(profile ?? emptyProfile)
-    setTemplateDraft(nextTemplateDraft)
-    setFlowStarted(nextFlowStarted)
-    setProfileErrors({})
-    setStarterBrokers(nextStarterBrokers)
-    setOnboardingSentCountState(nextOnboardingSentCount)
-    setSubscriptionSnapshot(nextSubscriptionSnapshot)
-    setTotalSentCount(queue.filter((item) => item.status === 'sent').length)
-    setSentReviewItemCount(queue.filter((item) => item.status === 'sent').length)
-    setIsReady(true)
+      setGmailConnected(status.connected)
+      setProfileDraft(profile ?? emptyProfile)
+      setTemplateDraft(nextTemplateDraft)
+      setFlowStarted(nextFlowStarted)
+      setProfileErrors({})
+      setStarterBrokers(nextStarterBrokers)
+      setOnboardingSentCountState(nextOnboardingSentCount)
+      setSubscriptionSnapshot(nextSubscriptionSnapshot)
+      setTotalSentCount(queue.filter((item) => item.status === 'sent').length)
+      setSentReviewItemCount(queue.filter((item) => item.status === 'sent').length)
+      setIsReady(true)
+    } catch (error) {
+      console.error('Failed to refresh onboarding state', error)
+      setGmailConnected(false)
+      setProfileDraft(emptyProfile)
+      setTemplateDraft(null)
+      setFlowStarted(false)
+      setProfileErrors({})
+      setStarterBrokers([])
+      setOnboardingSentCountState(0)
+      setSubscriptionSnapshot(null)
+      setTotalSentCount(0)
+      setSentReviewItemCount(0)
+      setIsReady(true)
+    }
   }
 
   useIonViewWillEnter(() => {

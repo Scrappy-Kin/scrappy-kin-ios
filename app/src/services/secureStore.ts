@@ -5,10 +5,17 @@ import { SecureStoragePlugin } from 'capacitor-secure-storage-plugin'
 const KEY_NAME = 'scrappy_kin_master_key'
 const STORE_PREFIX = 'sk_store:'
 const WEB_KEY_STORAGE = `${STORE_PREFIX}${KEY_NAME}`
+const NATIVE_READ_TIMEOUT_MS = 2500
 
 function isMissingSecureStorageItem(error: unknown) {
   const message = error instanceof Error ? error.message : String(error)
-  return message.includes('Item with given key does not exist')
+  const normalized = message.toLowerCase()
+  return (
+    normalized.includes('item with given key does not exist') ||
+    normalized.includes('could not be found') ||
+    normalized.includes('does not exist') ||
+    normalized.includes('not found')
+  )
 }
 
 function toBase64(data: Uint8Array) {
@@ -19,9 +26,21 @@ function fromBase64(data: string) {
   return Uint8Array.from(atob(data), (char) => char.charCodeAt(0))
 }
 
+function withNativeReadTimeout<T>(promise: Promise<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(() => {
+      reject(new Error('Secure storage read timed out.'))
+    }, NATIVE_READ_TIMEOUT_MS)
+
+    promise
+      .then(resolve, reject)
+      .finally(() => window.clearTimeout(timeout))
+  })
+}
+
 async function getStoredMasterKey() {
   if (Capacitor.isNativePlatform()) {
-    const existing = await SecureStoragePlugin.get({ key: KEY_NAME })
+    const existing = await withNativeReadTimeout(SecureStoragePlugin.get({ key: KEY_NAME }))
     return existing?.value ?? null
   }
 
@@ -117,11 +136,13 @@ export async function setEncrypted<T>(key: string, value: T) {
 export async function getEncrypted<T>(key: string) {
   if (Capacitor.isNativePlatform()) {
     try {
-      const stored = await SecureStoragePlugin.get({ key: `${STORE_PREFIX}${key}` })
+      const stored = await withNativeReadTimeout(
+        SecureStoragePlugin.get({ key: `${STORE_PREFIX}${key}` }),
+      )
       if (!stored.value) return null
       return JSON.parse(stored.value) as T
     } catch (error) {
-      if (isMissingSecureStorageItem(error)) {
+      if (isMissingSecureStorageItem(error) || error instanceof Error && error.message.includes('timed out')) {
         return null
       }
       throw error

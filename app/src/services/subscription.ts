@@ -101,6 +101,7 @@ export type SubscriptionRestoreResult =
     }
 
 const DEV_SUBSCRIPTION_ACTIVE_KEY = 'dev_subscription_active'
+const NATIVE_SUBSCRIPTION_TIMEOUT_MS = 4000
 const SubscriptionNative = registerPlugin<SubscriptionPlugin>('Subscription')
 
 function buildFallbackProduct(): SubscriptionProduct {
@@ -193,15 +194,29 @@ function extractMessage(error: unknown, fallback: string) {
   return fallback
 }
 
+function withNativeSubscriptionTimeout<T>(promise: Promise<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(() => {
+      reject(new Error('Subscription status timed out.'))
+    }, NATIVE_SUBSCRIPTION_TIMEOUT_MS)
+
+    promise
+      .then(resolve, reject)
+      .finally(() => window.clearTimeout(timeout))
+  })
+}
+
 async function readSubscriptionDiagnostics(): Promise<SubscriptionDiagnostics | null> {
   if (!isQaStoreKitLane() || !Capacitor.isNativePlatform() || !isSubscriptionProductConfigured()) {
     return null
   }
 
   try {
-    const response = await SubscriptionNative.diagnoseProducts({
-      productIds: [SUBSCRIPTION_PRODUCT_ID],
-    })
+    const response = await withNativeSubscriptionTimeout(
+      SubscriptionNative.diagnoseProducts({
+        productIds: [SUBSCRIPTION_PRODUCT_ID],
+      }),
+    )
     return response.diagnostics
   } catch {
     return null
@@ -227,8 +242,12 @@ async function readNativeSnapshot(): Promise<SubscriptionSnapshot> {
 
   try {
     const [productResponse, entitlementResponse] = await Promise.all([
-      SubscriptionNative.getProducts({ productIds: [SUBSCRIPTION_PRODUCT_ID] }),
-      SubscriptionNative.getEntitlement({ productIds: [SUBSCRIPTION_PRODUCT_ID] }),
+      withNativeSubscriptionTimeout(
+        SubscriptionNative.getProducts({ productIds: [SUBSCRIPTION_PRODUCT_ID] }),
+      ),
+      withNativeSubscriptionTimeout(
+        SubscriptionNative.getEntitlement({ productIds: [SUBSCRIPTION_PRODUCT_ID] }),
+      ),
     ])
 
     const product = productResponse.products[0] ?? null

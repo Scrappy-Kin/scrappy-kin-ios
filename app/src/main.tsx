@@ -18,12 +18,30 @@ import './theme/utilities.css'
 import './styles/theme.css'
 import './index.css'
 
+type ScrappyBootWindow = Window & {
+  __scrappyBoot?: {
+    mark: (stage: string, detail?: string) => void
+  }
+}
+
+function markBoot(stage: string, detail?: string) {
+  if (!__BOOT_DIAGNOSTICS_ENABLED__) {
+    return
+  }
+
+  ;(window as ScrappyBootWindow).__scrappyBoot?.mark(stage, detail)
+}
+
 setupIonicReact({
   swipeBackEnabled: true,
 })
+
+markBoot('main-loaded')
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
   </StrictMode>,
 )
+
+markBoot('react-render-requested')

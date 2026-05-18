@@ -38,6 +38,7 @@ import { buildOnboardingHref } from './services/navigation'
 const DEV_SURFACES_ENABLED =
   import.meta.env.VITE_EXECUTION_LANE === 'dev' ||
   (!import.meta.env.VITE_EXECUTION_LANE && import.meta.env.DEV)
+const ENTRY_ROUTE_TIMEOUT_MS = 5000
 const DevHarnessHome = DEV_SURFACES_ENABLED ? lazy(() => import('./ui/harness/HarnessHome')) : null
 const DevScreenshotGallery = DEV_SURFACES_ENABLED ? lazy(() => import('./ui/harness/ScreenshotGallery')) : null
 const DevReviewBoard = DEV_SURFACES_ENABLED ? lazy(() => import('./ui/harness/ReviewBoard')) : null
@@ -48,6 +49,20 @@ const DevAppUrlBridge = DEV_SURFACES_ENABLED ? lazy(() => import('./dev/AppUrlBr
 const DevCaptureScenarioRoute = DEV_SURFACES_ENABLED
   ? lazy(() => import('./dev/CaptureScenarioRoute'))
   : null
+
+type ScrappyBootWindow = Window & {
+  __scrappyBoot?: {
+    mark: (stage: string, detail?: string) => void
+  }
+}
+
+function markBoot(stage: string, detail?: string) {
+  if (!__BOOT_DIAGNOSTICS_ENABLED__) {
+    return
+  }
+
+  ;(window as ScrappyBootWindow).__scrappyBoot?.mark(stage, detail)
+}
 
 function OfflineShell() {
   return (
@@ -71,6 +86,18 @@ function RoutedHome() {
   return isOnline ? <Home /> : <OfflineShell />
 }
 
+function withEntryRouteTimeout<T>(promise: Promise<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(() => {
+      reject(new Error('Entry route resolution timed out.'))
+    }, ENTRY_ROUTE_TIMEOUT_MS)
+
+    promise
+      .then(resolve, reject)
+      .finally(() => window.clearTimeout(timeout))
+  })
+}
+
 function EntryGate() {
   const isOnline = useOnlineStatus()
   const [target, setTarget] = useState<string | null>(null)
@@ -80,26 +107,37 @@ function EntryGate() {
 
     let cancelled = false
 
-    Promise.all([
-      getGmailStatus(),
-      getUserProfile(),
-      hasStartedFlow(),
-      getSavedFlowStep(),
-      getOnboardingSentCount(),
-      getQueue(),
-      getTotalSentCount(),
-    ]).then(([gmailStatus, profile, flowStarted, lastFlowStep, onboardingSentCount, queue, totalSent]) => {
-      if (cancelled) return
-      const nextTarget =
-        deriveEntryTarget({
-          gmailConnected: gmailStatus.connected,
-          hasProfile: Boolean(profile),
-          onboardingSentCount,
-          totalSentCount: totalSent,
-          sentReviewItemCount: queue.filter((item) => item.status === 'sent').length,
-        }, lastFlowStep, flowStarted) ?? '/home'
-      setTarget(nextTarget)
-    })
+    withEntryRouteTimeout(
+      Promise.all([
+        getGmailStatus(),
+        getUserProfile(),
+        hasStartedFlow(),
+        getSavedFlowStep(),
+        getOnboardingSentCount(),
+        getQueue(),
+        getTotalSentCount(),
+      ]),
+    )
+      .then(([gmailStatus, profile, flowStarted, lastFlowStep, onboardingSentCount, queue, totalSent]) => {
+        if (cancelled) return
+        const nextTarget =
+          deriveEntryTarget({
+            gmailConnected: gmailStatus.connected,
+            hasProfile: Boolean(profile),
+            onboardingSentCount,
+            totalSentCount: totalSent,
+            sentReviewItemCount: queue.filter((item) => item.status === 'sent').length,
+          }, lastFlowStep, flowStarted) ?? '/home'
+        markBoot('entry-route-resolved', nextTarget)
+        setTarget(nextTarget)
+      })
+      .catch((error) => {
+        console.error('Failed to resolve app entry route', error)
+        if (!cancelled) {
+          markBoot('entry-route-fallback', error instanceof Error ? error.message : String(error))
+          setTarget(buildOnboardingHref('intro'))
+        }
+      })
 
     return () => {
       cancelled = true
@@ -145,6 +183,10 @@ function renderLazyDevComponent<T extends Record<string, unknown>>(
 }
 
 export default function App() {
+  useEffect(() => {
+    markBoot('react-mounted')
+  }, [])
+
   return (
     <IonApp>
       <IonReactRouter>

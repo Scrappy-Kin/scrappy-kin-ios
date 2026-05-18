@@ -1,0 +1,81 @@
+<script>
+  ;(() => {
+    const state = {
+      stage: 'html',
+      detail: '',
+      failed: false,
+    }
+    const render = (title, detail) => {
+      let node = document.getElementById('scrappy-boot-diagnostic')
+      if (!node) {
+        node = document.createElement('div')
+        node.id = 'scrappy-boot-diagnostic'
+        node.style.cssText = [
+          'position:fixed',
+          'z-index:2147483647',
+          'left:16px',
+          'right:16px',
+          'bottom:24px',
+          'padding:12px 14px',
+          'border-radius:10px',
+          'background:rgba(34,36,40,.92)',
+          'color:#fff',
+          'font:13px -apple-system,BlinkMacSystemFont,Helvetica,sans-serif',
+          'line-height:1.35',
+          'box-shadow:0 8px 24px rgba(0,0,0,.24)',
+          'white-space:pre-wrap',
+        ].join(';')
+        document.body.appendChild(node)
+      }
+      node.textContent = title + '\n' + (detail || '')
+    }
+    window.__scrappyBoot = {
+      mark(stage, detail) {
+        state.stage = stage
+        state.detail = detail || ''
+        document.documentElement.dataset.scrappyBootStage = stage
+        console.info('[scrappy-boot] ' + stage, detail || '')
+        if (stage === 'react-mounted') {
+          document.getElementById('scrappy-boot-diagnostic')?.remove()
+        }
+      },
+      show: render,
+    }
+    window.addEventListener('error', (event) => {
+      state.failed = true
+      render(
+        'Scrappy Kin failed before startup completed.',
+        event.message + '\n' + event.filename + ':' + event.lineno + ':' + event.colno,
+      )
+    })
+    window.addEventListener('unhandledrejection', (event) => {
+      state.failed = true
+      const reason = event.reason instanceof Error
+        ? event.reason.stack || event.reason.message
+        : String(event.reason)
+      render('Scrappy Kin startup promise rejected.', reason)
+    })
+    const moduleScript = document.querySelector('script[type="module"][src]')
+    if (moduleScript) {
+      state.detail = 'Module: ' + moduleScript.getAttribute('src')
+      moduleScript.addEventListener('load', () => {
+        if (state.stage === 'html') {
+          state.stage = 'module-loaded'
+          state.detail = moduleScript.getAttribute('src') || ''
+        }
+      })
+      moduleScript.addEventListener('error', () => {
+        state.failed = true
+        render('Scrappy Kin app bundle failed to load.', moduleScript.getAttribute('src') || '')
+      })
+    }
+    window.setTimeout(() => {
+      if (!state.failed && document.documentElement.dataset.scrappyBootStage !== 'react-mounted') {
+        render(
+          'Scrappy Kin is still starting.',
+          'Last boot stage: ' + state.stage + (state.detail ? '\n' + state.detail : ''),
+        )
+      }
+    }, 6000)
+  })()
+</script>
