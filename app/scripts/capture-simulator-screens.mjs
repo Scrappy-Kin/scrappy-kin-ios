@@ -3,6 +3,7 @@ import path from 'node:path'
 import { execFile as execFileCallback } from 'node:child_process'
 import { promisify } from 'node:util'
 import { fileURLToPath } from 'node:url'
+import { resolveXcodeDerivedDataPath } from './xcode-runtime-paths.mjs'
 
 const execFile = promisify(execFileCallback)
 
@@ -16,9 +17,7 @@ const simulatorRuntime = process.env.IOS_SIMULATOR_RUNTIME
 const simulatorUdid = process.env.IOS_SIMULATOR_UDID
 const bundleId = process.env.IOS_BUNDLE_ID ?? 'com.scrappykin.ios.dev'
 const captureRoutePreferenceKey = 'CapacitorStorage.dev_capture_route'
-const derivedDataRoot = process.env.XCODE_DERIVED_DATA_ROOT ?? '/Volumes/T7-Dev/Xcode-DerivedData'
-const derivedDataPath =
-  process.env.IOS_DERIVED_DATA_PATH ?? path.join(derivedDataRoot, 'ScrappyKinCapture')
+const derivedDataPath = await resolveXcodeDerivedDataPath('ScrappyKinCapture')
 const productOutputDir =
   process.env.CAPTURE_OUTPUT_DIR ??
   path.join(appRoot, 'dist', 'review-artifacts', 'local-ui-review-screens')

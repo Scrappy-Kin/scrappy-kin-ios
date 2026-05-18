@@ -3,6 +3,7 @@ import path from 'node:path'
 import { execFile as execFileCallback } from 'node:child_process'
 import { promisify } from 'node:util'
 import { fileURLToPath } from 'node:url'
+import { resolveXcodeDerivedDataPath } from './xcode-runtime-paths.mjs'
 
 const execFile = promisify(execFileCallback)
 
@@ -16,9 +17,7 @@ const executionLane = 'qa-storekit'
 const simulatorName = process.env.IOS_SIMULATOR_NAME
 const simulatorRuntime = process.env.IOS_SIMULATOR_RUNTIME
 const simulatorUdid = process.env.IOS_SIMULATOR_UDID
-const derivedDataRoot = process.env.XCODE_DERIVED_DATA_ROOT ?? '/Volumes/T7-Dev/Xcode-DerivedData'
-const derivedDataPath =
-  process.env.IOS_DERIVED_DATA_PATH ?? path.join(derivedDataRoot, 'ScrappyKinQaStoreKit')
+const derivedDataPath = await resolveXcodeDerivedDataPath('ScrappyKinQaStoreKit')
 
 let builtAppPathCache = null
 

@@ -14,6 +14,7 @@ app/fastlane/report.xml
 app/fastlane/Preview.html
 app/fastlane/screenshots/
 app/fastlane/test_output/
+app/tmp/
 
 # Env
 .env
