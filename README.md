@@ -31,6 +31,7 @@ Local scratch notes are fine, but they are not canonical planning state.
 - `app/` - React + TypeScript UI (Capacitor host)
 - `scripts/` - engineering scripts used by the app/tooling
 - `docs/build-oauth.md` - build-time OAuth and environment contract
+- `docs/browser-qa.md` - web-harness and browser automation QA lanes
 - `docs/qa-policy.md` - explicit QA surface policy and release-boundary rules
 - `docs/ui/accessibility-guidelines.md` - operational iOS accessibility rules and handoff checklist
 - `docs/ui/accessibility-qa-working-notes.md` - scratchpad for unresolved accessibility QA findings
@@ -45,6 +46,28 @@ npm run audit:manifest
 ```
 
 That writes `AUDIT_PROMPT.md` in the repo root for local review. It is intentionally not tracked in git.
+
+## Browser QA
+
+For Codex-driven web UI validation, start the preview harness, run the route
+preflight, then use the Codex Playwright MCP/browser tool for screenshots:
+
+```bash
+cd app
+npm run preview:dev
+```
+
+In another shell:
+
+```bash
+cd app
+npm run qa:agent-browser
+```
+
+Repo-local Playwright capture is intentionally a manual/unsandboxed lane:
+`npm run capture:screens:manual`. On macOS Codex sandboxed shells can fail to
+launch Playwright browsers even when the app is healthy. See
+`docs/browser-qa.md`.
 
 ## Licensing & Governance
 
