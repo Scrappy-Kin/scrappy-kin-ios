@@ -5,9 +5,30 @@ clear boundary around the production release path.
 
 ## TL;DR
 
+- Fast UI/content iteration starts in the web harness.
+- Native behavior and layout rough edges should be cleared in the VM simulator.
+- Real-device pocket QA and final release-candidate checks should use TestFlight.
 - Use `QADevice` / `qa-storekit` for local physical-device QA and safe sends.
 - Use production TestFlight only for release-candidate validation; it can send to real broker recipients.
 - Treat `Release` as archive/submission-only. Do not change it to make local installs easier.
+
+## Testing Surface Hierarchy
+
+Use the lowest surface that can answer the question without changing the release
+boundary:
+
+1. Web harness: fastest loop for copy, layout, accessibility, routing, and UI
+   state that does not require native iOS behavior.
+2. VM simulator: default native QA lane for Capacitor shell behavior, iOS layout,
+   navigation, and build/sync validation.
+3. TestFlight on a real phone: pocket testing, hallway checks, install/update
+   behavior, and release-candidate validation.
+
+Do not make Parallels iPhone USB passthrough to the macOS VM a required QA path.
+If it happens to work, treat it as a convenience only. The durable physical-device
+surface is TestFlight; host Xcode tethered installs are a temporary debugging
+fallback for bugs that cannot be reproduced in the web harness, VM simulator, or
+TestFlight.
 
 ## Command Matrix
 
