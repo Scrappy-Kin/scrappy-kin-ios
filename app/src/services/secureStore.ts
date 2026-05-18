@@ -6,6 +6,11 @@ const KEY_NAME = 'scrappy_kin_master_key'
 const STORE_PREFIX = 'sk_store:'
 const WEB_KEY_STORAGE = `${STORE_PREFIX}${KEY_NAME}`
 
+function isMissingSecureStorageItem(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error)
+  return message.includes('Item with given key does not exist')
+}
+
 function toBase64(data: Uint8Array) {
   return btoa(String.fromCharCode(...data))
 }
@@ -94,6 +99,14 @@ async function decryptJson<T>(ciphertext?: string, iv?: string): Promise<T | nul
 }
 
 export async function setEncrypted<T>(key: string, value: T) {
+  if (Capacitor.isNativePlatform()) {
+    await SecureStoragePlugin.set({
+      key: `${STORE_PREFIX}${key}`,
+      value: JSON.stringify(value),
+    })
+    return
+  }
+
   const encrypted = await encryptJson(value)
   await Preferences.set({
     key: `${STORE_PREFIX}${key}`,
@@ -102,6 +115,19 @@ export async function setEncrypted<T>(key: string, value: T) {
 }
 
 export async function getEncrypted<T>(key: string) {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const stored = await SecureStoragePlugin.get({ key: `${STORE_PREFIX}${key}` })
+      if (!stored.value) return null
+      return JSON.parse(stored.value) as T
+    } catch (error) {
+      if (isMissingSecureStorageItem(error)) {
+        return null
+      }
+      throw error
+    }
+  }
+
   const stored = await Preferences.get({ key: `${STORE_PREFIX}${key}` })
   if (!stored.value) return null
   const parsed = JSON.parse(stored.value) as { ciphertext: string; iv: string }
@@ -109,10 +135,25 @@ export async function getEncrypted<T>(key: string) {
 }
 
 export async function removeEncrypted(key: string) {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await SecureStoragePlugin.remove({ key: `${STORE_PREFIX}${key}` })
+    } catch (error) {
+      if (!isMissingSecureStorageItem(error)) {
+        throw error
+      }
+    }
+    return
+  }
+
   await Preferences.remove({ key: `${STORE_PREFIX}${key}` })
 }
 
 export async function wipeAllLocalData() {
   await Preferences.clear()
+  if (Capacitor.isNativePlatform()) {
+    await SecureStoragePlugin.clear()
+    return
+  }
   await removeStoredMasterKey()
 }
