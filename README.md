@@ -65,9 +65,10 @@ npm run qa:agent-browser
 ```
 
 Repo-local Playwright capture is intentionally a manual/unsandboxed lane:
-`npm run capture:screens:manual`. On macOS Codex sandboxed shells can fail to
-launch Playwright browsers even when the app is healthy. See
-`docs/browser-qa.md`.
+`npm run capture:screens:manual`. The legacy `npm run capture:screens` alias is
+blocked by default so agents do not reach for the broken sandboxed browser path.
+On macOS Codex sandboxed shells can fail to launch Playwright browsers even when
+the app is healthy. See `docs/browser-qa.md`.
 
 ## Licensing & Governance
 
