@@ -76,6 +76,11 @@ cd app
 npm run capture:screens:manual -- --group onboarding
 ```
 
+The old `npm run capture:screens` alias is intentionally blocked by default so
+agents do not rediscover sandboxed browser-launch failures. If an old automation
+cannot be updated immediately, run that specific invocation with
+`CAPTURE_SCREENS_LEGACY_OK=1` and then migrate it to `capture:screens:manual`.
+
 Optional controls:
 
 ```bash
