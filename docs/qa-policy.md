@@ -19,6 +19,16 @@ clear boundary around the production release path.
 | Production archive | `cd app && npm run ios:fastlane:prod-archive` | No | Builds `Release`; use for archive verification only. |
 | Production TestFlight | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight` | No | Release-candidate only; can email real brokers. |
 
+Local QA scripts resolve DerivedData/cache roots in this order:
+
+1. explicit `IOS_DERIVED_DATA_PATH` or `XCODE_DERIVED_DATA_ROOT`
+2. `/Volumes/T7-Dev/Xcode-DerivedData` when writable
+3. repo-local `app/tmp/Xcode-DerivedData`
+
+Fastlane user state and npm cache default to repo-local `app/tmp/` via
+`scripts/run-fastlane.mjs`. This keeps the VM lane bounded while preserving the
+host cache path when it is available.
+
 If the task is "QA the send flow without emailing brokers", the answer is
 always `ios:fastlane:qa-device` on a connected iPhone.
 

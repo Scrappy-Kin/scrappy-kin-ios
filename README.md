@@ -92,6 +92,16 @@ broker names/counts/order, and sink inbox recipients.
 Production TestFlight uses `Release` and can send real broker emails. Use it only
 for release-candidate validation, not safe send QA.
 
+Local QA scripts choose Xcode/Fastlane cache roots dynamically:
+
+1. explicit `IOS_DERIVED_DATA_PATH` or `XCODE_DERIVED_DATA_ROOT`
+2. `/Volumes/T7-Dev/Xcode-DerivedData` when that host path is writable
+3. repo-local `app/tmp/Xcode-DerivedData`
+
+Fastlane user state and npm cache also default to repo-local `app/tmp/` through
+`scripts/run-fastlane.mjs`, so VM runs do not require access to the broader host
+volume or a writable home-directory tool cache.
+
 Use the fast iPhone QA command only for JS/TS/CSS/content-only loops. Use the
 normal QADevice command after native iOS, Capacitor config, package/dependency,
 signing, plugin, or StoreKit changes.
