@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core'
 
 const DEV_APP_ID = 'com.scrappykin.ios.dev'
 const EXECUTION_LANES = ['dev', 'production', 'qa-storekit'] as const
+const NATIVE_INFO_TIMEOUT_MS = 1500
 
 export type ExecutionLane = typeof EXECUTION_LANES[number]
 
@@ -25,13 +26,25 @@ export function isQaStoreKitLane() {
   return getExecutionLane() === 'qa-storekit'
 }
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(() => {
+      reject(new Error('Native app info timed out.'))
+    }, timeoutMs)
+
+    promise
+      .then(resolve, reject)
+      .finally(() => window.clearTimeout(timeout))
+  })
+}
+
 export async function isDevAppLane() {
   if (!Capacitor.isNativePlatform()) {
     return getExecutionLane() === 'dev'
   }
 
   try {
-    const { id } = await App.getInfo()
+    const { id } = await withTimeout(App.getInfo(), NATIVE_INFO_TIMEOUT_MS)
     return id === DEV_APP_ID
   } catch {
     return false

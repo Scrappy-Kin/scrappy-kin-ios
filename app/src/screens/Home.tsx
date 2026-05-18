@@ -50,82 +50,94 @@ export default function Home() {
   const [subscriptionSnapshot, setSubscriptionSnapshot] = useState<SubscriptionSnapshot | null>(null)
 
   async function refreshHome() {
-    const [
-      gmailStatus,
-      profile,
-      flowStarted,
-      lastFlowStep,
-      onboardingSentCount,
-      selectedIds,
-      brokers,
-      brokerSummary,
-      queue,
-      lifetimeSentCount,
-      subscriptionSnapshot,
-    ] = await Promise.all([
-      getGmailStatus(),
-      getUserProfile(),
-      hasStartedFlow(),
-      getSavedFlowStep(),
-      getOnboardingSentCount(),
-      getSelectedBrokerIds(),
-      loadBrokers(),
-      loadBrokerCatalogSummary(),
-      getQueue(),
-      getTotalSentCount(),
-      getSubscriptionSnapshot(),
-    ])
-
-    const sentItems = buildSentReviewItems(queue, brokers)
-    const selectableBrokers = filterSelectableBrokers(brokers, queue)
-    const selectableBrokerIds = new Set(selectableBrokers.map((broker) => broker.id))
-    const filteredSelectedIds = selectedIds.filter((id) => selectableBrokerIds.has(id))
-
-    if (filteredSelectedIds.length !== selectedIds.length) {
-      await setSelectedBrokerIds(filteredSelectedIds)
-    }
-
-    const nextState = deriveHomeState(
-      {
-        gmailConnected: gmailStatus.connected,
-        hasProfile: Boolean(profile),
+    try {
+      const [
+        gmailStatus,
+        profile,
+        flowStarted,
+        lastFlowStep,
         onboardingSentCount,
-        totalSentCount: lifetimeSentCount,
-        sentReviewItemCount: sentItems.length,
-        subscriptionActive: subscriptionSnapshot.active,
+        selectedIds,
+        brokers,
         brokerSummary,
-      },
-      lastFlowStep,
-      flowStarted,
-    )
+        queue,
+        lifetimeSentCount,
+        subscriptionSnapshot,
+      ] = await Promise.all([
+        getGmailStatus(),
+        getUserProfile(),
+        hasStartedFlow(),
+        getSavedFlowStep(),
+        getOnboardingSentCount(),
+        getSelectedBrokerIds(),
+        loadBrokers(),
+        loadBrokerCatalogSummary(),
+        getQueue(),
+        getTotalSentCount(),
+        getSubscriptionSnapshot(),
+      ])
 
-    if (nextState.kind === 'redirect') {
-      history.replace(nextState.target)
-      return
-    }
+      const sentItems = buildSentReviewItems(queue, brokers)
+      const selectableBrokers = filterSelectableBrokers(brokers, queue)
+      const selectableBrokerIds = new Set(selectableBrokers.map((broker) => broker.id))
+      const filteredSelectedIds = selectedIds.filter((id) => selectableBrokerIds.has(id))
 
-    const nextTotalSentCount = Math.max(
-      lifetimeSentCount,
-      onboardingSentCount,
-      sentItems.length,
-    )
+      if (filteredSelectedIds.length !== selectedIds.length) {
+        await setSelectedBrokerIds(filteredSelectedIds)
+      }
 
-    setTotalSentCount(nextTotalSentCount)
-    setGmailConnected(gmailStatus.connected)
-    setRemainingCount(nextState.state.remainingCount)
-    setCardMode(nextState.state.mode)
-    setCanReviewSent(nextState.state.canReviewSent)
-    setSubscriptionUnavailable(subscriptionSnapshot.loadError)
-    setSubscriptionSnapshot(subscriptionSnapshot)
-    setNextBatchHref(
-      deriveNextBatchTaskTarget(
+      const nextState = deriveHomeState(
         {
           gmailConnected: gmailStatus.connected,
           hasProfile: Boolean(profile),
+          onboardingSentCount,
+          totalSentCount: lifetimeSentCount,
+          sentReviewItemCount: sentItems.length,
+          subscriptionActive: subscriptionSnapshot.active,
+          brokerSummary,
         },
-        '/home',
-      ),
-    )
+        lastFlowStep,
+        flowStarted,
+      )
+
+      if (nextState.kind === 'redirect') {
+        history.replace(nextState.target)
+        return
+      }
+
+      const nextTotalSentCount = Math.max(
+        lifetimeSentCount,
+        onboardingSentCount,
+        sentItems.length,
+      )
+
+      setTotalSentCount(nextTotalSentCount)
+      setGmailConnected(gmailStatus.connected)
+      setRemainingCount(nextState.state.remainingCount)
+      setCardMode(nextState.state.mode)
+      setCanReviewSent(nextState.state.canReviewSent)
+      setSubscriptionUnavailable(subscriptionSnapshot.loadError)
+      setSubscriptionSnapshot(subscriptionSnapshot)
+      setNextBatchHref(
+        deriveNextBatchTaskTarget(
+          {
+            gmailConnected: gmailStatus.connected,
+            hasProfile: Boolean(profile),
+          },
+          '/home',
+        ),
+      )
+    } catch (error) {
+      console.error('Failed to refresh home state', error)
+      setTotalSentCount(0)
+      setGmailConnected(false)
+      setRemainingCount(0)
+      setCardMode('unsubscribed')
+      setCanReviewSent(false)
+      setSubscriptionUnavailable('Local app state could not be loaded.')
+      setSubscriptionSnapshot(null)
+      setNextBatchHref('/onboarding/intro')
+    }
   }
 
   useIonViewWillEnter(() => {
