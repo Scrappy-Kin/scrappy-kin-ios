@@ -33,11 +33,17 @@ signoff begins, see `docs/qa-policy.md`.
 - Google client ID: `914858229260-ns59pecm40udl9fi18ugrb1njlqie0m1.apps.googleusercontent.com`
 - Broker catalog: deterministic fixture brokers only
 
-Set local env values in:
-- `app/.env.development` (`VITE_GOOGLE_CLIENT_ID=...`)
-- `app/.env.production` (`VITE_GOOGLE_CLIENT_ID=...`, `VITE_APPLE_SUBSCRIPTION_PRODUCT_ID=...`)
+Build-time client IDs are lane defaults in `app/vite.config.ts`; a fresh clone
+does not need local `.env` files just to produce a working DEV or PROD web
+bundle. If `VITE_GOOGLE_CLIENT_ID` is set locally, Vite validates that production
+builds still use the production client ID.
+
+Native URL schemes remain set in:
 - `app/ios/debug.xcconfig` (`GOOGLE_CLIENT_ID` + `GOOGLE_REDIRECT_SCHEME`)
 - `app/ios/release.xcconfig` (`GOOGLE_CLIENT_ID` + `GOOGLE_REDIRECT_SCHEME`)
+
+Set local env values only for optional lane-specific inputs such as
+`VITE_APPLE_SUBSCRIPTION_PRODUCT_ID` in production/QA StoreKit builds.
 
 Token/keychain storage is isolated per bundle ID (no shared keychain group).
 
@@ -68,6 +74,10 @@ Canonical local runbook:
     - `Very Long Broker Name For Layout Testing`
     - `Fixture Broker Four`
   - fixture emails use `testbot+broker-fixture_...@scrappykin.com` plus `testbot+broker-long_name@scrappykin.com`
+  - if the simulator shows only the pink app background, rerun with
+    `npm run ios:sync:dev:diagnostics`; this injects a dev-only boot overlay
+    that reports whether HTML loaded, the app bundle loaded, or startup threw
+    before React mounted
 - Prod lane
   - select Xcode scheme `Scrappy Kin Prod`
   - run `npm run ios:sync:prod`
@@ -141,6 +151,16 @@ Fastlane boundary:
   - `scrappy-kin-asc-api-key-p8`
 - the npm wrapper writes the `.p8` contents to a temporary file only for the Fastlane run, then deletes it
 - if those API variables are absent, Fastlane falls back to its normal interactive Apple login/session behavior
+
+## Boot diagnostics
+
+`SCRAPPY_BOOT_DIAGNOSTICS=1` enables a small simulator-visible boot overlay for
+DEV builds. Use `npm run ios:sync:dev:diagnostics` instead of editing app code
+when diagnosing a blank native WebView.
+
+The overlay is off by default, is injected by Vite from
+`app/scripts/boot-diagnostic-snippet.html`, and production builds reject the flag
+rather than carrying diagnostic UI or hook names into release artifacts.
 
 ## Do Not Change Without Consequences (PROD)
 
