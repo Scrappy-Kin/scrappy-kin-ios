@@ -194,6 +194,30 @@ function printHelp() {
   npm run capture:screens:manual -- --list`)
 }
 
+function assertSupportedEntrypoint() {
+  if (process.env.npm_lifecycle_event !== 'capture:screens') {
+    return
+  }
+
+  if (process.env.CAPTURE_SCREENS_LEGACY_OK === '1') {
+    return
+  }
+
+  throw new Error([
+    'npm run capture:screens is a legacy alias and is intentionally blocked by default.',
+    '',
+    'For agent visual QA:',
+    '  1. Start the preview server: npm run preview:dev',
+    '  2. Run the route preflight: npm run qa:agent-browser',
+    '  3. Use the Codex Playwright MCP/browser tool for screenshots',
+    '',
+    'For manual screenshot capture from a normal Terminal, CI, or another proven unsandboxed runner:',
+    '  npm run capture:screens:manual -- --group onboarding',
+    '',
+    'If an old automation truly needs this alias, set CAPTURE_SCREENS_LEGACY_OK=1 for that run.',
+  ].join('\n'))
+}
+
 function selectCapturePlan(options) {
   let entries = capturePlan
 
@@ -433,6 +457,8 @@ async function captureEntry(page, entry, captures) {
 }
 
 async function main() {
+  assertSupportedEntrypoint()
+
   const options = parseArgs(process.argv.slice(2))
 
   if (options.help) {
