@@ -185,13 +185,13 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log(`Usage:
-  npm run capture:screens
-  npm run capture:screens -- --group onboarding
-  npm run capture:screens -- --group subscription
-  npm run capture:screens -- --group dashboard
-  npm run capture:screens -- --group settings
-  npm run capture:screens -- --id flow-beat-subscribe
-  npm run capture:screens -- --list`)
+  npm run capture:screens:manual
+  npm run capture:screens:manual -- --group onboarding
+  npm run capture:screens:manual -- --group subscription
+  npm run capture:screens:manual -- --group dashboard
+  npm run capture:screens:manual -- --group settings
+  npm run capture:screens:manual -- --id flow-beat-subscribe
+  npm run capture:screens:manual -- --list`)
 }
 
 function selectCapturePlan(options) {
@@ -289,6 +289,28 @@ async function resolveBrowserLaunchOptions() {
   return {}
 }
 
+function browserRuntimeHint(cause) {
+  if (!(cause instanceof Error)) {
+    return ''
+  }
+
+  if (
+    cause.message.includes('MachPortRendezvousServer') ||
+    cause.message.includes('bootstrap_check_in') ||
+    cause.message.includes('SIGABRT') ||
+    cause.message.includes('Abort trap')
+  ) {
+    return [
+      '',
+      'Browser runtime unavailable from this execution surface.',
+      'This is a macOS browser-launch/sandbox failure, not a web-harness route failure.',
+      'Use the Codex Playwright MCP/browser lane for agent visual QA, or run this capture command from a normal Terminal outside the Codex shell sandbox.',
+    ].join('\n')
+  }
+
+  return ''
+}
+
 async function launchBrowser() {
   const launchOptions = {
     headless: true,
@@ -296,7 +318,11 @@ async function launchBrowser() {
   }
 
   if (browserName === 'firefox') {
-    return firefox.launch(launchOptions)
+    try {
+      return await firefox.launch(launchOptions)
+    } catch (cause) {
+      throw new Error(`${cause instanceof Error ? cause.message : cause}${browserRuntimeHint(cause)}`)
+    }
   }
 
   try {
@@ -307,15 +333,21 @@ async function launchBrowser() {
       !(cause instanceof Error) ||
       !cause.message.includes('Executable doesn\'t exist')
     ) {
-      throw cause
+      throw new Error(`${cause.message}${browserRuntimeHint(cause)}`)
     }
 
     const fallbackExecutable = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
     await fs.access(fallbackExecutable)
-    return chromium.launch({
-      headless: true,
-      executablePath: fallbackExecutable,
-    })
+    try {
+      return await chromium.launch({
+        headless: true,
+        executablePath: fallbackExecutable,
+      })
+    } catch (fallbackCause) {
+      throw new Error(
+        `${fallbackCause instanceof Error ? fallbackCause.message : fallbackCause}${browserRuntimeHint(fallbackCause)}`,
+      )
+    }
   }
 }
 
