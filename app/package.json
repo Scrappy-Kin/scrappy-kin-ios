@@ -30,7 +30,7 @@
     "capture:screens:simulator": "node scripts/capture-simulator-screens.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
-    "preview:dev": "npm run build:dev && vite preview --port 4173",
+    "preview:dev": "SCRAPPY_WEB_HARNESS=1 npm run build:dev && vite preview --port 4173",
     "audit:manifest": "node ../scripts/generate-audit-manifest.js",
     "audit:manifest:check": "node ../scripts/generate-audit-manifest.js --check",
     "health-check": "npm run lint && npm audit && npx madge --circular src/ && npx depcheck --ignores=@capacitor/ios"

@@ -144,40 +144,44 @@ export default function ScreenshotGallery() {
                 </button>
               ))}
             </div>
-            <div className="screenshot-gallery-segmented-control" role="tablist" aria-label="Screenshot size">
-              {sizeOptions.map((size) => (
+            {manifest ? (
+              <>
+                <div className="screenshot-gallery-segmented-control" role="tablist" aria-label="Screenshot size">
+                  {sizeOptions.map((size) => (
+                    <button
+                      key={size}
+                      type="button"
+                      className={`screenshot-gallery-segmented-control__button${selectedSize === size ? ' screenshot-gallery-segmented-control__button--active' : ''}`}
+                      onClick={() => setSelectedSize(size)}
+                      aria-pressed={selectedSize === size}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+                <div className="screenshot-gallery-segmented-control" role="group" aria-label="Gallery view options">
+                  <button
+                    type="button"
+                    className={`screenshot-gallery-segmented-control__button screenshot-gallery-segmented-control__button--icon${cropTallScreens ? ' screenshot-gallery-segmented-control__button--active' : ''}`}
+                    onClick={() => setCropTallScreens((current) => !current)}
+                    aria-pressed={cropTallScreens}
+                    aria-label={cropTallScreens ? 'Show full image height' : 'Clip tall screenshots'}
+                    title={cropTallScreens ? 'Show full image height' : 'Clip tall screenshots'}
+                  >
+                    <AppIcon icon={crop} size="sm" />
+                  </button>
+                </div>
                 <button
-                  key={size}
                   type="button"
-                  className={`screenshot-gallery-segmented-control__button${selectedSize === size ? ' screenshot-gallery-segmented-control__button--active' : ''}`}
-                  onClick={() => setSelectedSize(size)}
-                  aria-pressed={selectedSize === size}
+                  className="screenshot-gallery-toolbar__icon-action"
+                  onClick={() => void revealCaptureFolder()}
+                  aria-label="Open capture folder"
+                  title="Open capture folder"
                 >
-                  {size}
+                  <AppIcon icon={folderOpenOutline} size="sm" />
                 </button>
-              ))}
-            </div>
-            <div className="screenshot-gallery-segmented-control" role="group" aria-label="Gallery view options">
-              <button
-                type="button"
-                className={`screenshot-gallery-segmented-control__button screenshot-gallery-segmented-control__button--icon${cropTallScreens ? ' screenshot-gallery-segmented-control__button--active' : ''}`}
-                onClick={() => setCropTallScreens((current) => !current)}
-                aria-pressed={cropTallScreens}
-                aria-label={cropTallScreens ? 'Show full image height' : 'Clip tall screenshots'}
-                title={cropTallScreens ? 'Show full image height' : 'Clip tall screenshots'}
-              >
-                <AppIcon icon={crop} size="sm" />
-              </button>
-            </div>
-            <button
-              type="button"
-              className="screenshot-gallery-toolbar__icon-action"
-              onClick={() => void revealCaptureFolder()}
-              aria-label="Open capture folder"
-              title="Open capture folder"
-            >
-              <AppIcon icon={folderOpenOutline} size="sm" />
-            </button>
+              </>
+            ) : null}
             {generatedLabel ? (
               <AppText intent="caption" className="screenshot-gallery-generated">
                 {generatedLabel}
@@ -186,12 +190,19 @@ export default function ScreenshotGallery() {
           </div>
 
           {error ? (
-            <AppCard title="Gallery unavailable">
+            <AppCard title="No captured screenshots yet">
               <div className="app-stack">
-                <AppText intent="body">{error}</AppText>
-                <AppText intent="supporting">
-                  Run `npm run capture:screens -- --group onboarding` or another subset, then reload.
+                <AppText intent="body">
+                  Captured screenshot thumbnails appear here after a manual capture run. Use the
+                  review board for agent QA.
                 </AppText>
+                <AppText intent="supporting">
+                  Run `npm run capture:screens:manual -- --group onboarding` or another subset from
+                  an unsandboxed runner, then reload.
+                </AppText>
+                <Link className="app-link" to="/ui-harness/review-board">
+                  Open review board
+                </Link>
               </div>
             </AppCard>
           ) : null}
@@ -222,6 +233,7 @@ export default function ScreenshotGallery() {
               ))}
             </section>
           ) : null}
+
         </div>
       </IonContent>
     </IonPage>

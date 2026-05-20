@@ -114,9 +114,10 @@ function resolveGoogleClientId(mode: string) {
 export default defineConfig(({ mode }) => {
   const bootDiagnosticsEnabled = resolveBootDiagnosticsEnabled(mode)
   const googleClientId = resolveGoogleClientId(mode)
+  const base = process.env.SCRAPPY_WEB_HARNESS === '1' ? '/' : './'
 
   return {
-    base: './',
+    base,
     plugins: [
       react(),
       createLocalRevealPlugin(),
