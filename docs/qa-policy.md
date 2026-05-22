@@ -10,6 +10,7 @@ clear boundary around the production release path.
 - Real-device pocket QA and final release-candidate checks should use TestFlight.
 - Use `QADevice` / `qa-storekit` for local physical-device QA and safe sends.
 - Use production TestFlight only for release-candidate validation; it can send to real broker recipients.
+- The current production TestFlight lane builds/exports a Release IPA and uploads it; it is not upload-only.
 - Treat `Release` as archive/submission-only. Do not change it to make local installs easier.
 
 ## Testing Surface Hierarchy
@@ -38,7 +39,8 @@ TestFlight.
 | Local iPhone QA, web-only iteration | `cd app && npm run ios:fastlane:qa-device-fast` | Yes | Rebuilds web assets and uses `cap copy`; use only after JS/TS/CSS/content changes. |
 | Local simulator QA | `cd app && npm run ios:fastlane:qa-simulator` | Yes | Uses `qa-storekit`; good for fast UI checks. |
 | Production archive | `cd app && npm run ios:fastlane:prod-archive` | No | Builds `Release`; use for archive verification only. |
-| Production TestFlight | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight` | No | Release-candidate only; can email real brokers. |
+| Production TestFlight | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight` | No | Builds/exports `Release`, then uploads; release-candidate only; can email real brokers. |
+| Upload signed IPA to TestFlight | `cd app && IPA_PATH=/path/to/ScrappyKin.ipa SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:upload-testflight-ipa` | No | Uploads an already-signed IPA; does not build or export. |
 
 Local QA scripts resolve DerivedData/cache roots in this order:
 
@@ -130,6 +132,12 @@ Internal TestFlight is the final truth surface for paid-flow confidence.
 Internal TestFlight is not the safe-send QA surface. A TestFlight build produced
 from `Release` may send to real broker recipients.
 
+Signing authority and upload authority are separate. A release machine may build
+and sign the production IPA, while another bounded surface may upload that
+already-signed IPA to TestFlight using `ios:fastlane:upload-testflight-ipa`.
+Do not install Apple Distribution private keys or production provisioning
+profiles on a surface that should not be able to produce production builds.
+
 ### 3. Release / Submission
 
 Use only for archive, App Store submission, and reviewer-facing builds.
@@ -165,3 +173,4 @@ Do not:
 - rely on a dev-only bundle ID for production subscription testing
 - use a local-only shortcut as the sole signoff surface for subscriptions
 - upload production TestFlight builds for routine QA-send iteration
+- treat the current production TestFlight lane as upload-only

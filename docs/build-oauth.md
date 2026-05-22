@@ -140,6 +140,8 @@ Fastlane boundary:
 - `ios prod_archive` builds the `Scrappy Kin Prod` scheme with `Release` and `export_method: app-store`
 - `ios prod_testflight` builds the same Release archive, then uploads the IPA to TestFlight
 - `ios prod_testflight` requires `SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1`
+- `ios upload_testflight_ipa` uploads an already-signed IPA from `IPA_PATH` to TestFlight without building or exporting an archive
+- `ios upload_testflight_ipa` requires `SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1`
 - production TestFlight builds can send real broker emails; use them only for release-candidate validation, not safe send QA
 - App Store Connect API credentials are read from env vars populated by the npm wrapper:
   - `APP_STORE_CONNECT_API_KEY_ID`
