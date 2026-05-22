@@ -112,9 +112,13 @@ broker names/counts/order, and sink inbox recipients.
 | Local simulator QA | `cd app && npm run ios:fastlane:qa-simulator` | Yes |
 | Production archive | `cd app && npm run ios:fastlane:prod-archive` | No |
 | Production TestFlight | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight` | No |
+| Upload signed IPA to TestFlight | `cd app && IPA_PATH=/path/to/ScrappyKin.ipa SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:upload-testflight-ipa` | No |
 
 Production TestFlight uses `Release` and can send real broker emails. Use it only
-for release-candidate validation, not safe send QA.
+for release-candidate validation, not safe send QA. The current production
+TestFlight command builds/exports a Release IPA and uploads it. The upload-only
+lane is for already-signed IPAs; it does not build or export a production
+archive.
 
 Local QA scripts choose Xcode/Fastlane cache roots dynamically:
 
