@@ -32,6 +32,10 @@ Accessibility Inspector GUI is an optional human debugging aid, not a required
 default QA lane. Prefer simulator XCTest accessibility audits for agent-driven
 repeatable checks and physical-device VoiceOver for launch truth.
 
+Internal UI, accessibility, and product QA canon lives in the HQ wiki; this
+public app repo keeps only public-safe local facts and executable QA commands.
+See `docs/ui/README.md` for pointers.
+
 Do not make Parallels iPhone USB passthrough to the macOS VM a required QA path.
 If it happens to work, treat it as a convenience only. The durable physical-device
 surface is TestFlight; host Xcode tethered installs are a temporary debugging
