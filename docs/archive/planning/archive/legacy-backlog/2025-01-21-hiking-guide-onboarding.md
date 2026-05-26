@@ -49,8 +49,8 @@ Plan (ordered)
    - Show audit details: what was sent, when, how stored (or not stored).
 
 Dependencies / related docs
-- `docs/ui/ui-patterns.md` (trust patterns)
-- `docs/ui/ui-primitives.md` (candidate new element if needed)
+- `/Users/jonamar/Development/scrappy-kin/scrappy-kin-hq/wiki/reference/app-ui-system.md` (trust patterns)
+- `/Users/jonamar/Development/scrappy-kin/scrappy-kin-hq/wiki/reference/app-ui-system.md` (candidate new element if needed)
 - `docs/library/onboarding-best-practices.md`
 - `docs/library/hig/navigation-bars.md`
 - `docs/library/hig/toolbars.md`

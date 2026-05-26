@@ -10,10 +10,10 @@ Approach: tokens + App* primitives + trust patterns + harness-first workflow.  [
 
 ## Phase 0 — Guardrails (PR-0)
 Deliverables:
-- `docs/ui/ui-system.md` committed
-- `docs/ui/ui-tokens.md` committed
-- `docs/ui/ui-primitives.md` committed
-- `docs/ui/ui-patterns.md` committed
+- `/Users/jonamar/Development/scrappy-kin/scrappy-kin-hq/wiki/reference/app-ui-system.md` committed
+- `/Users/jonamar/Development/product-ops/resources/design-foundation/` committed
+- `/Users/jonamar/Development/scrappy-kin/scrappy-kin-hq/wiki/reference/app-ui-system.md` committed
+- `/Users/jonamar/Development/scrappy-kin/scrappy-kin-hq/wiki/reference/app-ui-system.md` committed
 - Screens import policy: screens may only import from `ui/primitives` and `ui/patterns`
 - Simple CI guardrail (good-enough):
   - forbid `#` and `font-family` outside `src/theme/`
