@@ -3,6 +3,7 @@ import path from 'node:path'
 import { execFile as execFileCallback } from 'node:child_process'
 import { promisify } from 'node:util'
 import { fileURLToPath } from 'node:url'
+import { loadLocalEnv } from './local-env.mjs'
 import { resolveXcodeDerivedDataPath } from './xcode-runtime-paths.mjs'
 
 const execFile = promisify(execFileCallback)
@@ -11,6 +12,8 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const appRoot = path.resolve(__dirname, '..')
 const repoRoot = path.resolve(appRoot, '..')
+
+await loadLocalEnv(path.join(appRoot, '.env.local'))
 
 const simulatorName = process.env.IOS_SIMULATOR_NAME
 const simulatorRuntime = process.env.IOS_SIMULATOR_RUNTIME
