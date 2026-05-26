@@ -52,7 +52,9 @@ AUDIT_PROMPT.md
 docs/planning/
 docs/strategy/
 docs/library/
-docs/ui/
+docs/ui/*
+!docs/ui/
+!docs/ui/accessibility-guidelines.md
 governance/
 brand/
 
