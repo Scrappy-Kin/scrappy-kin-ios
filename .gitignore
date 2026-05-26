@@ -53,9 +53,6 @@ AUDIT_PROMPT.md
 docs/planning/
 docs/strategy/
 docs/library/
-docs/ui/*
-!docs/ui/
-!docs/ui/README.md
 governance/
 brand/
 
