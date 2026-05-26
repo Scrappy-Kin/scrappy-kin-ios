@@ -23,6 +23,7 @@
     "ios:fastlane:qa-simulator": "node scripts/run-fastlane.mjs ios qa_simulator",
     "ios:fastlane:prod-archive": "node scripts/fastlane-with-keychain-asc.mjs ios prod_archive",
     "ios:fastlane:prod-testflight": "node scripts/fastlane-with-keychain-asc.mjs ios prod_testflight",
+    "ios:fastlane:upload-testflight-ipa": "node scripts/fastlane-with-keychain-asc.mjs ios upload_testflight_ipa",
     "capture:screens": "node scripts/capture-screens.mjs",
     "capture:screens:manual": "node scripts/capture-screens.mjs",
     "qa:agent-browser": "node scripts/preflight-browser-qa.mjs --http-only",

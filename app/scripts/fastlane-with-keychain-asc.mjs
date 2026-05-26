@@ -4,11 +4,14 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { promisify } from 'node:util'
+import { resolveRepoLocalToolEnv } from './xcode-runtime-paths.mjs'
 
 const execFile = promisify(execFileCallback)
 
 const KEYCHAIN_ITEMS = {
   APP_STORE_CONNECT_API_KEY_ID: 'scrappy-kin-asc-key-id',
+}
+const OPTIONAL_KEYCHAIN_ITEMS = {
   APP_STORE_CONNECT_ISSUER_ID: 'scrappy-kin-asc-issuer-id',
 }
 const API_KEY_CONTENT_SERVICE = 'scrappy-kin-asc-api-key-p8'
@@ -28,6 +31,14 @@ async function readKeychainPassword(service) {
     '-w',
   ])
   return stdout.trim()
+}
+
+async function readOptionalKeychainPassword(service) {
+  try {
+    return await readKeychainPassword(service)
+  } catch {
+    return ''
+  }
 }
 
 function normalizeP8Contents(rawContents) {
@@ -70,12 +81,18 @@ async function writeTempApiKeyFile(p8Contents) {
 }
 
 async function buildEnv() {
-  const env = { ...process.env }
+  const env = { ...process.env, ...(await resolveRepoLocalToolEnv()) }
   let tempKey = null
 
   for (const [envKey, service] of Object.entries(KEYCHAIN_ITEMS)) {
     if (env[envKey]) continue
     env[envKey] = await readKeychainPassword(service)
+  }
+
+  for (const [envKey, service] of Object.entries(OPTIONAL_KEYCHAIN_ITEMS)) {
+    if (env[envKey]) continue
+    const value = await readOptionalKeychainPassword(service)
+    if (value) env[envKey] = value
   }
 
   if (!env.APP_STORE_CONNECT_API_KEY_PATH) {
@@ -114,6 +131,10 @@ async function main() {
       console.error(`- ${service}`)
     }
     console.error(`- ${API_KEY_CONTENT_SERVICE}`)
+    console.error('Optional for team keys, omitted for individual keys:')
+    for (const service of Object.values(OPTIONAL_KEYCHAIN_ITEMS)) {
+      console.error(`- ${service}`)
+    }
     console.error(error instanceof Error ? error.message : error)
     process.exitCode = 1
     return
