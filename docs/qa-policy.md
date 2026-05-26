@@ -7,7 +7,10 @@ clear boundary around the production release path.
 
 - Fast UI/content iteration starts in the web harness.
 - Native behavior and layout rough edges should be cleared in the VM simulator.
-- Real-device pocket QA and final release-candidate checks should use TestFlight.
+- Agent-driven native accessibility checks should use simulator XCTest
+  accessibility audits where available.
+- Real-device pocket QA, VoiceOver signoff, and final release-candidate checks
+  should use TestFlight.
 - Use `QADevice` / `qa-storekit` for local physical-device QA and safe sends.
 - Use production TestFlight only for release-candidate validation; it can send to real broker recipients.
 - The current production TestFlight lane builds/exports a Release IPA and uploads it; it is not upload-only.
@@ -21,9 +24,13 @@ boundary:
 1. Web harness: fastest loop for copy, layout, accessibility, routing, and UI
    state that does not require native iOS behavior.
 2. VM simulator: default native QA lane for Capacitor shell behavior, iOS layout,
-   navigation, and build/sync validation.
-3. TestFlight on a real phone: pocket testing, hallway checks, install/update
-   behavior, and release-candidate validation.
+   navigation, build/sync validation, and XCTest accessibility audits.
+3. TestFlight on a real phone: pocket testing, hallway checks, VoiceOver
+   behavior, install/update behavior, and release-candidate validation.
+
+Accessibility Inspector GUI is an optional human debugging aid, not a required
+default QA lane. Prefer simulator XCTest accessibility audits for agent-driven
+repeatable checks and physical-device VoiceOver for launch truth.
 
 Do not make Parallels iPhone USB passthrough to the macOS VM a required QA path.
 If it happens to work, treat it as a convenience only. The durable physical-device
