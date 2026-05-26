@@ -49,10 +49,4 @@ Plan (ordered)
    - Show audit details: what was sent, when, how stored (or not stored).
 
 Dependencies / related docs
-- `/Users/jonamar/Development/scrappy-kin/scrappy-kin-hq/wiki/reference/app-ui-system.md` (trust patterns)
-- `/Users/jonamar/Development/scrappy-kin/scrappy-kin-hq/wiki/reference/app-ui-system.md` (candidate new element if needed)
-- `docs/library/onboarding-best-practices.md`
-- `docs/library/hig/navigation-bars.md`
-- `docs/library/hig/toolbars.md`
-- `docs/library/hig/sheets.md`
-- `docs/strategy/privacy-openess-security.md`
+- Archived packet. Do not use this file as current onboarding guidance.

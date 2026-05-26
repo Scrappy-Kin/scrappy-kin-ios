@@ -10,10 +10,8 @@ Approach: tokens + App* primitives + trust patterns + harness-first workflow.  [
 
 ## Phase 0 — Guardrails (PR-0)
 Deliverables:
-- `/Users/jonamar/Development/scrappy-kin/scrappy-kin-hq/wiki/reference/app-ui-system.md` committed
-- `/Users/jonamar/Development/product-ops/resources/design-foundation/` committed
-- `/Users/jonamar/Development/scrappy-kin/scrappy-kin-hq/wiki/reference/app-ui-system.md` committed
-- `/Users/jonamar/Development/scrappy-kin/scrappy-kin-hq/wiki/reference/app-ui-system.md` committed
+- Design-system reference committed in its canonical internal home
+- Shared design-foundation resources committed in their canonical internal home
 - Screens import policy: screens may only import from `ui/primitives` and `ui/patterns`
 - Simple CI guardrail (good-enough):
   - forbid `#` and `font-family` outside `src/theme/`
@@ -77,8 +75,7 @@ Pause point (loop Jon):
 
 ## Phase 4 — Screen composition (Phase A) (PR-9+)
 Implement Phase A screens using only primitives + patterns.
-Flow guidance lives in:
-- `docs/planning/backlog/2025-01-21-hiking-guide-onboarding.md`
+This archived packet is not current flow guidance.
 
 Phase A screen set (updated):
 - Welcome + trust expandables (methodology + privacy stance)

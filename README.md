@@ -19,21 +19,12 @@ Links:
 - Privacy Policy: [scrappykin.com/privacy.html](https://scrappykin.com/privacy.html)
 - Terms: [scrappykin.com/tos.html](https://scrappykin.com/tos.html)
 
-## Planning canon
-Cross-repo planning lives in HQ:
-- `/Users/jonamar/Development/scrappy-kin/scrappy-kin-hq/README.md`
-- `/Users/jonamar/Development/scrappy-kin/scrappy-kin-hq/workstreams/active-user-facing-launch/shared.md`
-
-This repo owns execution, code, runtime notes, and technical reference.
-Local scratch notes are fine, but they are not canonical planning state.
-
 ## Structure
 - `app/` - React + TypeScript UI (Capacitor host)
 - `scripts/` - engineering scripts used by the app/tooling
 - `docs/build-oauth.md` - build-time OAuth and environment contract
 - `docs/browser-qa.md` - web-harness and browser automation QA lanes
 - `docs/qa-policy.md` - explicit QA surface policy and release-boundary rules
-- `docs/ui/README.md` - public-safe pointer to internal UI/accessibility canon
 
 ## Auditing the code
 
@@ -97,7 +88,6 @@ Google account to the Test users list in Google Cloud Console.
 For build-time OAuth configuration (DEV vs PROD), see `docs/build-oauth.md`.
 For the bend/hold line between local QA, TestFlight, and release, see
 `docs/qa-policy.md`.
-For internal UI/accessibility/product QA canon, see `docs/ui/README.md`.
 
 ## QA and release commands
 

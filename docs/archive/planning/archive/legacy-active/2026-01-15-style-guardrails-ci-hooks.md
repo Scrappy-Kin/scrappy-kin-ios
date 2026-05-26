@@ -24,5 +24,4 @@ Keep UI style-guide constraints enforced by a single script run both locally and
 - Design-system checks will extend this model via a single script owned by the DS owner.
 
 ## Dependencies / Related Docs
-- `/Users/jonamar/Development/scrappy-kin/scrappy-kin-hq/wiki/reference/app-ui-system.md`
-- `/Users/jonamar/Development/scrappy-kin/scrappy-kin-hq/wiki/reference/app-ui-system.md`
+- Archived packet. Do not use this file as current design-system guidance.
