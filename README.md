@@ -19,12 +19,42 @@ Links:
 - Privacy Policy: [scrappykin.com/privacy.html](https://scrappykin.com/privacy.html)
 - Terms: [scrappykin.com/tos.html](https://scrappykin.com/tos.html)
 
+## Commands
+
+```bash
+cd app
+
+# Install deps
+npm install
+
+# Sync dev web bundle (JS/CSS-only rebuilds)
+npm run ios:sync:dev
+
+# Sync prod web bundle
+npm run ios:sync:prod
+
+# Install QA StoreKit lane on connected device
+npm run ios:install:qa-storekit:device
+
+# Open Xcode project
+npx cap open ios
+
+# Generate trust-surface audit prompt
+npm run audit:manifest
+```
+
 ## Structure
 - `app/` - React + TypeScript UI (Capacitor host)
 - `scripts/` - engineering scripts used by the app/tooling
 - `docs/build-oauth.md` - build-time OAuth and environment contract
 - `docs/browser-qa.md` - web-harness and browser automation QA lanes
 - `docs/qa-policy.md` - explicit QA surface policy and release-boundary rules
+
+## Agent Notes
+
+- HQ owns planning canon; this repo owns execution. Current active iOS stream: check HQ `workstreams/` for the live stream name (the `parked-google-auth-phase-a` stream referenced in older agent files is archived).
+- Shared agent tooling lives in `.agents/` (propagated from product-ops). Do not edit those surfaces directly.
+- Workflow guides: `.agents/skills/`, shared tools: `.agents/tools/`, risk modes: `.agents/meta/`.
 
 ## Auditing the code
 
