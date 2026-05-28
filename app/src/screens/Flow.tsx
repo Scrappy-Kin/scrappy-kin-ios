@@ -323,6 +323,11 @@ export default function Flow({ stepId }: FlowProps) {
     setSubscriptionBusy(null)
 
     if (result.status === 'cancelled') {
+      setSubscriptionNotice({
+        variant: 'info',
+        title: 'Purchase didn’t finish',
+        body: result.message,
+      })
       return
     }
 

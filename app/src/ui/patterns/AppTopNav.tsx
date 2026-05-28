@@ -29,7 +29,7 @@ export default function AppTopNav({
   action,
   progressCurrent,
   progressTotal,
-  sticky = false,
+  sticky = true,
 }: AppTopNavProps) {
   const history = useHistory()
   const navContext = useContext(NavContext)
@@ -38,6 +38,7 @@ export default function AppTopNav({
     typeof progressCurrent === 'number' &&
     typeof progressTotal === 'number' &&
     progressTotal > 0
+  const actionOnly = Boolean(action && !showBack && !label && !showProgress)
 
   function handleBack() {
     if (onBack) {
@@ -66,6 +67,7 @@ export default function AppTopNav({
       className={[
         'app-top-nav',
         sticky ? 'app-top-nav--sticky' : '',
+        actionOnly ? 'app-top-nav--floating-action' : '',
         showBack ? '' : 'app-top-nav--no-back',
       ].filter(Boolean).join(' ')}
     >
