@@ -517,6 +517,7 @@ export default function Flow({ stepId }: FlowProps) {
             )}
             {step.footer ?? null}
             {step.showFooterClaim === false ? null : <ServerBoundaryClaim />}
+            {step.qaFooter ?? null}
           </div>
         </div>
       </IonContent>

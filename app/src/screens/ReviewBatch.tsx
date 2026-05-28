@@ -153,11 +153,6 @@ export default function ReviewBatch() {
               Review the broker list and the email below. If it looks right, this round will send
               from your connected Gmail account.
             </AppText>
-            {isQaStoreKit ? (
-              <AppNotice variant="warning" title="QA send lane">
-                {QA_STOREKIT_SEND_NOTICE}
-              </AppNotice>
-            ) : null}
             <ReviewAssetCard
               title="Gmail connected"
               icon={checkmarkCircle}
@@ -239,6 +234,11 @@ export default function ReviewBatch() {
                 : `✉️ Send ${selectedBrokerIds.length || ''} opt-out emails`.trim()}
             </AppButton>
             <ServerBoundaryClaim />
+            {isQaStoreKit ? (
+              <AppNotice variant="warning" title="QA send lane">
+                {QA_STOREKIT_SEND_NOTICE}
+              </AppNotice>
+            ) : null}
           </section>
         </div>
       </IonContent>

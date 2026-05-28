@@ -286,7 +286,10 @@ function AppShell() {
     <>
       {showDevTools || showQaStoreKitUi ? (
         <div
-          className={`execution-lane-badge${showQaStoreKitUi ? ' execution-lane-badge--qa' : ''}`}
+          className={[
+            'execution-lane-badge',
+            showQaStoreKitUi ? 'execution-lane-badge--qa' : 'execution-lane-badge--dev',
+          ].join(' ')}
           aria-hidden="true"
         >
           <span className="execution-lane-badge__dot" />

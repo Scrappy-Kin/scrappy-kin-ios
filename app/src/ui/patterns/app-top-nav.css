@@ -5,10 +5,11 @@
 
 .app-top-nav--sticky {
   position: sticky;
-  top: calc(var(--ion-safe-area-top, 0px) + var(--space-2));
-  z-index: 10;
-  pointer-events: none;
-  margin: 0;
+  top: var(--ion-safe-area-top, 0px);
+  z-index: 40;
+  margin-inline: calc(-1 * var(--page-padding));
+  padding: var(--space-1) var(--page-padding);
+  background: var(--app-background);
 }
 
 .app-top-nav--floating-action {
@@ -16,6 +17,9 @@
   top: var(--ion-safe-area-top, 0px);
   right: calc(var(--ion-safe-area-right, 0px) + var(--page-padding));
   z-index: 20;
+  margin: 0;
+  padding: 0;
+  background: transparent;
 }
 
 .app-top-nav--floating-action .app-top-nav__row {
@@ -26,11 +30,6 @@
 .app-top-nav--floating-action .app-top-nav__slot {
   min-width: var(--touch-target-nav);
   min-height: var(--touch-target-nav);
-}
-
-.app-top-nav--sticky .app-top-nav__slot,
-.app-top-nav--sticky .app-top-nav__slot * {
-  pointer-events: auto;
 }
 
 .app-top-nav__row {
