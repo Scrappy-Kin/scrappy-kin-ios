@@ -40,24 +40,23 @@ body {
 
 .execution-lane-badge {
   position: fixed;
-  top: calc(var(--ion-safe-area-top, 0px) + var(--space-2));
-  left: calc(var(--ion-safe-area-left, 0px) + var(--space-2));
+  right: calc(var(--ion-safe-area-right, 0px) + var(--space-2));
+  bottom: calc(var(--ion-safe-area-bottom, 0px) + var(--space-2));
   z-index: 9999;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 6px 10px;
   border-radius: var(--radius-round);
-  background: rgba(176, 0, 13, 0.92);
   box-shadow: 0 8px 20px rgba(32, 24, 24, 0.18);
   pointer-events: none;
 }
 
+.execution-lane-badge--dev {
+  background: rgba(176, 0, 13, 0.92);
+}
+
 .execution-lane-badge--qa {
-  top: auto;
-  right: calc(var(--ion-safe-area-right, 0px) + var(--space-2));
-  bottom: calc(var(--ion-safe-area-bottom, 0px) + var(--space-2));
-  left: auto;
   background: rgba(22, 97, 58, 0.92);
 }
 

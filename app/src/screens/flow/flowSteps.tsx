@@ -37,6 +37,7 @@ export type FlowStepConfig = {
   nextLabel?: string
   nextAccessibilityDescription?: string
   footer?: ReactNode
+  qaFooter?: ReactNode
   showFooterClaim?: boolean
 }
 
@@ -327,11 +328,6 @@ export function buildFlowSteps({
           {renderStepContext(
             'Send this round as is, or make a last edit.',
           )}
-          {isQaStoreKit ? (
-            <AppNotice variant="warning" title="QA send lane">
-              {QA_STOREKIT_SEND_NOTICE}
-            </AppNotice>
-          ) : null}
           <ReviewAssetCard
             title="Gmail connected"
             icon={checkmarkCircle}
@@ -392,6 +388,11 @@ export function buildFlowSteps({
           <ServerBoundaryClaim />
         </section>
       ),
+      qaFooter: isQaStoreKit ? (
+        <AppNotice variant="warning" title="QA send lane">
+          {QA_STOREKIT_SEND_NOTICE}
+        </AppNotice>
+      ) : null,
       showNext: false,
       showFooterClaim: false,
     },
@@ -440,7 +441,6 @@ export function buildFlowSteps({
               {subscriptionSnapshot.loadError}
             </AppNotice>
           ) : null}
-          <SubscriptionDiagnosticsNotice snapshot={subscriptionSnapshot} />
           {subscriptionNotice ? (
             <AppNotice variant={subscriptionNotice.variant} title={subscriptionNotice.title}>
               {subscriptionNotice.body}
@@ -475,6 +475,9 @@ export function buildFlowSteps({
           </div>
         </section>
       ),
+      qaFooter: isQaStoreKit ? (
+        <SubscriptionDiagnosticsNotice snapshot={subscriptionSnapshot} />
+      ) : null,
       showNext: false,
       showFooterClaim: false,
     },
