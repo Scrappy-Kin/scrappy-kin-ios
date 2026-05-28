@@ -62,43 +62,48 @@ export default function AppTopNav({
     history.replace(resolvedFallbackHref)
   }
 
+  const classes = [
+    'app-top-nav',
+    sticky ? 'app-top-nav--sticky' : '',
+    actionOnly ? 'app-top-nav--floating-action' : '',
+    showBack ? '' : 'app-top-nav--no-back',
+  ].filter(Boolean).join(' ')
+
   return (
-    <div
-      className={[
-        'app-top-nav',
-        sticky ? 'app-top-nav--sticky' : '',
-        actionOnly ? 'app-top-nav--floating-action' : '',
-        showBack ? '' : 'app-top-nav--no-back',
-      ].filter(Boolean).join(' ')}
-    >
-      <div className="app-top-nav__row">
-        <div className="app-top-nav__slot app-top-nav__slot--leading">
-          {showBack ? (
-            <AppIconButton
-              icon={chevronBack}
-              ariaLabel="Back"
-              size="lg"
-              onClick={handleBack}
-              disabled={backDisabled}
-            />
-          ) : null}
+    <>
+      <div className={classes}>
+        <div className="app-top-nav__row">
+          <div className="app-top-nav__slot app-top-nav__slot--leading">
+            {showBack ? (
+              <AppIconButton
+                icon={chevronBack}
+                ariaLabel="Back"
+                size="lg"
+                onClick={handleBack}
+                disabled={backDisabled}
+              />
+            ) : null}
+          </div>
+          <div className="app-top-nav__label-wrap">
+            {label ? (
+              <AppText intent="label">
+                <span aria-hidden={labelAccessibilityHidden}>
+                  {label}
+                </span>
+              </AppText>
+            ) : null}
+          </div>
+          <div className="app-top-nav__slot app-top-nav__slot--trailing">
+            {action ?? null}
+          </div>
         </div>
-        <div className="app-top-nav__label-wrap">
-          {label ? (
-            <AppText intent="label">
-              <span aria-hidden={labelAccessibilityHidden}>
-                {label}
-              </span>
-            </AppText>
-          ) : null}
-        </div>
-        <div className="app-top-nav__slot app-top-nav__slot--trailing">
-          {action ?? null}
-        </div>
+        {showProgress ? (
+          <AppProgress current={progressCurrent} total={progressTotal} accessibilityHidden />
+        ) : null}
       </div>
-      {showProgress ? (
-        <AppProgress current={progressCurrent} total={progressTotal} accessibilityHidden />
+      {sticky && !actionOnly ? (
+        <div className="app-top-nav__spacer" aria-hidden="true" />
       ) : null}
-    </div>
+    </>
   )
 }
