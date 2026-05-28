@@ -20,6 +20,9 @@ export type SubscriptionDiagnostics = {
   requestedProductIds: string[]
   returnedProductIds: string[]
   activeProductIds: string[]
+  lastPurchaseStatus?: 'purchased' | 'cancelled' | 'pending' | 'error'
+  lastPurchaseActiveProductIds?: string[]
+  lastPurchaseErrorMessage?: string
   bundleIdentifier?: string
   appVersion?: string
   appBuild?: string
@@ -81,6 +84,7 @@ export type SubscriptionPurchaseResult =
   | {
       status: 'cancelled'
       snapshot: SubscriptionSnapshot
+      message: string
     }
   | {
       status: 'error'
@@ -103,6 +107,8 @@ export type SubscriptionRestoreResult =
 const DEV_SUBSCRIPTION_ACTIVE_KEY = 'dev_subscription_active'
 const NATIVE_SUBSCRIPTION_TIMEOUT_MS = 4000
 const SubscriptionNative = registerPlugin<SubscriptionPlugin>('Subscription')
+const PURCHASE_CANCELLED_MESSAGE =
+  'Purchase did not finish. You were not charged. Try again, or email support@scrappykin.com if you need a hand. You do not need to tell us who you are to get support.'
 
 function buildFallbackProduct(): SubscriptionProduct {
   return {
@@ -252,9 +258,16 @@ async function readNativeSnapshot(): Promise<SubscriptionSnapshot> {
 
     const product = productResponse.products[0] ?? null
     const active = entitlementResponse.activeProductIds.includes(SUBSCRIPTION_PRODUCT_ID)
-    const diagnostics = product
+    const productDiagnostics = product
       ? productResponse.diagnostics ?? null
       : (await readSubscriptionDiagnostics()) ?? productResponse.diagnostics ?? null
+    const diagnostics = productDiagnostics
+      ? {
+          ...productDiagnostics,
+          entitlementLookupCompleted: true,
+          activeProductIds: entitlementResponse.activeProductIds,
+        }
+      : null
 
     return normalizeSnapshot({
       active,
@@ -302,28 +315,62 @@ export async function purchaseSubscription(): Promise<SubscriptionPurchaseResult
   try {
     const result = await SubscriptionNative.purchase({ productId: snapshot.product.id })
     const nextSnapshot = await getSubscriptionSnapshot()
+    const diagnostics = nextSnapshot.diagnostics
+      ? {
+          ...nextSnapshot.diagnostics,
+          lastPurchaseStatus: result.status,
+          lastPurchaseActiveProductIds: result.activeProductIds,
+        }
+      : null
+    const purchaseSnapshot = {
+      ...nextSnapshot,
+      diagnostics,
+    }
 
     if (result.status === 'cancelled') {
-      return { status: 'cancelled', snapshot: nextSnapshot }
+      return {
+        status: 'cancelled',
+        snapshot: purchaseSnapshot,
+        message: PURCHASE_CANCELLED_MESSAGE,
+      }
     }
 
     if (result.status === 'pending') {
       return {
         status: 'error',
-        snapshot: nextSnapshot,
+        snapshot: purchaseSnapshot,
         message: 'Purchase is pending approval.',
+      }
+    }
+
+    if (!nextSnapshot.active) {
+      return {
+        status: 'error',
+        snapshot: purchaseSnapshot,
+        message: 'Purchase finished, but subscription access is not active yet.',
       }
     }
 
     return {
       status: 'purchased',
-      snapshot: nextSnapshot,
+      snapshot: purchaseSnapshot,
     }
   } catch (error) {
+    const snapshot = await getSubscriptionSnapshot()
+    const message = extractMessage(error, 'Purchase did not complete.')
     return {
       status: 'error',
-      snapshot: await getSubscriptionSnapshot(),
-      message: extractMessage(error, 'Purchase did not complete.'),
+      snapshot: {
+        ...snapshot,
+        diagnostics: snapshot.diagnostics
+          ? {
+              ...snapshot.diagnostics,
+              lastPurchaseStatus: 'error',
+              lastPurchaseErrorMessage: message,
+            }
+          : null,
+      },
+      message,
     }
   }
 }

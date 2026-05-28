@@ -139,7 +139,7 @@ export default function Settings() {
   const [subscriptionSnapshot, setSubscriptionSnapshot] = useState<SubscriptionSnapshot | null>(null)
   const [subscriptionBusy, setSubscriptionBusy] = useState<'purchase' | 'restore' | null>(null)
   const [subscriptionNotice, setSubscriptionNotice] = useState<{
-    variant: 'error' | 'success'
+    variant: 'error' | 'success' | 'info'
     title: string
     body: string
   } | null>(null)
@@ -366,6 +366,11 @@ export default function Settings() {
     setSubscriptionSnapshot(result.snapshot)
 
     if (result.status === 'cancelled') {
+      setSubscriptionNotice({
+        variant: 'info',
+        title: 'Purchase didn’t finish',
+        body: result.message,
+      })
       return
     }
 

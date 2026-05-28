@@ -149,8 +149,10 @@ export default function Home() {
     setPurchaseInFlight(true)
     const result = await purchaseSubscription()
     setPurchaseInFlight(false)
+    setSubscriptionSnapshot(result.snapshot)
 
     if (result.status === 'cancelled') {
+      setSubscriptionError(result.message)
       return
     }
 

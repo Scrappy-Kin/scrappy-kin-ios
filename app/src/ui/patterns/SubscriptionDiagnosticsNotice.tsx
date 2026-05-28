@@ -29,6 +29,14 @@ export default function SubscriptionDiagnosticsNotice({
     `Entitlements: ${diagnostics.entitlementLookupCompleted ? 'checked' : 'not checked'} (${formatList(diagnostics.activeProductIds)})`,
   ]
 
+  if (diagnostics.lastPurchaseStatus) {
+    lines.push(`Last purchase: ${diagnostics.lastPurchaseStatus} (${formatList(diagnostics.lastPurchaseActiveProductIds)})`)
+  }
+
+  if (diagnostics.lastPurchaseErrorMessage) {
+    lines.push(`Purchase error: ${diagnostics.lastPurchaseErrorMessage}`)
+  }
+
   if (diagnostics.productLoadErrorDomain || diagnostics.productLoadErrorMessage) {
     lines.push(
       `Error: ${diagnostics.productLoadErrorDomain ?? 'unknown'} ${diagnostics.productLoadErrorCode ?? ''} ${diagnostics.productLoadErrorMessage ?? ''}`.trim(),

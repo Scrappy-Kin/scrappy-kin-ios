@@ -54,7 +54,9 @@ body {
 }
 
 .execution-lane-badge--qa {
+  top: auto;
   right: calc(var(--ion-safe-area-right, 0px) + var(--space-2));
+  bottom: calc(var(--ion-safe-area-bottom, 0px) + var(--space-2));
   left: auto;
   background: rgba(22, 97, 58, 0.92);
 }
