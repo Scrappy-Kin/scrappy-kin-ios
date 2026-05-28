@@ -4,11 +4,16 @@
 }
 
 .app-top-nav--sticky {
-  position: sticky;
-  top: var(--ion-safe-area-top, 0px);
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
   z-index: 40;
-  margin-inline: calc(-1 * var(--page-padding));
-  padding: var(--space-1) var(--page-padding);
+  padding:
+    var(--ion-safe-area-top, 0px)
+    calc(var(--page-padding) + var(--ion-safe-area-right, 0px))
+    0
+    calc(var(--page-padding) + var(--ion-safe-area-left, 0px));
   background: var(--app-background);
 }
 
@@ -20,6 +25,10 @@
   margin: 0;
   padding: 0;
   background: transparent;
+}
+
+.app-top-nav__spacer {
+  min-height: var(--touch-target-nav);
 }
 
 .app-top-nav--floating-action .app-top-nav__row {
