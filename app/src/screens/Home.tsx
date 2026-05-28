@@ -201,7 +201,6 @@ export default function Home() {
                   Reconnect Gmail to keep sending from your own account.
                 </AppNotice>
               ) : null}
-              <SubscriptionDiagnosticsNotice snapshot={subscriptionSnapshot} />
 
               {subscriptionError ? (
                 <AppNotice variant="error" title="Subscription didn’t start">
@@ -240,6 +239,7 @@ export default function Home() {
               </div>
             </AppCard>
           ) : null}
+          <SubscriptionDiagnosticsNotice snapshot={subscriptionSnapshot} />
         </div>
       </IonContent>
     </IonPage>

@@ -509,7 +509,6 @@ export default function Settings() {
             {subscriptionSnapshot.loadError}
           </AppNotice>
         ) : null}
-        <SubscriptionDiagnosticsNotice snapshot={subscriptionSnapshot} />
 
         {subscriptionNotice ? (
           <AppNotice variant={subscriptionNotice.variant} title={subscriptionNotice.title}>
@@ -554,6 +553,8 @@ export default function Settings() {
             onClick={() => void openUrl(TERMS_URL)}
           />
         </AppList>
+
+        <SubscriptionDiagnosticsNotice snapshot={subscriptionSnapshot} />
       </section>
     )
   }

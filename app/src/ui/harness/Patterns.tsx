@@ -6,7 +6,7 @@ import AppList from '../primitives/AppList'
 import AppListRow from '../primitives/AppListRow'
 import AppText from '../primitives/AppText'
 import ArtifactPanel from '../patterns/ArtifactPanel'
-import DisclosureSheetRow from '../patterns/DisclosureSheetRow'
+import DisclosureRow from '../patterns/DisclosureRow'
 import InlineTrustClaim from '../patterns/InlineTrustClaim'
 import ReadMoreSheetLink from '../patterns/ReadMoreSheetLink'
 import InspectableArtifact from '../patterns/InspectableArtifact'
@@ -40,22 +40,17 @@ export default function Patterns() {
           </section>
 
           <section className="app-section">
-            <AppHeading intent="section">DisclosureSheetRow</AppHeading>
+            <AppHeading intent="section">DisclosureRow</AppHeading>
             <div className="app-stack">
-              <DisclosureSheetRow
-                label="What can Scrappy Kin see?"
-                sheetBody={
-                  <div className="app-stack">
-                    <AppText intent="body">
-                      Use this for mobile-first disclosure rows that open a bottom sheet.
-                    </AppText>
-                    <AppText intent="supporting">
-                      Prefer this over inline links when the disclosure is part of the main
-                      onboarding path.
-                    </AppText>
-                  </div>
-                }
-              />
+              <DisclosureRow label="What can Scrappy Kin see?">
+                <AppText intent="body">
+                  Use this for mobile-first disclosure rows that expand in place.
+                </AppText>
+                <AppText intent="supporting">
+                  Prefer this over inline links when the disclosure is part of the main onboarding
+                  path.
+                </AppText>
+              </DisclosureRow>
             </div>
           </section>
 
