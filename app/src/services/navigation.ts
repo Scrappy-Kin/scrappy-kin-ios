@@ -58,6 +58,10 @@ export function buildTemplateHref(returnTo?: string | null) {
   return withReturnTo('/template', returnTo)
 }
 
+export function buildBatchSizeHref(returnTo?: string | null) {
+  return withReturnTo('/batch-size', returnTo)
+}
+
 export function buildSentReviewHref(returnTo?: string | null) {
   return withReturnTo('/sent-emails', returnTo)
 }

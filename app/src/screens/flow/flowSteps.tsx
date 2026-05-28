@@ -1,6 +1,5 @@
 import {
   checkmarkCircle,
-  createOutline,
 } from 'ionicons/icons'
 import type { ReactElement, ReactNode } from 'react'
 import onboardingSuccessIllustration from '../../assets/illustrations/onboarding-success.svg'
@@ -18,7 +17,7 @@ import AppSegmentedCard, { AppSegmentedCardSection } from '../../ui/primitives/A
 import AppText from '../../ui/primitives/AppText'
 import GmailAccessExplainer, { GMAIL_CONNECTED_DESCRIPTION } from '../../ui/patterns/GmailAccessExplainer'
 import GmailConnectionStatusCard from '../../ui/patterns/GmailConnectionStatusCard'
-import ReviewAssetCard from '../../ui/patterns/ReviewAssetCard'
+import RoundReviewSummary, { ReviewEditIconButton } from '../../ui/patterns/RoundReviewSummary'
 import ServerBoundaryClaim from '../../ui/patterns/ServerBoundaryClaim'
 import SubscriptionDiagnosticsNotice from '../../ui/patterns/SubscriptionDiagnosticsNotice'
 import SubscriptionOfferCard from '../../ui/patterns/SubscriptionOfferCard'
@@ -328,43 +327,23 @@ export function buildFlowSteps({
           {renderStepContext(
             'Send this round as is, or make a last edit.',
           )}
-          <ReviewAssetCard
-            title="Gmail connected"
-            icon={checkmarkCircle}
-            action={
-              <button
-                type="button"
-                className="flow-inline-link"
+          <RoundReviewSummary
+            brokerCount={starterBrokers.length}
+            brokerNames={starterBrokers.map((broker) => broker.name)}
+            brokerTitle={`${starterBrokers.length} brokers in your first round`}
+            gmailAction={
+              <ReviewEditIconButton
+                label="Edit Gmail connection"
                 onClick={onManageGmail}
-              >
-                Manage in Settings
-              </button>
+              />
             }
-          >
-            <AppText intent="body">{GMAIL_CONNECTED_DESCRIPTION}</AppText>
-          </ReviewAssetCard>
-          <ReviewAssetCard title={`${starterBrokers.length} BROKERS IN YOUR FIRST ROUND`}>
-            <AppText intent="body">
-              {starterBrokers.map((broker) => broker.name).join(', ')}.
-            </AppText>
-          </ReviewAssetCard>
-          <ReviewAssetCard
-            title="Email template ready"
-            action={
-              <button
-                type="button"
-                className="review-asset-card__icon-action"
-                aria-label="Edit email template"
+            templateAction={
+              <ReviewEditIconButton
+                label="Edit email template"
                 onClick={onEditEmailWording}
-              >
-                <AppIcon icon={createOutline} size="sm" />
-              </button>
+              />
             }
-          >
-            <AppText intent="body">
-              Everything is ready to go. Make a last edit if you want, or send this round as is.
-            </AppText>
-          </ReviewAssetCard>
+          />
           {sendError ? (
             <AppNotice
               variant="error"
@@ -383,7 +362,7 @@ export function buildFlowSteps({
             </AppNotice>
           ) : null}
           <AppButton onClick={onSendStarterRound} disabled={sendInFlight || !gmailConnected}>
-            {sendInFlight ? 'Sending...' : `✉️ Send ${starterBrokers.length} opt-out emails`}
+            {sendInFlight ? 'Sending...' : `Send ${starterBrokers.length} opt-out emails`}
           </AppButton>
           <ServerBoundaryClaim />
         </section>

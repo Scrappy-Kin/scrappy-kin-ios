@@ -24,6 +24,7 @@ export type BrokerCatalogSummary = {
 }
 
 const SELECTED_KEY = 'selected_brokers'
+export const DEFAULT_ROUND_SIZE = 5
 let brokerCatalogPromise: Promise<Broker[]> | null = null
 
 function parseBrokerData(): Broker[] {
