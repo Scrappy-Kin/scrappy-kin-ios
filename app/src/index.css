@@ -135,6 +135,15 @@ body {
   gap: var(--stack-gap-tight);
 }
 
+.round-review-illustration {
+  display: block;
+  width: min(74vw, 292px);
+  height: auto;
+  justify-self: center;
+  pointer-events: none;
+  user-select: none;
+}
+
 .app-action-stack {
   display: grid;
   gap: var(--space-2);

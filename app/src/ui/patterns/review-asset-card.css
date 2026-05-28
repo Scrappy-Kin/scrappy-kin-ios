@@ -1,8 +1,8 @@
 .review-asset-card {
   display: grid;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-4) var(--space-3);
-  border: 1px solid var(--neutral-900-12);
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 0;
   border-radius: var(--radius-2);
   background: var(--neutral-50);
 }
@@ -42,8 +42,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: 0;
   background: transparent;
