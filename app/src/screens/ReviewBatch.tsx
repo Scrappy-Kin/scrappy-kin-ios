@@ -1,5 +1,5 @@
 import { IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
-import { checkmarkCircle, createOutline } from 'ionicons/icons'
+import dataRescueIllustration from '../assets/illustrations/onboarding-data-rescue.svg'
 import { useEffect, useRef, useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
 import { isQaStoreKitLane } from '../config/buildInfo'
@@ -7,6 +7,8 @@ import { QA_STOREKIT_SEND_NOTICE } from '../config/qaStoreKit'
 import { executeBatchSend } from '../services/batchSend'
 import {
   filterSelectableBrokers,
+  DEFAULT_ROUND_SIZE,
+  type Broker,
   getSelectedBrokerIds,
   loadBrokers,
   setSelectedBrokerIds as persistSelectedBrokerIds,
@@ -21,12 +23,9 @@ import {
 import { getActiveUserProfile, type UserProfile } from '../services/userProfile'
 import AppButton from '../ui/primitives/AppButton'
 import AppHeading from '../ui/primitives/AppHeading'
-import AppIcon from '../ui/primitives/AppIcon'
 import AppNotice from '../ui/primitives/AppNotice'
-import AppText from '../ui/primitives/AppText'
 import AppTopNav from '../ui/patterns/AppTopNav'
-import { GMAIL_CONNECTED_DESCRIPTION } from '../ui/patterns/GmailAccessExplainer'
-import ReviewAssetCard from '../ui/patterns/ReviewAssetCard'
+import RoundReviewSummary, { ReviewEditIconButton } from '../ui/patterns/RoundReviewSummary'
 import ServerBoundaryClaim from '../ui/patterns/ServerBoundaryClaim'
 import SettingsShortcut from '../ui/patterns/SettingsShortcut'
 import { useRouteFocus } from '../ui/patterns/useRouteFocus'
@@ -49,6 +48,7 @@ export default function ReviewBatch() {
   const [gmailConnected, setGmailConnected] = useState(false)
   const [profileDraft, setProfileDraft] = useState<UserProfile>(emptyProfile)
   const [selectedBrokerIds, setSelectedBrokerIds] = useState<string[]>([])
+  const [selectedBrokers, setSelectedBrokers] = useState<Broker[]>([])
   const [sendError, setSendError] = useState<string | null>(null)
   const [sendInFlight, setSendInFlight] = useState(false)
   const isQaStoreKit = isQaStoreKitLane()
@@ -68,7 +68,7 @@ export default function ReviewBatch() {
     const nextSelectedIds =
       filteredSelectedIds.length > 0
         ? filteredSelectedIds
-        : selectableBrokers.map((broker) => broker.id)
+        : selectableBrokers.slice(0, DEFAULT_ROUND_SIZE).map((broker) => broker.id)
 
     if (
       nextSelectedIds.length !== selectedIds.length ||
@@ -80,6 +80,7 @@ export default function ReviewBatch() {
     setGmailConnected(status.connected)
     setProfileDraft(profile ?? emptyProfile)
     setSelectedBrokerIds(nextSelectedIds)
+    setSelectedBrokers(selectableBrokers.filter((broker) => nextSelectedIds.includes(broker.id)))
     setIsReady(true)
   }
 
@@ -146,20 +147,21 @@ export default function ReviewBatch() {
         <div className="app-screen-shell">
           <AppTopNav backHref={returnTo} action={<SettingsShortcut />} />
           <AppHeading intent="section" level={1} ref={headingRef} tabIndex={-1}>
-            Review next round
+            Review your next round of opt-out emails
           </AppHeading>
           <section className="app-section-shell">
-            <AppText intent="supporting">
-              Review the broker list and the email below. If it looks right, this round will send
-              from your connected Gmail account.
-            </AppText>
-            <ReviewAssetCard
-              title="Gmail connected"
-              icon={checkmarkCircle}
-              action={
-                <button
-                  type="button"
-                  className="flow-inline-link"
+            <img
+              className="round-review-illustration"
+              src={dataRescueIllustration}
+              alt=""
+              aria-hidden="true"
+            />
+            <RoundReviewSummary
+              brokerCount={selectedBrokerIds.length}
+              brokerNames={selectedBrokers.map((broker) => broker.name)}
+              gmailAction={
+                <ReviewEditIconButton
+                  label="Edit Gmail connection"
                   onClick={() =>
                     history.push(
                       buildTaskHref('repair_gmail', {
@@ -168,39 +170,25 @@ export default function ReviewBatch() {
                       }),
                     )
                   }
-                >
-                  Manage Gmail
-                </button>
+                />
               }
-            >
-              <AppText intent="body">{GMAIL_CONNECTED_DESCRIPTION}</AppText>
-            </ReviewAssetCard>
-            <ReviewAssetCard
-              title={`${selectedBrokerIds.length} brokers in this round`}
-            >
-              <AppText intent="body">
-                This round uses the remaining brokers that have not already been sent.
-              </AppText>
-            </ReviewAssetCard>
-            <ReviewAssetCard
-              title="Email template ready"
-              action={
-                <button
-                  type="button"
-                  className="review-asset-card__icon-action"
-                  aria-label="Edit email template"
+              brokersAction={
+                <ReviewEditIconButton
+                  label="Edit round size"
+                  onClick={() =>
+                    history.push(buildTaskHref('edit_batch_size', { returnTo: currentRoute }))
+                  }
+                />
+              }
+              templateAction={
+                <ReviewEditIconButton
+                  label="Edit email template"
                   onClick={() =>
                     history.push(buildTaskHref('edit_template_for_batch', { returnTo: currentRoute }))
                   }
-                >
-                  <AppIcon icon={createOutline} size="sm" />
-                </button>
+                />
               }
-            >
-              <AppText intent="body">
-                Everything is ready to go. Make a last edit if you want, or send this round as is.
-              </AppText>
-            </ReviewAssetCard>
+            />
             {sendError ? (
               <AppNotice
                 variant="error"
@@ -231,7 +219,7 @@ export default function ReviewBatch() {
             >
               {sendInFlight
                 ? 'Sending...'
-                : `✉️ Send ${selectedBrokerIds.length || ''} opt-out emails`.trim()}
+                : `Send ${selectedBrokerIds.length || ''} opt-out emails`.trim()}
             </AppButton>
             <ServerBoundaryClaim />
             {isQaStoreKit ? (

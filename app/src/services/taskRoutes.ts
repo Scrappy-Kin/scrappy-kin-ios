@@ -1,6 +1,7 @@
 import type { FlowStepId } from './flowProgress'
 import {
   buildGmailHref,
+  buildBatchSizeHref,
   buildOnboardingHref,
   buildReviewBatchHref,
   buildSentReviewHref,
@@ -13,6 +14,7 @@ export type TaskIntent =
   | 'review_next_batch'
   | 'repair_gmail'
   | 'edit_template_for_batch'
+  | 'edit_batch_size'
   | 'edit_profile_for_batch'
   | 'review_sent'
 
@@ -49,6 +51,11 @@ const TASK_ROUTES: Record<TaskIntent, TaskRouteDefinition> = {
   },
   edit_template_for_batch: {
     href: ({ returnTo }) => buildTemplateHref(returnTo ?? '/home'),
+    successHref: ({ returnTo }) => returnTo ?? '/home',
+    editBehavior: 'explicit_save',
+  },
+  edit_batch_size: {
+    href: ({ returnTo }) => buildBatchSizeHref(returnTo ?? '/home'),
     successHref: ({ returnTo }) => returnTo ?? '/home',
     editBehavior: 'explicit_save',
   },
