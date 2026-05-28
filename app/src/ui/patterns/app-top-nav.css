@@ -5,26 +5,27 @@
 
 .app-top-nav--sticky {
   position: sticky;
-  top: calc((var(--page-padding-top) + var(--ion-safe-area-top, 0px)) * -1);
+  top: calc(var(--ion-safe-area-top, 0px) + var(--space-2));
   z-index: 10;
   pointer-events: none;
-  margin:
-    calc((var(--page-padding-top) + var(--ion-safe-area-top, 0px)) * -1)
-    calc(var(--page-padding) * -1)
-    0;
-  padding:
-    calc(var(--page-padding-top) + var(--ion-safe-area-top, 0px) + var(--space-2))
-    var(--page-padding)
-    var(--space-3);
-  background:
-    linear-gradient(
-      180deg,
-      rgba(var(--app-background-rgb), 0.98) 0%,
-      rgba(var(--app-background-rgb), 0.94) 72%,
-      rgba(var(--app-background-rgb), 0.82) 100%
-    );
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  margin: 0;
+}
+
+.app-top-nav--floating-action {
+  position: fixed;
+  top: var(--ion-safe-area-top, 0px);
+  right: calc(var(--ion-safe-area-right, 0px) + var(--page-padding));
+  z-index: 20;
+}
+
+.app-top-nav--floating-action .app-top-nav__row {
+  display: flex;
+  min-height: auto;
+}
+
+.app-top-nav--floating-action .app-top-nav__slot {
+  min-width: var(--touch-target-nav);
+  min-height: var(--touch-target-nav);
 }
 
 .app-top-nav--sticky .app-top-nav__slot,

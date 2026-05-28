@@ -188,12 +188,12 @@ export default function ReviewBatch() {
               </AppText>
             </ReviewAssetCard>
             <ReviewAssetCard
-              title="Email wording ready"
+              title="Email template ready"
               action={
                 <button
                   type="button"
                   className="review-asset-card__icon-action"
-                  aria-label="Edit email wording"
+                  aria-label="Edit email template"
                   onClick={() =>
                     history.push(buildTaskHref('edit_template_for_batch', { returnTo: currentRoute }))
                   }

@@ -11,7 +11,6 @@ import type { FlowStepId } from '../../services/flowProgress'
 import type { SubscriptionSnapshot } from '../../services/subscription'
 import type { UserProfile, UserProfileErrors, UserProfileField } from '../../services/userProfile'
 import AppButton from '../../ui/primitives/AppButton'
-import AppHeading from '../../ui/primitives/AppHeading'
 import AppIcon from '../../ui/primitives/AppIcon'
 import AppInput from '../../ui/primitives/AppInput'
 import AppNotice from '../../ui/primitives/AppNotice'
@@ -165,11 +164,11 @@ export function buildFlowSteps({
         </section>
       ),
       canContinue: true,
-      nextLabel: 'Review deletion request',
+      nextLabel: 'Set up email template',
       showFooterClaim: false,
     },
     'request-review': {
-      title: 'Review your deletion request',
+      title: 'Set up your email template',
       render: () => (
         <section className="app-section-shell">
           <AppText intent="supporting">
@@ -256,7 +255,7 @@ export function buildFlowSteps({
             size="sm"
             onClick={onEditTemplate}
           >
-            Edit wording
+            Edit template wording
           </AppButton>
         </section>
       ),
@@ -354,12 +353,12 @@ export function buildFlowSteps({
             </AppText>
           </ReviewAssetCard>
           <ReviewAssetCard
-            title="Email wording ready"
+            title="Email template ready"
             action={
               <button
                 type="button"
                 className="review-asset-card__icon-action"
-                aria-label="Edit opt-out email"
+                aria-label="Edit email template"
                 onClick={onEditEmailWording}
               >
                 <AppIcon icon={createOutline} size="sm" />
@@ -413,11 +412,9 @@ export function buildFlowSteps({
             your personal data in their databases. How's it feel?
           </AppText>
           <section className="app-section-shell app-stack--tight">
-            <AppHeading intent="section" level={2}>
-              Next up:
-            </AppHeading>
+            <AppText intent="label">Next up</AppText>
             <AppText intent="body">
-              Most brokers reply within a few days. Replies go directly to your Gmail inbox.
+              Check your Gmail inbox over the next few days to see broker replies.
             </AppText>
           </section>
         </section>
