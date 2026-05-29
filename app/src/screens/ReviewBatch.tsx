@@ -147,7 +147,7 @@ export default function ReviewBatch() {
         <div className="app-screen-shell">
           <AppTopNav backHref={returnTo} action={<SettingsShortcut />} />
           <AppHeading intent="section" level={1} ref={headingRef} tabIndex={-1}>
-            Review your next round of opt-out emails
+            Send your next round of opt-out emails
           </AppHeading>
           <section className="app-section-shell">
             <img
