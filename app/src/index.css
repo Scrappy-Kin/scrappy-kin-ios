@@ -47,9 +47,10 @@ body {
   align-items: center;
   gap: 6px;
   padding: 6px 10px;
+  border: none;
   border-radius: var(--radius-round);
   box-shadow: 0 8px 20px rgba(32, 24, 24, 0.18);
-  pointer-events: none;
+  cursor: pointer;
 }
 
 .execution-lane-badge--dev {

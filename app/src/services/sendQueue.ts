@@ -4,6 +4,7 @@ import { isVerboseDevLane } from '../config/buildInfo'
 import { buildDeletionBody, buildDeletionSubject } from './emailTemplate'
 import { sendEmail } from './gmailSend'
 import { incrementTotalSentCount } from './metricsStore'
+import { appendSentLogEntries } from './sentLog'
 import { getDeletionTemplateDraft, resolveDeletionTemplate } from './templateStore'
 import { getUserProfile } from './userProfile'
 import { getQueue, initializeQueue, resetFailedToPending, setQueue, summarizeQueue, type QueueItem, updateQueueItem } from './queueStore'
@@ -94,6 +95,7 @@ export async function sendAll(brokers: Broker[], brokerIds: string[], onProgress
         replyTo: profile.email,
       })
 
+      const sentAt = new Date().toISOString()
       const updated = await updateQueueItem({
         ...item,
         status: 'sent',
@@ -102,9 +104,17 @@ export async function sendAll(brokers: Broker[], brokerIds: string[], onProgress
         errorDetail: undefined,
         gmailMessageId: result.id,
         gmailThreadId: result.threadId,
-        lastAttemptAt: new Date().toISOString(),
+        lastAttemptAt: sentAt,
       })
       await incrementTotalSentCount(1)
+      await appendSentLogEntries([
+        {
+          brokerId: broker.id,
+          brokerName: broker.name,
+          sentAt,
+          referenceId: item.referenceId,
+        },
+      ])
       summary = summarizeQueue(updated)
       onProgress?.(summary)
     } catch (error) {

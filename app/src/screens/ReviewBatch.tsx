@@ -6,7 +6,6 @@ import { isQaStoreKitLane } from '../config/buildInfo'
 import { QA_STOREKIT_SEND_NOTICE } from '../config/qaStoreKit'
 import { executeBatchSend } from '../services/batchSend'
 import {
-  filterSelectableBrokers,
   DEFAULT_ROUND_SIZE,
   type Broker,
   getSelectedBrokerIds,
@@ -16,7 +15,8 @@ import {
 } from '../services/brokerStore'
 import { getGmailStatus } from '../services/googleAuth'
 import { getCurrentRoute, readReturnTo } from '../services/navigation'
-import { getQueue } from '../services/queueStore'
+import { computeBrokerEligibility, getEligibleBrokerIds } from '../services/roundState'
+import { getMergedSentLog } from '../services/sentLog'
 import {
   buildTaskHref,
   deriveReviewBatchTaskRedirect,
@@ -55,17 +55,19 @@ export default function ReviewBatch() {
   const isQaStoreKit = isQaStoreKitLane()
 
   async function refreshState() {
-    const [status, profile, nextBrokers, selectedIds, selectedRoundSize, queue] = await Promise.all([
+    const nextBrokers = await loadBrokers()
+    const [status, profile, selectedIds, selectedRoundSize, sentLog] = await Promise.all([
       getGmailStatus(),
       getActiveUserProfile(),
-      loadBrokers(),
       getSelectedBrokerIds(),
       getSelectedRoundSize(),
-      getQueue(),
+      getMergedSentLog(nextBrokers),
     ])
 
-    const selectableBrokers = filterSelectableBrokers(nextBrokers, queue)
-    const selectableBrokerIds = new Set(selectableBrokers.map((broker) => broker.id))
+    const eligibility = computeBrokerEligibility(nextBrokers, sentLog)
+    const eligibleIds = getEligibleBrokerIds(eligibility)
+    const selectableBrokers = nextBrokers.filter((broker) => eligibleIds.includes(broker.id))
+    const selectableBrokerIds = new Set(eligibleIds)
     const filteredSelectedIds = selectedIds.filter((id) => selectableBrokerIds.has(id))
     const defaultRoundSize = Math.min(selectedRoundSize || DEFAULT_ROUND_SIZE, selectableBrokers.length)
     const nextSelectedIds =
