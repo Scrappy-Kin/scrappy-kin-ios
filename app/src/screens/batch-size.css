@@ -55,10 +55,12 @@
 
 .batch-size-option__label {
   color: var(--primary);
+  font-weight: var(--font-weight-semibold);
 }
 
 .batch-size-option__description {
   color: var(--neutral-700);
+  font-weight: var(--font-weight-regular);
 }
 
 .batch-size-option--selected {

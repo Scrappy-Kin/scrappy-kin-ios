@@ -96,7 +96,7 @@ function RoundSizeOptionButton({
       aria-pressed={selected}
       onClick={onSelect}
     >
-      <AppText intent="body" emphasis className="batch-size-option__label">
+      <AppText intent="body" className="batch-size-option__label">
         {option.label}
       </AppText>
       <AppText intent="body" className="batch-size-option__description">
