@@ -3,26 +3,19 @@ import { buildOnboardingHref } from './navigation'
 
 type HomeRedirectTarget = string
 
-type DeriveHomeStateInput = {
+type EntryRouteInput = {
   gmailConnected: boolean
   hasProfile: boolean
   onboardingSentCount: number
   totalSentCount: number
   sentReviewItemCount: number
-  subscriptionActive: boolean
-  remainingUnsentBrokerCount: number
 }
-
-type DeriveEntryTargetInput = Pick<
-  DeriveHomeStateInput,
-  'gmailConnected' | 'hasProfile' | 'onboardingSentCount' | 'totalSentCount' | 'sentReviewItemCount'
->
 
 function buildFlowStepHref(step: FlowStepId): HomeRedirectTarget {
   return buildOnboardingHref(step)
 }
 
-function hasAnyCompletedSend(input: Pick<DeriveEntryTargetInput, 'onboardingSentCount' | 'totalSentCount' | 'sentReviewItemCount'>) {
+function hasAnyCompletedSend(input: Pick<EntryRouteInput, 'onboardingSentCount' | 'totalSentCount' | 'sentReviewItemCount'>) {
   return input.onboardingSentCount > 0 || input.totalSentCount > 0 || input.sentReviewItemCount > 0
 }
 
@@ -50,7 +43,7 @@ function shouldResumePostSendFlow(
 }
 
 export function deriveEntryTarget(
-  input: DeriveEntryTargetInput,
+  input: EntryRouteInput,
   lastFlowStep?: FlowStepId | null,
   flowStarted = false,
 ): HomeRedirectTarget | null {
@@ -90,7 +83,7 @@ export function deriveEntryTarget(
 }
 
 export function deriveOnboardingRedirect(
-  input: DeriveEntryTargetInput,
+  input: EntryRouteInput,
   requestedStep: FlowStepId,
   flowStarted = false,
 ) {
