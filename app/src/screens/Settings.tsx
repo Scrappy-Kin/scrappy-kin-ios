@@ -9,10 +9,12 @@ import { SUBSCRIPTION_PRICE_BUTTON_LABEL } from '../config/subscription'
 import {
   buildSettingsHref,
   type SettingsView as SettingsRouteView,
+  buildBatchSizeHref,
   buildTemplateHref,
   buildOnboardingHref,
   readReturnTo,
 } from '../services/navigation'
+import { DEFAULT_ROUND_SIZE, getSelectedRoundSize } from '../services/brokerStore'
 import { buildTaskHref } from '../services/taskRoutes'
 import {
   exportLogsAsText,
@@ -134,6 +136,7 @@ export default function Settings() {
   const [showInternalTools, setShowInternalTools] = useState(false)
   const [gmailConnected, setGmailConnected] = useState(false)
   const [profileDraft, setProfileDraft] = useState<UserProfile>(emptyProfile)
+  const [selectedRoundSize, setSelectedRoundSizeState] = useState(DEFAULT_ROUND_SIZE)
   const [profileSaved, setProfileSaved] = useState(false)
   const [profileErrors, setProfileErrors] = useState<UserProfileErrors>({})
   const [subscriptionSnapshot, setSubscriptionSnapshot] = useState<SubscriptionSnapshot | null>(null)
@@ -185,6 +188,7 @@ export default function Settings() {
       setProfileSaved(false)
     }
     setProfileErrors({})
+    setSelectedRoundSizeState(await getSelectedRoundSize())
     const nextSubscriptionSnapshot = await getSubscriptionSnapshot()
     setSubscriptionSnapshot(nextSubscriptionSnapshot)
   }
@@ -420,6 +424,12 @@ export default function Settings() {
             title="Email wording"
             description="Review the message you send to brokers."
             onClick={() => history.push(buildTemplateHref(settingsHomeHref))}
+          />
+          <AppListRow
+            title="Emails at a time"
+            description="Choose how many opt-out emails Scrappy Kin sends in each round."
+            right={<AppText intent="caption">{selectedRoundSize}</AppText>}
+            onClick={() => history.push(buildBatchSizeHref(settingsHomeHref))}
           />
         </AppList>
 
