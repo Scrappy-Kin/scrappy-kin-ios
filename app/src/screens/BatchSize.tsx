@@ -49,19 +49,19 @@ function buildOptions(remainingCount: number): RoundSizeOption[] {
       id: 'quiet',
       label: 'Quiet',
       size: Math.min(3, remainingCount),
-      description: `Up to 3 at a time. ${formatGroupCount(quietGroupCount)} to finish.`,
+      description: `Up to 3 emails at a time. ${formatGroupCount(quietGroupCount)} to finish.`,
     },
     {
       id: 'steady',
       label: 'Steady',
       size: Math.min(DEFAULT_ROUND_SIZE, remainingCount),
-      description: `Up to ${DEFAULT_ROUND_SIZE} at a time. ${formatGroupCount(steadyGroupCount)} to finish.`,
+      description: `Up to ${DEFAULT_ROUND_SIZE} emails at a time. ${formatGroupCount(steadyGroupCount)} to finish.`,
     },
     {
       id: 'fast',
       label: 'Fast',
       size: Math.min(10, remainingCount),
-      description: `Up to 10 at a time. ${formatGroupCount(fastGroupCount)} to finish.`,
+      description: `Up to 10 emails at a time. ${formatGroupCount(fastGroupCount)} to finish.`,
     },
     {
       id: 'all',
