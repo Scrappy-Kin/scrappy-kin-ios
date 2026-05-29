@@ -1,25 +1,7 @@
-import type { Broker } from './brokerStore'
 import type { FlowStepId } from './flowProgress'
 import { buildOnboardingHref } from './navigation'
-import type { QueueItem } from './queueStore'
 
 type HomeRedirectTarget = string
-
-type HomeReadyState = {
-  mode: 'subscribed' | 'unsubscribed' | 'complete'
-  remainingCount: number
-  canReviewSent: boolean
-}
-
-export type DerivedHomeState =
-  | {
-      kind: 'redirect'
-      target: HomeRedirectTarget
-    }
-  | {
-      kind: 'ready'
-      state: HomeReadyState
-    }
 
 type DeriveHomeStateInput = {
   gmailConnected: boolean
@@ -155,54 +137,4 @@ export function deriveOnboardingRedirect(
   }
 
   return null
-}
-
-export function buildSentReviewItems(queue: QueueItem[], brokers: Broker[]) {
-  const brokerMap = new Map(brokers.map((broker) => [broker.id, broker.name]))
-  return queue
-    .filter((item) => item.status === 'sent')
-    .map((item) => ({
-      brokerName: brokerMap.get(item.brokerId) ?? item.brokerId,
-      referenceId: item.referenceId,
-      status: item.status,
-      lastAttemptAt: item.lastAttemptAt,
-    }))
-}
-
-export function deriveHomeState(
-  input: DeriveHomeStateInput,
-  lastFlowStep?: FlowStepId | null,
-  flowStarted = false,
-): DerivedHomeState {
-  const redirectTarget = deriveEntryTarget(
-    {
-      gmailConnected: input.gmailConnected,
-      hasProfile: input.hasProfile,
-      onboardingSentCount: input.onboardingSentCount,
-      totalSentCount: input.totalSentCount,
-      sentReviewItemCount: input.sentReviewItemCount,
-    },
-    lastFlowStep,
-    flowStarted,
-  )
-  if (redirectTarget) {
-    return {
-      kind: 'redirect',
-      target: redirectTarget,
-    }
-  }
-
-  return {
-    kind: 'ready',
-    state: {
-      mode:
-        input.remainingUnsentBrokerCount === 0
-          ? 'complete'
-          : input.subscriptionActive
-            ? 'subscribed'
-            : 'unsubscribed',
-      remainingCount: input.remainingUnsentBrokerCount,
-      canReviewSent: input.sentReviewItemCount > 0,
-    },
-  }
 }
