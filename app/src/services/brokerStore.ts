@@ -24,6 +24,7 @@ export type BrokerCatalogSummary = {
 }
 
 const SELECTED_KEY = 'selected_brokers'
+const SELECTED_ROUND_SIZE_KEY = 'selected_round_size'
 export const DEFAULT_ROUND_SIZE = 5
 let brokerCatalogPromise: Promise<Broker[]> | null = null
 
@@ -121,6 +122,14 @@ export async function getSelectedBrokerIds() {
 
 export async function setSelectedBrokerIds(ids: string[]) {
   await setEncrypted(SELECTED_KEY, ids)
+}
+
+export async function getSelectedRoundSize() {
+  return (await getEncrypted<number>(SELECTED_ROUND_SIZE_KEY)) ?? DEFAULT_ROUND_SIZE
+}
+
+export async function setSelectedRoundSize(size: number) {
+  await setEncrypted(SELECTED_ROUND_SIZE_KEY, size)
 }
 
 export function getSentBrokerIds(queue: QueueItem[]) {

@@ -5,9 +5,11 @@ import {
   DEFAULT_ROUND_SIZE,
   filterSelectableBrokers,
   getSelectedBrokerIds,
+  getSelectedRoundSize,
   getSentBrokerIds,
   loadBrokers,
   setSelectedBrokerIds,
+  setSelectedRoundSize,
   type Broker,
 } from '../services/brokerStore'
 import { readReturnTo } from '../services/navigation'
@@ -71,6 +73,7 @@ function buildOptions(remainingCount: number): RoundSizeOption[] {
 }
 
 function resolveInitialOptionId(selectedCount: number, remainingCount: number): RoundSizeOptionId {
+  if (selectedCount <= 0) return 'steady'
   if (selectedCount >= remainingCount) return 'all'
   if (selectedCount <= 3) return 'quiet'
   if (selectedCount <= DEFAULT_ROUND_SIZE) return 'steady'
@@ -113,10 +116,11 @@ export default function BatchSize() {
   const [selectedOptionId, setSelectedOptionId] = useState<RoundSizeOptionId>('steady')
 
   async function refreshState() {
-    const [brokers, queue, selectedBrokerIds] = await Promise.all([
+    const [brokers, queue, selectedBrokerIds, selectedRoundSize] = await Promise.all([
       loadBrokers(),
       getQueue(),
       getSelectedBrokerIds(),
+      getSelectedRoundSize(),
     ])
     const nextRemainingBrokers = filterSelectableBrokers(brokers, queue)
     const selectableIds = new Set(nextRemainingBrokers.map((broker) => broker.id))
@@ -126,7 +130,9 @@ export default function BatchSize() {
     setRemainingBrokers(nextRemainingBrokers)
     setSelectedOptionId(
       resolveInitialOptionId(
-        selectedCount > 0 ? selectedCount : DEFAULT_ROUND_SIZE,
+        selectedCount > 0 && selectedCount !== nextRemainingBrokers.length
+          ? selectedCount
+          : selectedRoundSize,
         nextRemainingBrokers.length,
       ),
     )
@@ -146,7 +152,10 @@ export default function BatchSize() {
     const nextSelectedIds = remainingBrokers
       .slice(0, selectedOption.size)
       .map((broker) => broker.id)
-    await setSelectedBrokerIds(nextSelectedIds)
+    await Promise.all([
+      setSelectedBrokerIds(nextSelectedIds),
+      setSelectedRoundSize(selectedOption.size),
+    ])
     history.replace(returnTo)
   }
 
@@ -162,15 +171,17 @@ export default function BatchSize() {
             <section className="app-section-shell">
               <div
                 className="batch-size-counts"
+                role="text"
                 aria-label={`${sentCount} sent, ${remainingCount} remaining`}
               >
-                <div className="batch-size-counts__item">
+                <div className="batch-size-counts__numbers" aria-hidden="true">
                   <strong>{sentCount}</strong>
-                  <AppText intent="body">Sent</AppText>
-                </div>
-                <span className="batch-size-counts__divider" aria-hidden="true">/</span>
-                <div className="batch-size-counts__item">
+                  <span className="batch-size-counts__divider">/</span>
                   <strong>{remainingCount}</strong>
+                </div>
+                <div className="batch-size-counts__labels" aria-hidden="true">
+                  <AppText intent="body">Sent</AppText>
+                  <span />
                   <AppText intent="body">Remaining</AppText>
                 </div>
               </div>
@@ -181,7 +192,7 @@ export default function BatchSize() {
               <AppText intent="body">
                 Go smaller for a quieter inbox, or larger to move faster.
               </AppText>
-              <section className="batch-size-picker" aria-label="Round size options">
+              <section className="app-card batch-size-picker" aria-label="Round size options">
                 {options.map((option) => (
                   <RoundSizeOptionButton
                     key={option.id}
