@@ -11,7 +11,7 @@ import { lazy, Suspense, useEffect, useState, useSyncExternalStore, type Compone
 import Flow from './screens/Flow'
 import Gmail from './screens/Gmail'
 import Home from './screens/Home'
-import BatchSizePlaceholder from './screens/BatchSizePlaceholder'
+import BatchSize from './screens/BatchSize'
 import ReviewBatch from './screens/ReviewBatch'
 import SentEmails from './screens/SentEmails'
 import Settings from './screens/Settings'
@@ -309,7 +309,7 @@ function AppShell() {
           <Route exact path="/home" component={RoutedHome} />
           <Route exact path="/gmail" component={Gmail} />
           <Route exact path="/review-batch" component={ReviewBatch} />
-          <Route exact path="/batch-size" component={BatchSizePlaceholder} />
+          <Route exact path="/batch-size" component={BatchSize} />
           <Route exact path="/onboarding/:stepId" component={OnboardingRoute} />
           <Route exact path="/sent-emails" component={SentEmails} />
           <Route exact path="/settings" component={Settings} />
