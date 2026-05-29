@@ -38,23 +38,11 @@ tmp/
 # Local browser tooling
 app/chrome/
 
-# Local mayor workflow (in-repo, not in git)
+# Generated agent surfaces owned by product-ops
 .agents/
 .claude/
-THREAD_A_STATE.md
-workstreams/
-work-orders/
-deliverables/
 AGENTS.md
 CLAUDE.md
-AUDIT_PROMPT.md
-
-# Local planning / reference (not in git)
-docs/planning/
-docs/strategy/
-docs/library/
-governance/
-brand/
 
 # IDE-specific agent skills
 .windsurf/
