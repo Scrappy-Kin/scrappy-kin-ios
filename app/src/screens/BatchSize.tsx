@@ -67,7 +67,7 @@ function buildOptions(remainingCount: number): RoundSizeOption[] {
       id: 'all',
       label: 'All at once',
       size: allAtOnceCount,
-      description: `Send all ${allAtOnceCount} in one group.`,
+      description: `Send all ${allAtOnceCount} emails in one group.`,
     },
   ]
 }
