@@ -1,9 +1,12 @@
 import {
+  DEFAULT_ROUND_SIZE,
   filterSelectableBrokers,
   getSelectedBrokerIds,
+  getSelectedRoundSize,
   loadBrokers,
   loadStarterBrokerIds,
   setSelectedBrokerIds,
+  setSelectedRoundSize,
 } from './brokerStore'
 import { setOnboardingSentCount } from './flowProgress'
 import { getSendFailureMessage, sendAll } from './sendQueue'
@@ -33,9 +36,10 @@ export async function executeBatchSend(
   const summary = await sendAll(brokers, targetIds)
 
   const updatedQueue = await getQueue()
-  const remainingSelectedIds = updatedQueue
-    .filter((item) => item.status !== 'sent')
-    .map((item) => item.brokerId)
+  const selectedRoundSize = await getSelectedRoundSize()
+  const remainingSelectedIds = filterSelectableBrokers(brokers, updatedQueue)
+    .slice(0, selectedRoundSize)
+    .map((broker) => broker.id)
   await setSelectedBrokerIds(remainingSelectedIds)
 
   if (summary.sent === 0) {
@@ -57,10 +61,13 @@ export async function completeOnboardingSend(profile: UserProfile) {
   if (result.sentCount > 0) {
     const brokers = await loadBrokers()
     const updatedQueue = await getQueue()
-    const remainingCatalogIds = filterSelectableBrokers(brokers, updatedQueue).map((broker) => broker.id)
+    const remainingCatalogIds = filterSelectableBrokers(brokers, updatedQueue)
+      .slice(0, DEFAULT_ROUND_SIZE)
+      .map((broker) => broker.id)
 
     await Promise.all([
       setSelectedBrokerIds(remainingCatalogIds),
+      setSelectedRoundSize(DEFAULT_ROUND_SIZE),
       setOnboardingSentCount(result.sentCount),
     ])
   }

@@ -10,6 +10,7 @@ import {
   DEFAULT_ROUND_SIZE,
   type Broker,
   getSelectedBrokerIds,
+  getSelectedRoundSize,
   loadBrokers,
   setSelectedBrokerIds as persistSelectedBrokerIds,
 } from '../services/brokerStore'
@@ -54,21 +55,23 @@ export default function ReviewBatch() {
   const isQaStoreKit = isQaStoreKitLane()
 
   async function refreshState() {
-    const [status, profile, nextBrokers, selectedIds, queue] = await Promise.all([
+    const [status, profile, nextBrokers, selectedIds, selectedRoundSize, queue] = await Promise.all([
       getGmailStatus(),
       getActiveUserProfile(),
       loadBrokers(),
       getSelectedBrokerIds(),
+      getSelectedRoundSize(),
       getQueue(),
     ])
 
     const selectableBrokers = filterSelectableBrokers(nextBrokers, queue)
     const selectableBrokerIds = new Set(selectableBrokers.map((broker) => broker.id))
     const filteredSelectedIds = selectedIds.filter((id) => selectableBrokerIds.has(id))
+    const defaultRoundSize = Math.min(selectedRoundSize || DEFAULT_ROUND_SIZE, selectableBrokers.length)
     const nextSelectedIds =
-      filteredSelectedIds.length > 0
+      filteredSelectedIds.length > 0 && filteredSelectedIds.length !== selectableBrokers.length
         ? filteredSelectedIds
-        : selectableBrokers.slice(0, DEFAULT_ROUND_SIZE).map((broker) => broker.id)
+        : selectableBrokers.slice(0, defaultRoundSize).map((broker) => broker.id)
 
     if (
       nextSelectedIds.length !== selectedIds.length ||
