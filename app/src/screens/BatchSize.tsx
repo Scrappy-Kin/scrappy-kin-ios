@@ -165,7 +165,7 @@ export default function BatchSize() {
         <div className="app-screen-shell">
           <AppTopNav backHref={returnTo} />
           <AppHeading intent="section" level={1}>
-            Choose how many emails to send at a time.
+            Choose how many emails to send in each group
           </AppHeading>
           {isReady ? (
             <section className="app-section-shell">
