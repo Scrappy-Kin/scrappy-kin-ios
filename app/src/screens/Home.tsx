@@ -13,7 +13,6 @@ import {
   filterSelectableBrokers,
   getSelectedBrokerIds,
   loadBrokers,
-  loadBrokerCatalogSummary,
   setSelectedBrokerIds,
 } from '../services/brokerStore'
 import { getOnboardingSentCount, getSavedFlowStep, hasStartedFlow } from '../services/flowProgress'
@@ -32,7 +31,7 @@ import SettingsShortcut from '../ui/patterns/SettingsShortcut'
 import SubscriptionBillingClaim from '../ui/patterns/SubscriptionBillingClaim'
 import SubscriptionDiagnosticsNotice from '../ui/patterns/SubscriptionDiagnosticsNotice'
 
-type HomeCardMode = 'subscribed' | 'unsubscribed' | null
+type HomeCardMode = 'subscribed' | 'unsubscribed' | 'complete' | null
 
 export default function Home() {
   const history = useHistory()
@@ -59,7 +58,6 @@ export default function Home() {
         onboardingSentCount,
         selectedIds,
         brokers,
-        brokerSummary,
         queue,
         lifetimeSentCount,
         subscriptionSnapshot,
@@ -71,7 +69,6 @@ export default function Home() {
         getOnboardingSentCount(),
         getSelectedBrokerIds(),
         loadBrokers(),
-        loadBrokerCatalogSummary(),
         getQueue(),
         getTotalSentCount(),
         getSubscriptionSnapshot(),
@@ -94,7 +91,7 @@ export default function Home() {
           totalSentCount: lifetimeSentCount,
           sentReviewItemCount: sentItems.length,
           subscriptionActive: subscriptionSnapshot.active,
-          brokerSummary,
+          remainingUnsentBrokerCount: selectableBrokers.length,
         },
         lastFlowStep,
         flowStarted,
@@ -183,7 +180,9 @@ export default function Home() {
           {cardMode ? (
             <AppCard title="Next up">
               <AppText intent="body">
-                {!gmailConnected
+                {cardMode === 'complete'
+                  ? 'You’ve sent opt-out emails to every audited broker currently in Scrappy Kin.'
+                  : !gmailConnected
                   ? 'Reconnect Gmail before you send your next round.'
                   : cardMode === 'subscribed'
                     ? `${remainingCount} brokers available for your next round.`
@@ -196,7 +195,7 @@ export default function Home() {
                 </AppNotice>
               ) : null}
               {cardMode === 'unsubscribed' ? <SubscriptionBillingClaim /> : null}
-              {!gmailConnected ? (
+              {!gmailConnected && cardMode !== 'complete' ? (
                 <AppNotice variant="warning" title="Gmail disconnected">
                   Reconnect Gmail to keep sending from your own account.
                 </AppNotice>
@@ -209,7 +208,7 @@ export default function Home() {
               ) : null}
 
               <div className="app-stack">
-                {!gmailConnected ? (
+                {cardMode === 'complete' ? null : !gmailConnected ? (
                   <AppButton fullWidth onClick={() => history.push(nextBatchHref)}>
                     Reconnect Gmail
                   </AppButton>
