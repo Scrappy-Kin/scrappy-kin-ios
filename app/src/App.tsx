@@ -50,6 +50,9 @@ const DevAppUrlBridge = DEV_SURFACES_ENABLED ? lazy(() => import('./dev/AppUrlBr
 const DevCaptureScenarioRoute = DEV_SURFACES_ENABLED
   ? lazy(() => import('./dev/CaptureScenarioRoute'))
   : null
+const QaDashboardSheet = (DEV_SURFACES_ENABLED || isQaStoreKitLane())
+  ? lazy(() => import('./dev/QaDashboardSheet'))
+  : null
 
 type ScrappyBootWindow = Window & {
   __scrappyBoot?: {
@@ -201,6 +204,7 @@ function AppShell() {
   const [showDevLaneUi, setShowDevLaneUi] = useState(
     () => DEV_SURFACES_ENABLED && !Capacitor.isNativePlatform(),
   )
+  const [qaSheetOpen, setQaSheetOpen] = useState(false)
 
   useEffect(() => {
     clearStaleOAuthState().catch(() => undefined)
@@ -235,6 +239,7 @@ function AppShell() {
   )
   const showDevTools = DEV_SURFACES_ENABLED && showDevLaneUi
   const showQaStoreKitUi = isQaStoreKitLane()
+  const showQaBadge = showDevTools || showQaStoreKitUi
 
   const devRoutes = showDevTools
     ? [
@@ -285,19 +290,26 @@ function AppShell() {
 
   return (
     <>
-      {showDevTools || showQaStoreKitUi ? (
-        <div
+      {showQaBadge ? (
+        <button
+          type="button"
           className={[
             'execution-lane-badge',
             showQaStoreKitUi ? 'execution-lane-badge--qa' : 'execution-lane-badge--dev',
           ].join(' ')}
-          aria-hidden="true"
+          aria-label="Open QA dashboard presets"
+          onClick={() => setQaSheetOpen(true)}
         >
           <span className="execution-lane-badge__dot" />
           <span className="execution-lane-badge__label">
             {showQaStoreKitUi ? 'QA' : 'DEV'}
           </span>
-        </div>
+        </button>
+      ) : null}
+      {showQaBadge && QaDashboardSheet ? (
+        <Suspense fallback={null}>
+          <QaDashboardSheet open={qaSheetOpen} onDismiss={() => setQaSheetOpen(false)} />
+        </Suspense>
       ) : null}
       {showDevTools ? renderLazyDevComponent(DevAppUrlBridge) : null}
       <div
