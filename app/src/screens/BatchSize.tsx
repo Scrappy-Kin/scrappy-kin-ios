@@ -186,7 +186,7 @@ export default function BatchSize() {
                 </div>
               </div>
               <AppText intent="body">
-                Most brokers reply within a few days. Sending fewer emails at a time can make
+                Most data brokers reply within a few days. Sending fewer emails at a time can make
                 their replies easier to manage.
               </AppText>
               <AppText intent="body">
