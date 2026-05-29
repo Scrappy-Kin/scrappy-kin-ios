@@ -385,8 +385,8 @@ export default function Settings() {
 
     setSubscriptionNotice({
       variant: 'success',
-      title: 'Subscription active',
-      body: 'Your paid access is active on this device.',
+      title: "You're subscribed.",
+      body: 'Your yearly subscription is now active.',
     })
   }
 
