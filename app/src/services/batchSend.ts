@@ -1,6 +1,5 @@
 import {
   DEFAULT_ROUND_SIZE,
-  filterSelectableBrokers,
   getSelectedBrokerIds,
   getSelectedRoundSize,
   loadBrokers,
@@ -9,8 +8,9 @@ import {
   setSelectedRoundSize,
 } from './brokerStore'
 import { setOnboardingSentCount } from './flowProgress'
+import { computeBrokerEligibility, getEligibleBrokerIds } from './roundState'
 import { getSendFailureMessage, sendAll } from './sendQueue'
-import { getQueue } from './queueStore'
+import { getMergedSentLog } from './sentLog'
 import { clearUserProfileDraft, setUserProfile, type UserProfile } from './userProfile'
 
 type BatchSendResult = {
@@ -35,9 +35,11 @@ export async function executeBatchSend(
         : brokers.map((broker) => broker.id)
   const summary = await sendAll(brokers, targetIds)
 
-  const updatedQueue = await getQueue()
   const selectedRoundSize = await getSelectedRoundSize()
-  const remainingSelectedIds = filterSelectableBrokers(brokers, updatedQueue)
+  const sentLog = await getMergedSentLog(brokers)
+  const eligibleIds = new Set(getEligibleBrokerIds(computeBrokerEligibility(brokers, sentLog)))
+  const remainingSelectedIds = brokers
+    .filter((broker) => eligibleIds.has(broker.id))
     .slice(0, selectedRoundSize)
     .map((broker) => broker.id)
   await setSelectedBrokerIds(remainingSelectedIds)
@@ -60,8 +62,10 @@ export async function completeOnboardingSend(profile: UserProfile) {
   const result = await executeBatchSend(profile, starterBrokerIds)
   if (result.sentCount > 0) {
     const brokers = await loadBrokers()
-    const updatedQueue = await getQueue()
-    const remainingCatalogIds = filterSelectableBrokers(brokers, updatedQueue)
+    const sentLog = await getMergedSentLog(brokers)
+    const eligibleIds = new Set(getEligibleBrokerIds(computeBrokerEligibility(brokers, sentLog)))
+    const remainingCatalogIds = brokers
+      .filter((broker) => eligibleIds.has(broker.id))
       .slice(0, DEFAULT_ROUND_SIZE)
       .map((broker) => broker.id)
 
