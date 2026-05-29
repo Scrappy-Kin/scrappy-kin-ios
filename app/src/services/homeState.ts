@@ -1,4 +1,4 @@
-import type { Broker, BrokerCatalogSummary } from './brokerStore'
+import type { Broker } from './brokerStore'
 import type { FlowStepId } from './flowProgress'
 import { buildOnboardingHref } from './navigation'
 import type { QueueItem } from './queueStore'
@@ -6,7 +6,7 @@ import type { QueueItem } from './queueStore'
 type HomeRedirectTarget = string
 
 type HomeReadyState = {
-  mode: 'subscribed' | 'unsubscribed'
+  mode: 'subscribed' | 'unsubscribed' | 'complete'
   remainingCount: number
   canReviewSent: boolean
 }
@@ -28,7 +28,7 @@ type DeriveHomeStateInput = {
   totalSentCount: number
   sentReviewItemCount: number
   subscriptionActive: boolean
-  brokerSummary: BrokerCatalogSummary
+  remainingUnsentBrokerCount: number
 }
 
 type DeriveEntryTargetInput = Pick<
@@ -195,8 +195,13 @@ export function deriveHomeState(
   return {
     kind: 'ready',
     state: {
-      mode: input.subscriptionActive ? 'subscribed' : 'unsubscribed',
-      remainingCount: input.brokerSummary.remainingBrokerCount,
+      mode:
+        input.remainingUnsentBrokerCount === 0
+          ? 'complete'
+          : input.subscriptionActive
+            ? 'subscribed'
+            : 'unsubscribed',
+      remainingCount: input.remainingUnsentBrokerCount,
       canReviewSent: input.sentReviewItemCount > 0,
     },
   }
