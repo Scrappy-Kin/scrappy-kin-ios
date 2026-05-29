@@ -3,7 +3,6 @@ import { devFixtureBrokers } from '../assets/broker-lists/dev-fixture-brokers'
 import { isDevAppLane, isQaStoreKitLane } from '../config/buildInfo'
 import { getQaStoreKitSinkEmail } from '../config/qaStoreKit'
 import { getEncrypted, setEncrypted } from './secureStore'
-import type { QueueItem } from './queueStore'
 
 export type Broker = {
   id: string
@@ -130,15 +129,6 @@ export async function getSelectedRoundSize() {
 
 export async function setSelectedRoundSize(size: number) {
   await setEncrypted(SELECTED_ROUND_SIZE_KEY, size)
-}
-
-export function getSentBrokerIds(queue: QueueItem[]) {
-  return queue.filter((item) => item.status === 'sent').map((item) => item.brokerId)
-}
-
-export function filterSelectableBrokers(brokers: Broker[], queue: QueueItem[]) {
-  const sentBrokerIds = new Set(getSentBrokerIds(queue))
-  return brokers.filter((broker) => !sentBrokerIds.has(broker.id))
 }
 
 export function getBrokerDescription(broker: Broker) {
