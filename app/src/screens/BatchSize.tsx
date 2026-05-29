@@ -3,17 +3,16 @@ import { useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
 import {
   DEFAULT_ROUND_SIZE,
-  filterSelectableBrokers,
   getSelectedBrokerIds,
   getSelectedRoundSize,
-  getSentBrokerIds,
   loadBrokers,
   setSelectedBrokerIds,
   setSelectedRoundSize,
   type Broker,
 } from '../services/brokerStore'
 import { readReturnTo } from '../services/navigation'
-import { getQueue } from '../services/queueStore'
+import { computeBrokerEligibility, getEligibleBrokerIds } from '../services/roundState'
+import { getMergedSentLog } from '../services/sentLog'
 import AppButton from '../ui/primitives/AppButton'
 import AppHeading from '../ui/primitives/AppHeading'
 import AppText from '../ui/primitives/AppText'
@@ -116,17 +115,19 @@ export default function BatchSize() {
   const [selectedOptionId, setSelectedOptionId] = useState<RoundSizeOptionId>('steady')
 
   async function refreshState() {
-    const [brokers, queue, selectedBrokerIds, selectedRoundSize] = await Promise.all([
-      loadBrokers(),
-      getQueue(),
+    const brokers = await loadBrokers()
+    const [sentLog, selectedBrokerIds, selectedRoundSize] = await Promise.all([
+      getMergedSentLog(brokers),
       getSelectedBrokerIds(),
       getSelectedRoundSize(),
     ])
-    const nextRemainingBrokers = filterSelectableBrokers(brokers, queue)
-    const selectableIds = new Set(nextRemainingBrokers.map((broker) => broker.id))
+    const eligibility = computeBrokerEligibility(brokers, sentLog)
+    const eligibleIds = getEligibleBrokerIds(eligibility)
+    const nextRemainingBrokers = brokers.filter((broker) => eligibleIds.includes(broker.id))
+    const selectableIds = new Set(eligibleIds)
     const selectedCount = selectedBrokerIds.filter((id) => selectableIds.has(id)).length
 
-    setSentCount(getSentBrokerIds(queue).length)
+    setSentCount(sentLog.length)
     setRemainingBrokers(nextRemainingBrokers)
     setSelectedOptionId(
       resolveInitialOptionId(
