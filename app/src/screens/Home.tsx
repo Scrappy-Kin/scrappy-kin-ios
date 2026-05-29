@@ -192,7 +192,7 @@ export default function Home() {
               <div className="app-stack">
                 {copy.primaryActionKind === 'start_round' ? (
                   <AppButton fullWidth onClick={() => history.push(nextBatchHref)}>
-                    {copy.stateId === 'next_round_ready' ? 'Start next round' : 'Review next round'}
+                    Start next round
                   </AppButton>
                 ) : copy.primaryActionKind === 'subscribe' ? (
                   <AppButton
