@@ -1,0 +1,4 @@
+# Audit files are kept out of git until publication is decided pre-launch.
+# See security/README.md for policy.
+# To publish an audit: remove the relevant pattern below and commit.
+*-audit-*.md
