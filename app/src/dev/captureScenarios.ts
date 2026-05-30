@@ -1,5 +1,6 @@
 import { IS_DEV_BUILD } from '../config/buildInfo'
 import {
+  loadBrokers,
   loadStarterBrokerIds,
   setSelectedBrokerIds,
 } from '../services/brokerStore'
@@ -44,10 +45,13 @@ function buildConnectedToken(): GmailTokenPayload {
 }
 
 function buildQueue(status: QueueItem['status'], brokerIds: string[]): QueueItem[] {
+  const lastAttemptAt = new Date().toISOString()
+
   return brokerIds.map((brokerId, index) => ({
     brokerId,
     status,
     referenceId: `REF-${index + 1}`,
+    lastAttemptAt: status === 'sent' ? lastAttemptAt : undefined,
     gmailMessageId: status === 'sent' ? `gmail-msg-${index + 1}` : undefined,
     gmailThreadId: status === 'sent' ? `gmail-thread-${index + 1}` : undefined,
   }))
@@ -79,6 +83,28 @@ async function seedPostSendState(step: 'beat-sent' | 'beat-subscribe' | null) {
   } else {
     await clearFlowProgress()
   }
+}
+
+async function seedAllBrokersSentState() {
+  await seedConnectedState()
+
+  const brokerIds = (await loadBrokers()).map((broker) => broker.id)
+
+  await setQueue(buildQueue('sent', brokerIds))
+  await setTotalSentCount(brokerIds.length)
+  await setSelectedBrokerIds([])
+  await clearFlowProgress()
+}
+
+async function seedPostSendWithoutGmail() {
+  await seedProfileAndSelection()
+
+  const starterIds = await loadStarterBrokerIds()
+
+  await setQueue(buildQueue('sent', starterIds))
+  await setTotalSentCount(starterIds.length)
+  await setSelectedBrokerIds([])
+  await clearFlowProgress()
 }
 
 const captureScenarios: Record<string, CaptureScenarioDefinition> = {
@@ -177,8 +203,36 @@ const captureScenarios: Record<string, CaptureScenarioDefinition> = {
       await setDevSubscriptionEntitled(true)
     },
   },
+  'home-all-caught-up': {
+    route: '/home',
+    seed: async () => {
+      await seedAllBrokersSentState()
+      await setDevSubscriptionEntitled(true)
+    },
+  },
+  'home-gmail-disconnected': {
+    route: '/home',
+    seed: async () => {
+      await seedPostSendWithoutGmail()
+      await setDevSubscriptionEntitled(true)
+    },
+  },
+  'home-entitlement-expired': {
+    route: '/home',
+    seed: async () => {
+      await seedAllBrokersSentState()
+      await setDevSubscriptionEntitled(false)
+    },
+  },
   'review-batch': {
     route: '/review-batch?returnTo=%2Fhome',
+    seed: async () => {
+      await seedPostSendState(null)
+      await setDevSubscriptionEntitled(true)
+    },
+  },
+  'batch-size': {
+    route: '/batch-size?returnTo=%2Freview-batch',
     seed: async () => {
       await seedPostSendState(null)
       await setDevSubscriptionEntitled(true)

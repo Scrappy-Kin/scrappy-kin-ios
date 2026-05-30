@@ -90,6 +90,16 @@ blocked by default so agents do not reach for the broken sandboxed browser path.
 On macOS Codex sandboxed shells can fail to launch Playwright browsers even when
 the app is healthy. See `docs/browser-qa.md`.
 
+For a fast launch-facing dashboard/state regression brake:
+
+```bash
+cd app
+npm run test:launch-harness
+```
+
+This starts or reuses the preview harness and checks coarse seeded UI states. It
+does not replace native/device QA for StoreKit, Gmail OAuth, sends, or VoiceOver.
+
 ## Licensing & Governance
 
 - Code licensed under AGPLv3
