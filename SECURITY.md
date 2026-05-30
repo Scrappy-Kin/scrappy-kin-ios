@@ -12,10 +12,22 @@ We will acknowledge receipt within 7 days and work to provide a fix as soon as p
 
 Scrappy Kin is built on a minimal-exposure architecture. Key design principles:
 
-- **Device-local by default.** User data (tokens, broker selections, sent logs) is stored on-device only, encrypted using the device keychain (iOS) or AES-256-GCM. Nothing is transmitted to Scrappy Kin servers.
+- **Device-local by default.** User data (tokens, broker selections, sent logs) is stored on-device only in the iOS keychain with `ThisDeviceOnly` accessibility — data does not migrate to other devices or backups. Nothing is transmitted to Scrappy Kin servers.
+- **Fresh-install keychain clear.** On first launch after a new install, the app clears any keychain data left over from a previous install. Deleting the app removes your Gmail connection and local data; reinstalling starts fresh.
 - **Minimal permission scope.** The app requests Gmail send-only access (`gmail.send`). We do not read email.
 - **No Scrappy Kin accounts.** There is no server-side user account layer. There is nothing to breach on our side.
+- **No remote control.** There is no remote kill switch, feature flag, or backchannel. The app does not phone home.
 - **Empty warehouse principle.** If a threat arrives at our door, they should find nothing worth taking.
+
+## Emergency Response
+
+We do not use a remote kill switch — that would contradict the no-backchannel architecture. If a serious issue is discovered in a released build, our response path is:
+
+1. Ship an App Store update as quickly as possible.
+2. If Gmail send is affected: post clear instructions for users to revoke Scrappy Kin's Gmail access at [myaccount.google.com/permissions](https://myaccount.google.com/permissions). This takes effect immediately and does not require an app update.
+3. Remove the app from the App Store if necessary to prevent new installs while a fix is in progress.
+
+This is an accepted architectural tradeoff. We document it explicitly rather than leaving it implicit.
 
 ## Security Audits
 
