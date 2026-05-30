@@ -28,6 +28,7 @@
     "capture:screens:manual": "node scripts/capture-screens.mjs",
     "qa:agent-browser": "node scripts/preflight-browser-qa.mjs --http-only",
     "qa:web-preflight": "node scripts/preflight-browser-qa.mjs",
+    "test:launch-harness": "node scripts/launch-harness-regression.mjs",
     "capture:screens:simulator": "node scripts/capture-simulator-screens.mjs",
     "test": "tsc -p tsconfig.test.json --noEmit && vitest run",
     "lint": "eslint .",
