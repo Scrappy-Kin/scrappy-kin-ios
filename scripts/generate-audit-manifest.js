@@ -4,7 +4,7 @@ const { execSync } = require('node:child_process')
 const fs = require('node:fs')
 const path = require('node:path')
 
-const repoRoot = process.cwd()
+const repoRoot = path.resolve(__dirname, '..')
 const manifestPath = path.join(repoRoot, 'app', 'src', 'assets', 'audit-manifest.json')
 const repo = 'https://github.com/Scrappy-Kin/scrappy-kin-ios'
 

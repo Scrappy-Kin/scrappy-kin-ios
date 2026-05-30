@@ -1,0 +1,22 @@
+diff --git a/node_modules/capacitor-secure-storage-plugin/ios/Sources/SecureStoragePlugin/SecureStoragePlugin.swift b/node_modules/capacitor-secure-storage-plugin/ios/Sources/SecureStoragePlugin/SecureStoragePlugin.swift
+index 902a7bf..dd26352 100644
+--- a/node_modules/capacitor-secure-storage-plugin/ios/Sources/SecureStoragePlugin/SecureStoragePlugin.swift
++++ b/node_modules/capacitor-secure-storage-plugin/ios/Sources/SecureStoragePlugin/SecureStoragePlugin.swift
+@@ -23,7 +23,7 @@ public class SecureStoragePlugin: CAPPlugin, CAPBridgedPlugin {
+     @objc func set(_ call: CAPPluginCall) {
+         let key = call.getString("key") ?? ""
+         let value = call.getString("value") ?? ""
+-        let saveSuccessful: Bool = keychainwrapper.set(value, forKey: key, withAccessibility: .afterFirstUnlock)
++        let saveSuccessful: Bool = keychainwrapper.set(value, forKey: key, withAccessibility: .afterFirstUnlockThisDeviceOnly)
+         if(saveSuccessful) {
+             call.resolve([
+                 "value": saveSuccessful
+@@ -44,7 +44,7 @@ public class SecureStoragePlugin: CAPPlugin, CAPBridgedPlugin {
+             let syncValueSuccessful: Bool = keychainwrapper.set(
+                 KeychainWrapper.standard.string(forKey: key) ?? "",
+                 forKey: key,
+-                withAccessibility: .afterFirstUnlock
++                withAccessibility: .afterFirstUnlockThisDeviceOnly
+             )
+             let removeValueSuccessful: Bool = KeychainWrapper.standard.removeObject(forKey: key)
+             if (!syncValueSuccessful || !removeValueSuccessful) {
