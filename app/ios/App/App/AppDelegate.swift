@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import SwiftKeychainWrapper
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -7,7 +8,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        // On first launch after a fresh install, clear any keychain data left over from a
+        // previous install. UserDefaults is wiped on uninstall; the keychain is not.
+        // This ensures Gmail tokens and local state do not silently survive app deletion.
+        let freshInstallKey = "sk_has_launched_before"
+        if !UserDefaults.standard.bool(forKey: freshInstallKey) {
+            KeychainWrapper(serviceName: "cap_sec").removeAllKeys()
+            UserDefaults.standard.set(true, forKey: freshInstallKey)
+        }
         return true
     }
 
