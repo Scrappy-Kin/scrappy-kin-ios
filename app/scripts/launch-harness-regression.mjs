@@ -6,6 +6,8 @@ const appRoot = new URL('..', import.meta.url)
 const baseUrl = process.env.CAPTURE_BASE_URL ?? 'http://localhost:4173'
 const browserName = process.env.CAPTURE_BROWSER ?? 'chromium'
 const executablePath = process.env.CAPTURE_EXECUTABLE_PATH
+const configuredCdpEndpoint = process.env.CAPTURE_CDP_ENDPOINT
+const defaultCdpEndpoint = process.env.CAPTURE_CDP_AUTODETECT === '0' ? '' : 'http://127.0.0.1:9222'
 const shouldPrintHelp = process.argv.includes('--help') || process.argv.includes('-h')
 
 const browserEngines = {
@@ -42,6 +44,7 @@ function printHelp() {
 Optional:
   CAPTURE_BASE_URL=http://localhost:4173 npm run test:launch-harness
   CAPTURE_BROWSER=webkit npm run test:launch-harness
+  CAPTURE_CDP_ENDPOINT=http://127.0.0.1:9222 npm run test:launch-harness
   CAPTURE_EXECUTABLE_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" npm run test:launch-harness`)
 }
 
@@ -195,6 +198,29 @@ async function ensurePreviewServer() {
 }
 
 async function createBrowser() {
+  const cdpEndpoint = configuredCdpEndpoint || defaultCdpEndpoint
+  if (cdpEndpoint) {
+    try {
+      const browser = await chromium.connectOverCDP(cdpEndpoint, { timeout: 2_000 })
+      console.log(`[launch-harness] Using browser sidecar at ${cdpEndpoint}`)
+      return {
+        browser,
+        connectedOverCdp: true,
+        close: async () => {
+          await browser.close().catch(() => {})
+        },
+      }
+    } catch (error) {
+      if (configuredCdpEndpoint) {
+        throw new Error([
+          `CAPTURE_CDP_ENDPOINT is set but not reachable: ${configuredCdpEndpoint}`,
+          'Start the VM browser sidecar or unset CAPTURE_CDP_ENDPOINT to use normal Playwright launch.',
+          error instanceof Error ? error.message : String(error),
+        ].join('\n'))
+      }
+    }
+  }
+
   const engine = browserEngines[browserName]
   if (!engine) {
     throw new Error(`Unknown CAPTURE_BROWSER: ${browserName}`)
@@ -206,7 +232,13 @@ async function createBrowser() {
   }
 
   try {
-    return await engine.launch(launchOptions)
+    const browser = await engine.launch(launchOptions)
+    return {
+      browser,
+      close: async () => {
+        await browser.close()
+      },
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
 
@@ -218,10 +250,16 @@ async function createBrowser() {
       const fallbackExecutable = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
       try {
         await fs.access(fallbackExecutable)
-        return await chromium.launch({
+        const browser = await chromium.launch({
           headless: true,
           executablePath: fallbackExecutable,
         })
+        return {
+          browser,
+          close: async () => {
+            await browser.close()
+          },
+        }
       } catch (fallbackError) {
         if (fallbackError?.code === 'ENOENT') {
           throw new Error(explainBrowserFailure(message))
@@ -440,11 +478,13 @@ async function main() {
   }
 
   const startedPreview = await ensurePreviewServer()
-  let browser = null
+  let browserHandle = null
+  let page = null
 
   try {
-    browser = await createBrowser()
-    const page = await browser.newPage({
+    browserHandle = await createBrowser()
+    const { browser } = browserHandle
+    page = await browser.newPage({
       viewport: { width: 390, height: 844 },
       isMobile: true,
       hasTouch: true,
@@ -453,8 +493,11 @@ async function main() {
     await runChecks(page)
     console.log('[launch-harness] PASS all launch harness checks')
   } finally {
-    if (browser) {
-      await browser.close()
+    if (page && !browserHandle?.connectedOverCdp) {
+      await page.close().catch(() => {})
+    }
+    if (browserHandle) {
+      await browserHandle.close()
     }
     if (startedPreview) {
       startedPreview.stop()
