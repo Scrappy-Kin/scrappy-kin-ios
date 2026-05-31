@@ -99,6 +99,8 @@ npm run test:launch-harness
 
 This starts or reuses the preview harness and checks coarse seeded UI states. It
 does not replace native/device QA for StoreKit, Gmail OAuth, sends, or VoiceOver.
+On the Agentic-Work-VM, this command uses the VM browser sidecar automatically
+when it is available.
 
 ## Licensing & Governance
 
