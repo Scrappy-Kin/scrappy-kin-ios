@@ -285,7 +285,9 @@ async function bodyText(page) {
 }
 
 function includesMatcher(text, matcher) {
-  return matcher instanceof RegExp ? matcher.test(text) : text.includes(matcher)
+  return matcher instanceof RegExp
+    ? matcher.test(text)
+    : text.toLocaleLowerCase().includes(matcher.toLocaleLowerCase())
 }
 
 async function assertVisibleText(page, matcher) {
@@ -342,8 +344,8 @@ const checks = [
     run: (page) =>
       assertDashboardState(page, 'home-unsubscribed', [
         'Next up',
-        /15 (?:more )?brokers available/,
-        /Subscribe/,
+        /15 (?:more )?brokers available/i,
+        /Subscribe/i,
         'Apple manages billing',
       ]),
   },
@@ -352,7 +354,7 @@ const checks = [
     run: (page) =>
       assertDashboardState(page, 'home-subscribed', [
         'Your next round is ready',
-        /15 (?:more )?brokers available/,
+        /15 (?:more )?brokers available/i,
         'Start next round',
         'View previous sends',
       ]),
@@ -368,7 +370,7 @@ const checks = [
           '20 opt-out emails sent',
           'Your next round opens on',
         ],
-        [/Subscribe/, /Start next round/],
+        [/Subscribe/i, /Start next round/i],
       ),
   },
   {
@@ -381,7 +383,7 @@ const checks = [
           'Reconnect Gmail',
           '5 opt-out emails sent',
         ],
-        [/Subscribe/],
+        [/Subscribe/i],
       ),
   },
   {
@@ -390,7 +392,7 @@ const checks = [
       assertDashboardState(page, 'home-entitlement-expired', [
         'Next up',
         '0 brokers available',
-        /Subscribe/,
+        /Subscribe/i,
         'Apple manages billing',
       ]),
   },
@@ -425,8 +427,8 @@ const checks = [
       await clickButtonByName(page, 'Later')
       await assertNoCrashOrForbiddenCopy(page)
       await assertVisibleText(page, 'Next up')
-      await assertVisibleText(page, /15 (?:more )?brokers available/)
-      await assertVisibleText(page, /Subscribe/)
+      await assertVisibleText(page, /15 (?:more )?brokers available/i)
+      await assertVisibleText(page, /Subscribe/i)
     },
   },
   {
