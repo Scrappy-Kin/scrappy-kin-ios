@@ -32,6 +32,17 @@ For agent-driven visual QA in Codex, prefer the Playwright MCP/browser tool
 surface when it is available. It can navigate localhost routes and capture
 screenshots without launching a new Playwright browser from the sandboxed shell.
 
+For command-level regression checks, repo scripts may connect to a loopback
+Chrome DevTools endpoint when one is already running:
+
+```bash
+CAPTURE_CDP_ENDPOINT=http://127.0.0.1:9222 npm run test:launch-harness
+```
+
+On the Agentic-Work-VM, product-ops owns the private launchd sidecar that
+provides this endpoint. This repo only depends on the public-safe CDP endpoint
+contract.
+
 The repo capture script remains useful, but on macOS it may fail when run from
 some sandboxed agent shells. Known failure signatures include:
 
@@ -86,4 +97,5 @@ Optional controls:
 ```bash
 CAPTURE_BROWSER=firefox npm run capture:screens:manual -- --id flow-intro
 CAPTURE_BASE_URL=http://localhost:4173 npm run capture:screens:manual
+CAPTURE_CDP_ENDPOINT=http://127.0.0.1:9222 npm run test:launch-harness
 ```
