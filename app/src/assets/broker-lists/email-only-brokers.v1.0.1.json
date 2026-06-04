@@ -1,190 +1,175 @@
 [
   {
-    "id": "spokeo-com",
-    "name": "Spokeo",
-    "domain": "spokeo.com",
-    "contactEmail": "privacy@spokeo.com",
-    "tier": "mega",
-    "inTop30": true,
-    "verifiedResolutions": 1,
-    "starterOrder": 1
+    "id": "carneydirect-com",
+    "name": "Carney Direct Marketing",
+    "domain": "carneydirect.com",
+    "contactEmail": "privacy@carneydirect.com"
   },
   {
-    "id": "whitepages-com",
-    "name": "Whitepages",
-    "domain": "whitepages.com",
-    "contactEmail": "privacy@whitepages.com",
-    "tier": "mega",
-    "inTop30": true,
-    "verifiedResolutions": 1,
-    "starterOrder": 2
-  },
-  {
-    "id": "beenverified-com",
-    "name": "BeenVerified",
-    "domain": "beenverified.com",
-    "contactEmail": "privacy@beenverified.com",
-    "tier": "mega",
-    "inTop30": true,
-    "verifiedResolutions": 1,
-    "starterOrder": 3
-  },
-  {
-    "id": "peoplefinders-com",
-    "name": "PeopleFinders",
-    "domain": "peoplefinders.com",
-    "contactEmail": "privacy@peoplefinders.com",
-    "tier": "mega",
-    "inTop30": true,
-    "verifiedResolutions": 1,
+    "id": "censia-com",
+    "name": "Censia",
+    "domain": "censia.com",
+    "contactEmail": "tgotowka@censia.com",
     "starterOrder": 4
   },
   {
-    "id": "intelius-com",
-    "name": "Intelius",
-    "domain": "intelius.com",
-    "contactEmail": "support@mailer.intelius.com",
-    "tier": "mega",
-    "inTop30": true,
-    "verifiedResolutions": 1,
-    "starterOrder": 5
-  },
-  {
-    "id": "truepeoplesearch-com",
-    "name": "Truepeoplesearch",
-    "domain": "truepeoplesearch.com",
-    "contactEmail": "support@truepeoplesearch.zendesk.com",
-    "tier": "mega",
-    "inTop30": true,
-    "verifiedResolutions": 2
+    "id": "clustrmaps-com",
+    "name": "ClustrMaps",
+    "domain": "clustrmaps.com",
+    "contactEmail": "support@clustrmaps.com"
   },
   {
     "id": "data-axle-com",
-    "name": "Data Axle",
+    "name": "Data Axle, Inc. f/k/a Infogroup Inc.",
     "domain": "data-axle.com",
     "contactEmail": "privacyteam@data-axle.com",
-    "tier": "mega",
-    "inTop30": true,
-    "verifiedResolutions": 1
+    "starterOrder": 1
   },
   {
-    "id": "gravyanalytics-com",
-    "name": "Gravy Analytics & Venntel",
-    "domain": "gravyanalytics.com",
-    "contactEmail": "privacy@gravyanalytics.com",
-    "tier": "mega",
-    "inTop30": true,
-    "verifiedResolutions": 1,
-    "childCompanies": [
-      "Venntel"
-    ]
-  },
-  {
-    "id": "stirista-com",
-    "name": "Stirista",
-    "domain": "stirista.com",
-    "contactEmail": "privacyinfo@stirista.com",
-    "tier": "medium",
-    "inTop30": false,
-    "verifiedResolutions": 3
-  },
-  {
-    "id": "carneydirect-com",
-    "name": "Carney Direct Marketing ",
-    "domain": "carneydirect.com",
-    "contactEmail": "info@carneydirect.com",
-    "tier": "medium",
-    "inTop30": false,
-    "verifiedResolutions": 2
-  },
-  {
-    "id": "clustrmaps-com",
-    "name": "Clustrmaps",
-    "domain": "clustrmaps.com",
-    "contactEmail": "support@clustrmaps.com",
-    "tier": "medium",
-    "inTop30": false,
-    "verifiedResolutions": 2
-  },
-  {
-    "id": "careerbuilder-com",
-    "name": "CareerBuilder",
-    "domain": "careerbuilder.com",
-    "contactEmail": "info@careerbuilder.com",
-    "tier": "small",
-    "inTop30": false,
-    "verifiedResolutions": 1
-  },
-  {
-    "id": "edvisorsmail-com",
-    "name": "edvisorsmail",
-    "domain": "edvisorsmail.com",
-    "contactEmail": "customerservice@email.edvisorsmail.com",
-    "tier": "small",
-    "inTop30": false,
-    "verifiedResolutions": 1
+    "id": "evs7-com",
+    "name": "Electronic Voice Services, Inc.",
+    "domain": "evs7.com",
+    "contactEmail": "richard@evs7.com"
   },
   {
     "id": "focus-usa-com",
     "name": "Focus USA",
     "domain": "focus-usa.com",
-    "contactEmail": "privacy@focus-usa.com",
-    "tier": "small",
-    "inTop30": false,
-    "verifiedResolutions": 1
+    "contactEmail": "privacy@focus-usa.com"
   },
   {
     "id": "giantpartners-com",
-    "name": "Giant Partners",
+    "name": "Giant Partners, Inc.",
     "domain": "giantpartners.com",
-    "contactEmail": "compliance@giantpartners.com",
-    "tier": "small",
-    "inTop30": false,
-    "verifiedResolutions": 1
+    "contactEmail": "compliance@giantpartners.com"
+  },
+  {
+    "id": "gravyanalytics-com",
+    "name": "Gravy Analytics, Inc.",
+    "domain": "gravyanalytics.com",
+    "contactEmail": "privacy@gravyanalytics.com"
+  },
+  {
+    "id": "heartbeat-ai",
+    "name": "Heartbeat.AI Inc",
+    "domain": "heartbeat.ai",
+    "contactEmail": "contact@heartbeat.ai"
+  },
+  {
+    "id": "hireez-com",
+    "name": "HireTeamMate, Inc. dba Hiretual / hireEZ",
+    "domain": "hireez.com",
+    "contactEmail": "legal@hiretual.com"
   },
   {
     "id": "infotracer-com",
-    "name": "Infotracer",
+    "name": "InfoTracer",
     "domain": "infotracer.com",
-    "contactEmail": "privacy@infotracer.com",
-    "tier": "small",
-    "inTop30": false,
-    "verifiedResolutions": 1
+    "contactEmail": "privacy@infotracer.com"
   },
   {
     "id": "inmarket-com",
-    "name": "InMarket Media",
+    "name": "InMarket Media LLC",
     "domain": "inmarket.com",
-    "contactEmail": "privacy@inmarket.com",
-    "tier": "small",
-    "inTop30": false,
-    "verifiedResolutions": 1
+    "contactEmail": "privacy@inmarket.com"
   },
   {
-    "id": "intentiq-com",
-    "name": "Intent IQ",
-    "domain": "intentiq.com",
-    "contactEmail": "privacy@intentiq.com",
-    "tier": "small",
-    "inTop30": false,
-    "verifiedResolutions": 1
+    "id": "jdpa-com",
+    "name": "J.D. Power",
+    "domain": "jdpa.com",
+    "contactEmail": "jdpowerprivacy@jdpa.com"
+  },
+  {
+    "id": "lusha-com",
+    "name": "Lusha Systems Inc",
+    "domain": "lusha.com",
+    "contactEmail": "privacy@lusha.co"
+  },
+  {
+    "id": "peopledatalabs-com",
+    "name": "People Data Labs",
+    "domain": "peopledatalabs.com",
+    "contactEmail": "privacy@peopledatalabs.com",
+    "starterOrder": 5
+  },
+  {
+    "id": "recordsfinder-com",
+    "name": "RecordsFinder",
+    "domain": "recordsfinder.com",
+    "contactEmail": "support@recordsfinder.com"
+  },
+  {
+    "id": "retention-com",
+    "name": "Retention.com",
+    "domain": "retention.com",
+    "contactEmail": "support@retention.com"
+  },
+  {
+    "id": "scileads-com",
+    "name": "SciLeads",
+    "domain": "scileads.com",
+    "contactEmail": "privacy@scileads.com"
   },
   {
     "id": "seamlessleads-com",
     "name": "Seamless.AI",
     "domain": "seamlessleads.com",
-    "contactEmail": "privacy@seamlessleads.com",
-    "tier": "small",
-    "inTop30": false,
-    "verifiedResolutions": 1
+    "contactEmail": "privacy@seamlessleads.com"
+  },
+  {
+    "id": "slashdotmedia-com",
+    "name": "Slashdot Media, LLC",
+    "domain": "slashdotmedia.com",
+    "contactEmail": "privacy@slashdotmedia.com"
+  },
+  {
+    "id": "spokeo-com",
+    "name": "Spokeo",
+    "domain": "spokeo.com",
+    "contactEmail": "legal@spokeo.com"
+  },
+  {
+    "id": "staterecords-org",
+    "name": "StateRecords",
+    "domain": "staterecords.org",
+    "contactEmail": "support@staterecords.org"
+  },
+  {
+    "id": "statsocial-com",
+    "name": "StatSocial",
+    "domain": "statsocial.com",
+    "contactEmail": "info@statsocial.com"
+  },
+  {
+    "id": "stirista-com",
+    "name": "Stirista, LLC",
+    "domain": "stirista.com",
+    "contactEmail": "privacyinfo@stirista.com"
+  },
+  {
+    "id": "swordfish-ai",
+    "name": "Swordfish AI Inc.",
+    "domain": "swordfish.ai",
+    "contactEmail": "contact@swordfish.ai"
+  },
+  {
+    "id": "truepeoplesearch-com",
+    "name": "TruePeopleSearch",
+    "domain": "truepeoplesearch.com",
+    "contactEmail": "support@truepeoplesearch.com",
+    "starterOrder": 3
+  },
+  {
+    "id": "venntel-com",
+    "name": "Venntel, Inc.",
+    "domain": "venntel.com",
+    "contactEmail": "privacy@venntel.com"
   },
   {
     "id": "zoominfo-com",
     "name": "ZoomInfo",
     "domain": "zoominfo.com",
     "contactEmail": "privacy@zoominfo.com",
-    "tier": "small",
-    "inTop30": false,
-    "verifiedResolutions": 1
+    "starterOrder": 2
   }
 ]

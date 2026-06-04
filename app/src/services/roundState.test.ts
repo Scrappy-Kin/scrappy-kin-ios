@@ -102,8 +102,9 @@ describe('deriveRoundState', () => {
     expect(result.eligibleBrokerIds).toEqual(['a', 'b'])
   })
 
-  it('sent count uses the larger of totalSentCount and sentLog.length', () => {
-    // totalSentCount (10) exceeds sentLog entries (2)
+  it('sent count uses sent log entries when current-catalog sent history is available', () => {
+    // totalSentCount may include stale historical sends, but dashboard count should
+    // describe the current catalog state when sent-log detail is available.
     const highTotalCount = deriveRoundState({
       brokers: [broker('a')],
       sentLog: [sent('a', 1)],
@@ -112,9 +113,8 @@ describe('deriveRoundState', () => {
       totalSentCount: 10,
       now: NOW,
     })
-    expect(highTotalCount.metricValue).toBe(10)
+    expect(highTotalCount.metricValue).toBe(1)
 
-    // sentLog.length (3) exceeds totalSentCount (1)
     const highLogLength = deriveRoundState({
       brokers: [broker('a'), broker('b'), broker('c')],
       sentLog: [sent('a', 1), sent('b', 1), sent('c', 1)],
@@ -124,5 +124,20 @@ describe('deriveRoundState', () => {
       now: NOW,
     })
     expect(highLogLength.metricValue).toBe(3)
+  })
+
+  it('sent count ignores sent brokers outside the current launch catalog', () => {
+    const result = deriveRoundState({
+      brokers: [broker('a'), broker('b')],
+      sentLog: [sent('a', 1), sent('b', 1), sent('stale-outside-catalog', 1)],
+      subscriptionActive: true,
+      gmailConnected: true,
+      totalSentCount: 3,
+      now: NOW,
+    })
+
+    expect(result.stateId).toBe('all_caught_up')
+    expect(result.metricValue).toBe(2)
+    expect(result.eligibleBrokerIds).toEqual([])
   })
 })

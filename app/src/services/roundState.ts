@@ -85,6 +85,8 @@ export type DashboardCopy = {
 
 export function deriveRoundState(input: RoundStateInput): DashboardCopy {
   const now = input.now ?? new Date()
+  const brokerIds = new Set(input.brokers.map((broker) => broker.id))
+  const catalogSentCount = input.sentLog.filter((entry) => brokerIds.has(entry.brokerId)).length
 
   // QA override: feed a canned state without changing action wiring
   if (input.qaOverride) {
@@ -94,7 +96,10 @@ export function deriveRoundState(input: RoundStateInput): DashboardCopy {
   const eligibility = computeBrokerEligibility(input.brokers, input.sentLog, now)
   const eligibleBrokerIds = getEligibleBrokerIds(eligibility)
   const hasAnySent = input.totalSentCount > 0 || input.sentLog.length > 0
-  const sentCount = Math.max(input.totalSentCount, input.sentLog.length)
+  const sentCount =
+    input.sentLog.length > 0
+      ? catalogSentCount
+      : Math.min(input.totalSentCount, input.brokers.length)
 
   // No active entitlement and no remaining access
   if (!input.subscriptionActive) {
