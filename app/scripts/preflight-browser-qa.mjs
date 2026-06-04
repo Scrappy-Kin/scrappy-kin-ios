@@ -2,6 +2,11 @@ import { chromium, firefox, webkit } from 'playwright'
 
 const baseUrl = process.env.CAPTURE_BASE_URL ?? 'http://localhost:4173'
 const browserName = process.env.CAPTURE_BROWSER ?? 'chromium'
+const configuredCdpEndpoint = process.env.CAPTURE_CDP_ENDPOINT
+const defaultCdpEndpoint =
+  process.env.CAPTURE_CDP_AUTODETECT === '0' || browserName !== 'chromium'
+    ? ''
+    : 'http://127.0.0.1:9222'
 const shouldLaunchBrowser = !process.argv.includes('--http-only')
 const shouldPrintHelp = process.argv.includes('--help') || process.argv.includes('-h')
 
@@ -27,7 +32,7 @@ function printHelp() {
 Default agent flow:
   1. Start the preview server: npm run preview:dev
   2. Run route preflight: npm run qa:agent-browser
-  3. Use the Codex Playwright MCP/browser tool for screenshots`)
+  3. Run screenshot capture: npm run capture:screens:manual -- --id flow-intro`)
 }
 
 function explainBrowserFailure(message) {
@@ -40,7 +45,7 @@ function explainBrowserFailure(message) {
     return [
       'Browser runtime unavailable from this execution surface.',
       'This is a macOS browser-launch/sandbox failure, not a web-harness route failure.',
-      'Use the Codex Playwright MCP/browser lane for agent visual QA, or run capture:screens:manual from a normal Terminal outside the Codex shell sandbox.',
+      'Start the VM browser sidecar, set CAPTURE_CDP_ENDPOINT, or run capture:screens:manual from a normal Terminal outside the Codex shell sandbox.',
     ].join('\n')
   }
 
@@ -55,6 +60,29 @@ function explainBrowserFailure(message) {
   return message
 }
 
+async function connectToCdpBrowser() {
+  const cdpEndpoint = configuredCdpEndpoint || defaultCdpEndpoint
+  if (!cdpEndpoint) {
+    return null
+  }
+
+  try {
+    const browser = await chromium.connectOverCDP(cdpEndpoint, { timeout: 2_000 })
+    console.log(`[browser-qa-preflight] Using browser sidecar at ${cdpEndpoint}`)
+    return browser
+  } catch (error) {
+    if (!configuredCdpEndpoint) {
+      return null
+    }
+
+    throw new Error([
+      `CAPTURE_CDP_ENDPOINT is set but not reachable: ${configuredCdpEndpoint}`,
+      'Start the VM browser sidecar or unset CAPTURE_CDP_ENDPOINT to use normal Playwright launch.',
+      error instanceof Error ? error.message : String(error),
+    ].join('\n'))
+  }
+}
+
 async function checkRoute(route) {
   const url = `${baseUrl}${route}`
   const response = await fetch(url)
@@ -65,6 +93,21 @@ async function checkRoute(route) {
 }
 
 async function checkBrowser() {
+  const cdpBrowser = await connectToCdpBrowser()
+  if (cdpBrowser) {
+    const context = await cdpBrowser.newContext()
+    try {
+      const page = await context.newPage()
+      await page.goto(`${baseUrl}/capture/flow-intro?qa=1`, { waitUntil: 'networkidle' })
+      await page.screenshot()
+      console.log('[browser-qa-preflight] sidecar launch and screenshot OK')
+    } finally {
+      await context.close().catch(() => {})
+      await cdpBrowser.close().catch(() => {})
+    }
+    return
+  }
+
   const engine = browserEngines[browserName]
   if (!engine) {
     throw new Error(`Unknown CAPTURE_BROWSER: ${browserName}`)

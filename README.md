@@ -71,7 +71,7 @@ runtime output, not repo canon.
 ## Browser QA
 
 For Codex-driven web UI validation, start the preview harness, run the route
-preflight, then use the Codex Playwright MCP/browser tool for screenshots:
+preflight, then use the repo screenshot command:
 
 ```bash
 cd app
@@ -86,10 +86,11 @@ npm run qa:agent-browser
 ```
 
 Repo-local Playwright capture is intentionally a manual/unsandboxed lane:
-`npm run capture:screens:manual`. The legacy `npm run capture:screens` alias is
-blocked by default so agents do not reach for the broken sandboxed browser path.
-On macOS Codex sandboxed shells can fail to launch Playwright browsers even when
-the app is healthy. See `docs/browser-qa.md`.
+`npm run capture:screens:manual`. On the Agentic-Work-VM, that command
+auto-attaches to the VM browser sidecar when it is running, so agents do not
+launch Chrome from the Codex shell. The legacy `npm run capture:screens` alias
+is blocked by default so agents do not reach for stale automation paths. See
+`docs/browser-qa.md`.
 
 For a fast launch-facing dashboard/state regression brake:
 
