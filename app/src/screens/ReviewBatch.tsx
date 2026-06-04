@@ -2,6 +2,10 @@ import { IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
 import dataRescueIllustration from '../assets/illustrations/onboarding-data-rescue.svg'
 import { useEffect, useRef, useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
+import {
+  APP_REVIEW_TEST_RECIPIENT_NOTICE,
+  isAppReviewProfileEmail,
+} from '../config/appReviewTestRecipients'
 import { isQaStoreKitLane } from '../config/buildInfo'
 import { QA_STOREKIT_SEND_NOTICE } from '../config/qaStoreKit'
 import { executeBatchSend } from '../services/batchSend'
@@ -216,6 +220,11 @@ export default function ReviewBatch() {
                 }
               >
                 {sendError}
+              </AppNotice>
+            ) : null}
+            {isAppReviewProfileEmail(profileDraft.email) ? (
+              <AppNotice variant="info" title={APP_REVIEW_TEST_RECIPIENT_NOTICE.title}>
+                {APP_REVIEW_TEST_RECIPIENT_NOTICE.body}
               </AppNotice>
             ) : null}
             <AppButton

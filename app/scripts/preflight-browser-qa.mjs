@@ -1,10 +1,12 @@
 import { chromium, firefox, webkit } from 'playwright'
+import fs from 'node:fs/promises'
 
 const baseUrl = process.env.CAPTURE_BASE_URL ?? 'http://localhost:4173'
 const browserName = process.env.CAPTURE_BROWSER ?? 'chromium'
+const executablePath = process.env.CAPTURE_EXECUTABLE_PATH
 const configuredCdpEndpoint = process.env.CAPTURE_CDP_ENDPOINT
 const defaultCdpEndpoint =
-  process.env.CAPTURE_CDP_AUTODETECT === '0' || browserName !== 'chromium'
+  process.env.CAPTURE_CDP_AUTODETECT === '0' || browserName !== 'chromium' || executablePath
     ? ''
     : 'http://127.0.0.1:9222'
 const shouldLaunchBrowser = !process.argv.includes('--http-only')
@@ -32,7 +34,10 @@ function printHelp() {
 Default agent flow:
   1. Start the preview server: npm run preview:dev
   2. Run route preflight: npm run qa:agent-browser
-  3. Run screenshot capture: npm run capture:screens:manual -- --id flow-intro`)
+  3. Run screenshot capture: npm run capture:screens:manual -- --id flow-intro
+
+Optional:
+  CAPTURE_EXECUTABLE_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" npm run qa:web-preflight`)
 }
 
 function explainBrowserFailure(message) {
@@ -114,7 +119,10 @@ async function checkBrowser() {
   }
 
   try {
-    const browser = await engine.launch({ headless: true })
+    const browser = await engine.launch({
+      headless: true,
+      ...(executablePath ? { executablePath } : {}),
+    })
     const page = await browser.newPage()
     await page.goto(`${baseUrl}/capture/flow-intro?qa=1`, { waitUntil: 'networkidle' })
     await page.screenshot()
@@ -122,6 +130,30 @@ async function checkBrowser() {
     console.log(`[browser-qa-preflight] ${browserName} launch and screenshot OK`)
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
+
+    if (!executablePath && browserName === 'chromium' && message.includes('Executable doesn\'t exist')) {
+      const fallbackExecutable = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+      try {
+        await fs.access(fallbackExecutable)
+        const browser = await chromium.launch({
+          headless: true,
+          executablePath: fallbackExecutable,
+        })
+        const page = await browser.newPage()
+        await page.goto(`${baseUrl}/capture/flow-intro?qa=1`, { waitUntil: 'networkidle' })
+        await page.screenshot()
+        await browser.close()
+        console.log(`[browser-qa-preflight] chromium launch and screenshot OK via ${fallbackExecutable}`)
+        return
+      } catch (fallbackError) {
+        if (fallbackError?.code === 'ENOENT') {
+          throw new Error(explainBrowserFailure(message))
+        }
+        const fallbackMessage = fallbackError instanceof Error ? fallbackError.message : String(fallbackError)
+        throw new Error(explainBrowserFailure(fallbackMessage))
+      }
+    }
+
     throw new Error(explainBrowserFailure(message))
   }
 }

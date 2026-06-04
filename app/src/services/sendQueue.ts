@@ -1,6 +1,7 @@
 import type { Broker } from './brokerStore'
 import { SEND_DELAY_MS } from '../config/constants'
 import { isVerboseDevLane } from '../config/buildInfo'
+import { resolveBrokerRecipientForSend } from './appReviewRecipientRouting'
 import { buildDeletionBody, buildDeletionSubject } from './emailTemplate'
 import { sendEmail } from './gmailSend'
 import { incrementTotalSentCount } from './metricsStore'
@@ -69,7 +70,7 @@ export async function sendAll(brokers: Broker[], brokerIds: string[], onProgress
   let summary = summarizeQueue(queue)
   onProgress?.(summary)
 
-  for (const item of queue) {
+  for (const [brokerIndex, item] of queue.entries()) {
     if (item.status !== 'pending') continue
 
     const broker = brokers.find((entry) => entry.id === item.brokerId)
@@ -88,11 +89,17 @@ export async function sendAll(brokers: Broker[], brokerIds: string[], onProgress
     }
 
     try {
+      const recipient = resolveBrokerRecipientForSend({
+        broker,
+        brokerIndex,
+        profileEmail: profile.email,
+      })
       const result = await sendEmail({
-        to: broker.contactEmail,
+        to: recipient.to,
         subject: buildDeletionSubject(item.referenceId),
         body: buildDeletionBody(broker, profile, item.referenceId, template),
         replyTo: profile.email,
+        appReviewTestRecipients: recipient.usesAppReviewTestRecipient,
       })
 
       const sentAt = new Date().toISOString()

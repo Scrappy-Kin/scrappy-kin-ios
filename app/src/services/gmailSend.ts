@@ -1,5 +1,6 @@
 import { getAccessToken } from './googleAuth'
 import { isQaStoreKitLane, isVerboseDevLane } from '../config/buildInfo'
+import { isAppReviewSinkEmail } from '../config/appReviewTestRecipients'
 import { isQaStoreKitSinkEmail } from '../config/qaStoreKit'
 
 type SendEmailInput = {
@@ -7,6 +8,7 @@ type SendEmailInput = {
   subject: string
   body: string
   replyTo?: string
+  appReviewTestRecipients?: boolean
 }
 
 type GmailApiErrorPayload = {
@@ -47,6 +49,10 @@ function buildMimeMessage({ to, subject, body, replyTo }: SendEmailInput) {
 }
 
 export async function sendEmail(input: SendEmailInput) {
+  if (input.appReviewTestRecipients && !isAppReviewSinkEmail(input.to)) {
+    throw new Error('App Review test-recipient mode blocked a non-test broker recipient before Gmail send.')
+  }
+
   if (isQaStoreKitLane() && !isQaStoreKitSinkEmail(input.to)) {
     throw new Error('QA StoreKit build blocked a non-test broker recipient before Gmail send.')
   }
