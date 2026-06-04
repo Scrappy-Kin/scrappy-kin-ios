@@ -3,12 +3,18 @@ import fs from 'node:fs/promises'
 import { chromium, firefox, webkit } from 'playwright'
 
 const appRoot = new URL('..', import.meta.url)
+const catalogPath = new URL('src/assets/broker-lists/email-only-brokers.v1.0.1.json', appRoot)
 const baseUrl = process.env.CAPTURE_BASE_URL ?? 'http://localhost:4173'
 const browserName = process.env.CAPTURE_BROWSER ?? 'chromium'
 const executablePath = process.env.CAPTURE_EXECUTABLE_PATH
 const configuredCdpEndpoint = process.env.CAPTURE_CDP_ENDPOINT
 const defaultCdpEndpoint = process.env.CAPTURE_CDP_AUTODETECT === '0' ? '' : 'http://127.0.0.1:9222'
 const shouldPrintHelp = process.argv.includes('--help') || process.argv.includes('-h')
+const launchCatalog = JSON.parse(await fs.readFile(catalogPath, 'utf8'))
+const launchBrokers = Array.isArray(launchCatalog) ? launchCatalog : launchCatalog.brokers
+const launchBrokerCount = launchBrokers.length
+const launchStarterCount = launchBrokers.filter((broker) => typeof broker.starterOrder === 'number').length
+const paidBrokerCount = launchBrokerCount - launchStarterCount
 
 const browserEngines = {
   chromium,
@@ -344,7 +350,7 @@ const checks = [
     run: (page) =>
       assertDashboardState(page, 'home-unsubscribed', [
         'Next up',
-        /15 (?:more )?brokers available/i,
+        new RegExp(`${paidBrokerCount} (?:more )?brokers available`, 'i'),
         /Subscribe/i,
         'Apple manages billing',
       ]),
@@ -354,7 +360,7 @@ const checks = [
     run: (page) =>
       assertDashboardState(page, 'home-subscribed', [
         'Your next round is ready',
-        /15 (?:more )?brokers available/i,
+        new RegExp(`${paidBrokerCount} (?:more )?brokers available`, 'i'),
         'Start next round',
         'View previous sends',
       ]),
@@ -367,7 +373,7 @@ const checks = [
         'home-all-caught-up',
         [
           'You\'re all set!',
-          '20 opt-out emails sent',
+          `${launchBrokerCount} opt-out emails sent`,
           'Your next round opens on',
         ],
         [/Subscribe/i, /Start next round/i],
@@ -403,7 +409,7 @@ const checks = [
         { name: 'Quiet', count: 3 },
         { name: 'Steady', count: 5 },
         { name: 'Fast', count: 10 },
-        { name: 'All at once', count: 15 },
+        { name: 'All at once', count: paidBrokerCount },
       ]
 
       for (const option of options) {
@@ -427,7 +433,7 @@ const checks = [
       await clickButtonByName(page, 'Later')
       await assertNoCrashOrForbiddenCopy(page)
       await assertVisibleText(page, 'Next up')
-      await assertVisibleText(page, /15 (?:more )?brokers available/i)
+      await assertVisibleText(page, new RegExp(`${paidBrokerCount} (?:more )?brokers available`, 'i'))
       await assertVisibleText(page, /Subscribe/i)
     },
   },
