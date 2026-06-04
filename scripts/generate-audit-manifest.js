@@ -155,9 +155,11 @@ const buildManifest = (sha) => {
 }
 
 const writePromptFile = (manifest) => {
-  const promptPath = path.join(repoRoot, 'AUDIT_PROMPT.md')
+  const promptPath = path.join(repoRoot, 'app', 'tmp', 'audit', 'AUDIT_PROMPT.md')
   const text = manifest.prompt_text || buildPrompt(manifest)
+  fs.mkdirSync(path.dirname(promptPath), { recursive: true })
   fs.writeFileSync(promptPath, `${text}\n`, 'utf8')
+  return promptPath
 }
 
 const buildPrompt = (manifest) => {
@@ -361,8 +363,9 @@ try {
   const manifest = buildManifest(sha)
   manifest.prompt_text = buildPrompt(manifest)
   writeManifest(manifest)
-  writePromptFile(manifest)
+  const promptPath = writePromptFile(manifest)
   console.log(`Audit manifest written to ${path.relative(repoRoot, manifestPath)}.`)
+  console.log(`Audit prompt written to ${path.relative(repoRoot, promptPath)}.`)
 } catch (error) {
   console.error(error.message || error)
   process.exit(1)

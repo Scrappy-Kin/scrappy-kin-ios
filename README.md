@@ -65,7 +65,8 @@ cd app
 npm run audit:manifest
 ```
 
-That writes `AUDIT_PROMPT.md` in the repo root for local review. It is intentionally not tracked in git.
+That writes a local review prompt to `app/tmp/audit/AUDIT_PROMPT.md`. The file is
+runtime output, not repo canon.
 
 ## Browser QA
 
