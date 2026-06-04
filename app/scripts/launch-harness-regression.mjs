@@ -68,7 +68,7 @@ function explainBrowserFailure(message) {
     return [
       'Browser runtime unavailable from this execution surface.',
       'This is a macOS browser-launch/sandbox failure, not a web-harness route failure.',
-      'Run this command from a normal Terminal, or use the Codex browser lane for visual QA.',
+      'Start the VM browser sidecar, set CAPTURE_CDP_ENDPOINT, or run this command from a normal Terminal.',
     ].join('\n')
   }
 

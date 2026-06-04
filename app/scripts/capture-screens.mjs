@@ -10,6 +10,11 @@ const appRoot = path.resolve(__dirname, '..')
 const baseUrl = process.env.CAPTURE_BASE_URL ?? 'http://localhost:4173'
 const browserName = process.env.CAPTURE_BROWSER ?? 'chromium'
 const executablePath = process.env.CAPTURE_EXECUTABLE_PATH
+const configuredCdpEndpoint = process.env.CAPTURE_CDP_ENDPOINT
+const defaultCdpEndpoint =
+  process.env.CAPTURE_CDP_AUTODETECT === '0' || browserName !== 'chromium' || executablePath
+    ? ''
+    : 'http://127.0.0.1:9222'
 const outputDirs = process.env.CAPTURE_OUTPUT_DIR
   ? [process.env.CAPTURE_OUTPUT_DIR]
   : [
@@ -209,9 +214,11 @@ function assertSupportedEntrypoint() {
     'For agent visual QA:',
     '  1. Start the preview server: npm run preview:dev',
     '  2. Run the route preflight: npm run qa:agent-browser',
-    '  3. Use the Codex Playwright MCP/browser tool for screenshots',
+    '  3. Run screenshot capture: npm run capture:screens:manual -- --id flow-intro',
     '',
-    'For manual screenshot capture from a normal Terminal, CI, or another proven unsandboxed runner:',
+    'On the Agentic-Work-VM, capture:screens:manual auto-attaches to the VM browser sidecar when it is running.',
+    '',
+    'For manual screenshot capture from a normal Terminal, CI, or another proven runner:',
     '  npm run capture:screens:manual -- --group onboarding',
     '',
     'If an old automation truly needs this alias, set CAPTURE_SCREENS_LEGACY_OK=1 for that run.',
@@ -313,6 +320,29 @@ async function resolveBrowserLaunchOptions() {
   return {}
 }
 
+async function connectToCdpBrowser() {
+  const cdpEndpoint = configuredCdpEndpoint || defaultCdpEndpoint
+  if (!cdpEndpoint) {
+    return null
+  }
+
+  try {
+    const browser = await chromium.connectOverCDP(cdpEndpoint, { timeout: 2_000 })
+    console.log(`[capture-screens] Using browser sidecar at ${cdpEndpoint}`)
+    return browser
+  } catch (cause) {
+    if (!configuredCdpEndpoint) {
+      return null
+    }
+
+    throw new Error([
+      `CAPTURE_CDP_ENDPOINT is set but not reachable: ${configuredCdpEndpoint}`,
+      'Start the VM browser sidecar or unset CAPTURE_CDP_ENDPOINT to use normal Playwright launch.',
+      cause instanceof Error ? cause.message : String(cause),
+    ].join('\n'))
+  }
+}
+
 function browserRuntimeHint(cause) {
   if (!(cause instanceof Error)) {
     return ''
@@ -328,7 +358,7 @@ function browserRuntimeHint(cause) {
       '',
       'Browser runtime unavailable from this execution surface.',
       'This is a macOS browser-launch/sandbox failure, not a web-harness route failure.',
-      'Use the Codex Playwright MCP/browser lane for agent visual QA, or run this capture command from a normal Terminal outside the Codex shell sandbox.',
+      'Start the VM browser sidecar, set CAPTURE_CDP_ENDPOINT, or run this capture command from a normal Terminal outside the Codex shell sandbox.',
     ].join('\n')
   }
 
@@ -336,6 +366,11 @@ function browserRuntimeHint(cause) {
 }
 
 async function launchBrowser() {
+  const cdpBrowser = await connectToCdpBrowser()
+  if (cdpBrowser) {
+    return cdpBrowser
+  }
+
   const launchOptions = {
     headless: true,
     ...(await resolveBrowserLaunchOptions()),
