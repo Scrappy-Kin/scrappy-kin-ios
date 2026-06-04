@@ -33,6 +33,9 @@ const forbiddenCopy = [
   /sign (?:in|up) (?:to|for|with) (?:a )?scrappy kin account/i,
   /scrappy kin (?:manages|handles|stores|keeps) (?:your )?(?:billing|card|payment)/i,
   /\bwe (?:store|keep|handle|manage) (?:your )?(?:card|billing|payment)/i,
+  /review-safe mode/i,
+  /safe send/i,
+  /demo mode/i,
 ]
 
 const routeCrashCopy = [
@@ -419,6 +422,19 @@ const checks = [
         await assertNoCrashOrForbiddenCopy(page)
         await assertVisibleText(page, `${option.count} brokers selected`)
         await assertVisibleText(page, `Send ${option.count} opt-out emails`)
+      }
+    },
+  },
+  {
+    id: 'app-review-test-recipient-notice',
+    run: async (page) => {
+      for (const scenario of ['flow-final-review', 'review-batch']) {
+        await openScenario(page, scenario)
+        await assertVisibleText(page, 'App Review test recipients')
+        await assertVisibleText(
+          page,
+          'This review profile sends emails through Gmail to Scrappy Kin test inboxes instead of broker addresses.',
+        )
       }
     },
   },

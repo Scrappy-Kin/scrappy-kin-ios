@@ -1,4 +1,5 @@
 import { IS_DEV_BUILD } from '../config/buildInfo'
+import { APP_REVIEW_PROFILE_EMAIL } from '../config/appReviewTestRecipients'
 import {
   loadBrokers,
   loadStarterBrokerIds,
@@ -37,6 +38,11 @@ const seededProfile: UserProfile = {
   partialZip: '7870',
 }
 
+const appReviewProfile: UserProfile = {
+  ...seededProfile,
+  email: APP_REVIEW_PROFILE_EMAIL,
+}
+
 function buildConnectedToken(): GmailTokenPayload {
   return {
     accessToken: 'FIXTURE_CAPTURE_ONLY__NOT_A_REAL_TOKEN',
@@ -57,14 +63,14 @@ function buildQueue(status: QueueItem['status'], brokerIds: string[]): QueueItem
   }))
 }
 
-async function seedProfileAndSelection() {
-  await setUserProfile(seededProfile)
+async function seedProfileAndSelection(profile = seededProfile) {
+  await setUserProfile(profile)
   const starterIds = await loadStarterBrokerIds()
   await setSelectedBrokerIds(starterIds)
 }
 
-async function seedConnectedState() {
-  await seedProfileAndSelection()
+async function seedConnectedState(profile = seededProfile) {
+  await seedProfileAndSelection(profile)
   await setEncrypted(CAPTURE_GMAIL_TOKEN_KEY, buildConnectedToken())
 }
 
@@ -171,7 +177,7 @@ const captureScenarios: Record<string, CaptureScenarioDefinition> = {
   'flow-final-review': {
     route: '/onboarding/final-review',
     seed: async () => {
-      await seedConnectedState()
+      await seedConnectedState(appReviewProfile)
       await setSavedFlowStep('final-review')
     },
   },
@@ -228,6 +234,7 @@ const captureScenarios: Record<string, CaptureScenarioDefinition> = {
     route: '/review-batch?returnTo=%2Fhome',
     seed: async () => {
       await seedPostSendState(null)
+      await setUserProfile(appReviewProfile)
       await setDevSubscriptionEntitled(true)
     },
   },

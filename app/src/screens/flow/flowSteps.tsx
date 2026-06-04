@@ -3,6 +3,10 @@ import {
 } from 'ionicons/icons'
 import type { ReactElement, ReactNode } from 'react'
 import onboardingSuccessIllustration from '../../assets/illustrations/onboarding-success.svg'
+import {
+  APP_REVIEW_TEST_RECIPIENT_NOTICE,
+  isAppReviewProfileEmail,
+} from '../../config/appReviewTestRecipients'
 import { QA_STOREKIT_SEND_NOTICE } from '../../config/qaStoreKit'
 import { buildDeletionSubject } from '../../services/emailTemplate'
 import type { Broker } from '../../services/brokerStore'
@@ -359,6 +363,11 @@ export function buildFlowSteps({
               }
             >
               {sendError}
+            </AppNotice>
+          ) : null}
+          {isAppReviewProfileEmail(profileDraft.email) ? (
+            <AppNotice variant="info" title={APP_REVIEW_TEST_RECIPIENT_NOTICE.title}>
+              {APP_REVIEW_TEST_RECIPIENT_NOTICE.body}
             </AppNotice>
           ) : null}
           <AppButton onClick={onSendStarterRound} disabled={sendInFlight || !gmailConnected}>
