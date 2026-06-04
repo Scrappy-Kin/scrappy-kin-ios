@@ -53,10 +53,13 @@ describe('launch broker catalog', () => {
     const brokerKeys = new Set(brokers.flatMap((broker) => Object.keys(broker)))
 
     expect(dataAxle?.contactEmail).toBe('privacyteam@data-axle.com')
+    expect(brokerKeys.has('launchRisk')).toBe(false)
+    expect(brokerKeys.has('launchNote')).toBe(false)
     expect(brokerKeys.has('evidence')).toBe(false)
+    expect(Array.isArray(catalogData)).toBe(true)
   })
 
-  it('leaves only non-starter launch brokers eligible after the free starter round is sent, () => {
+  it('leaves only non-starter launch brokers eligible after the free starter round is sent', () => {
     const brokers = brokersFromCatalog()
     const starterSentLog = getStarterBrokers(brokers).map(sentEntry)
     const eligibility = computeBrokerEligibility(
