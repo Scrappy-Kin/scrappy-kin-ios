@@ -154,6 +154,19 @@ TestFlight command builds/exports a Release IPA and uploads it. The upload-only
 lane is for already-signed IPAs; it does not build or export a production
 archive.
 
+Before producing a new production TestFlight build, bump the checked-in Xcode
+build number:
+
+```bash
+cd app
+npm run ios:version:set -- --build 16
+```
+
+Use the next build number after the latest TestFlight build. The production
+TestFlight lane checks App Store Connect before archiving and refuses to upload
+when the checked-in build number is not newer than the latest TestFlight build
+for the current marketing version.
+
 Local QA scripts choose Xcode/Fastlane cache roots dynamically:
 
 1. explicit `IOS_DERIVED_DATA_PATH` or `XCODE_DERIVED_DATA_ROOT`
