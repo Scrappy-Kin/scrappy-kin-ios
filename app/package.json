@@ -24,6 +24,7 @@
     "ios:fastlane:prod-archive": "node scripts/fastlane-with-keychain-asc.mjs ios prod_archive",
     "ios:fastlane:prod-testflight": "node scripts/fastlane-with-keychain-asc.mjs ios prod_testflight",
     "ios:fastlane:upload-testflight-ipa": "node scripts/fastlane-with-keychain-asc.mjs ios upload_testflight_ipa",
+    "ios:version:set": "node scripts/set-ios-build-number.mjs",
     "capture:screens": "node scripts/capture-screens.mjs",
     "capture:screens:manual": "node scripts/capture-screens.mjs",
     "qa:agent-browser": "node scripts/preflight-browser-qa.mjs --http-only",

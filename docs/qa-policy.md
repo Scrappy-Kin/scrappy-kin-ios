@@ -49,6 +49,18 @@ TestFlight.
 | Production TestFlight | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight` | No | Builds/exports `Release`, then uploads; release-candidate only; can email real brokers. |
 | Upload signed IPA to TestFlight | `cd app && IPA_PATH=/path/to/ScrappyKin.ipa SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:upload-testflight-ipa` | No | Uploads an already-signed IPA; does not build or export. |
 
+Before a new production TestFlight build, bump and commit the checked-in Xcode
+build number:
+
+```bash
+cd app
+npm run ios:version:set -- --build <next-build-number>
+```
+
+Use the next number after the latest TestFlight build for the current marketing
+version. The production TestFlight lane checks App Store Connect before
+archiving and fails fast if the checked-in build number is stale.
+
 Local QA scripts resolve DerivedData/cache roots in this order:
 
 1. explicit `IOS_DERIVED_DATA_PATH` or `XCODE_DERIVED_DATA_ROOT`
