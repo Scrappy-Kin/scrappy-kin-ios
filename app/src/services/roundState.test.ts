@@ -49,16 +49,36 @@ describe('computeBrokerEligibility', () => {
 describe('deriveRoundState', () => {
   it('unsubscribed after a free send returns free_remaining_locked', () => {
     const result = deriveRoundState({
-      brokers: [broker('a')],
-      sentLog: [],
+      brokers: [broker('a'), broker('b'), broker('c'), broker('d'), broker('e'), broker('f')],
+      sentLog: [sent('a', 1), sent('b', 1), sent('c', 1), sent('d', 1), sent('e', 1)],
       subscriptionActive: false,
       gmailConnected: true,
       totalSentCount: 5,
       now: NOW,
     })
     expect(result.stateId).toBe('free_remaining_locked')
+    expect(result.metricValue).toBe(5)
+    expect(result.metricLabel).toBe('opt-out emails sent')
+    expect(result.bodyText).toContain('1 broker is available')
     expect(result.primaryActionKind).toBe('subscribe')
     expect(result.secondaryActionKind).toBe('view_sent')
+  })
+
+  it('unsubscribed with no remaining brokers keeps sent history as the hero metric', () => {
+    const result = deriveRoundState({
+      brokers: [broker('a'), broker('b')],
+      sentLog: [sent('a', 1), sent('b', 1)],
+      subscriptionActive: false,
+      gmailConnected: true,
+      totalSentCount: 2,
+      now: NOW,
+    })
+
+    expect(result.stateId).toBe('free_remaining_locked')
+    expect(result.metricValue).toBe(2)
+    expect(result.metricLabel).toBe('opt-out emails sent')
+    expect(result.bodyText).toContain('0 brokers are available')
+    expect(result.primaryActionKind).toBe('subscribe')
   })
 
   it('subscribed + Gmail disconnected returns gmail_disconnected', () => {
@@ -113,6 +133,9 @@ describe('deriveRoundState', () => {
       now: NOW,
     })
     expect(result.stateId).toBe('next_round_ready')
+    expect(result.metricValue).toBe(2)
+    expect(result.metricLabel).toBe('opt-out emails sent')
+    expect(result.bodyText).toContain('2 brokers are available')
     expect(result.primaryActionKind).toBe('start_round')
     expect(result.eligibleBrokerIds).toEqual(['a', 'b'])
   })

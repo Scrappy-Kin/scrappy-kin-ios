@@ -51,6 +51,7 @@ export default function SubscriptionOfferCard({ product }: SubscriptionOfferCard
             label="Apple handles billing"
             subtext="We can't see your card or billing details."
           />
+          <AppBulletRow label="Support an indie developer" />
         </div>
       </AppSegmentedCardSection>
     </AppSegmentedCard>

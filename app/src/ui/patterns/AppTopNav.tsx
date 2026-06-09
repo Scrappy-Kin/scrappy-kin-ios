@@ -38,7 +38,13 @@ export default function AppTopNav({
     typeof progressCurrent === 'number' &&
     typeof progressTotal === 'number' &&
     progressTotal > 0
-  const actionOnly = Boolean(action && !showBack && !label && !showProgress)
+  const showLabel = Boolean(label)
+  const hasVisibleNav = showBack || showLabel || showProgress || Boolean(action)
+  const actionOnly = Boolean(action && !showBack && !showLabel && !showProgress)
+
+  if (!hasVisibleNav) {
+    return null
+  }
 
   function handleBack() {
     if (onBack) {
@@ -85,7 +91,7 @@ export default function AppTopNav({
             ) : null}
           </div>
           <div className="app-top-nav__label-wrap">
-            {label ? (
+            {showLabel ? (
               <AppText intent="label">
                 <span aria-hidden={labelAccessibilityHidden}>
                   {label}
