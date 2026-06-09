@@ -383,6 +383,21 @@ const checks = [
       ),
   },
   {
+    id: 'home-active-no-local-history',
+    run: (page) =>
+      assertDashboardState(
+        page,
+        'home-active-no-local-history',
+        [
+          'Your subscription is active',
+          new RegExp(`${launchBrokerCount} (?:more )?brokers available`, 'i'),
+          'This is a fresh install',
+          'Set up a round',
+        ],
+        [/Subscribe/i, /View sent/i],
+      ),
+  },
+  {
     id: 'home-gmail-disconnected',
     run: (page) =>
       assertDashboardState(
@@ -430,10 +445,14 @@ const checks = [
     run: async (page) => {
       for (const scenario of ['flow-final-review', 'review-batch']) {
         await openScenario(page, scenario)
-        await assertVisibleText(page, 'App Review test recipients')
+        await assertVisibleText(page, 'App Review demo recipients')
         await assertVisibleText(
           page,
-          'This review profile sends emails through Gmail to Scrappy Kin test inboxes instead of broker addresses.',
+          'For the App Review demo email, these emails are sent to Scrappy Kin test inboxes instead of broker inboxes.',
+        )
+        await assertVisibleText(
+          page,
+          'The broker list, email content, Gmail authorization and send flow, and sent history work the same as the live app.',
         )
       }
     },
@@ -460,6 +479,7 @@ const checks = [
         'home-unsubscribed',
         'home-subscribed',
         'home-all-caught-up',
+        'home-active-no-local-history',
         'home-gmail-disconnected',
         'home-entitlement-expired',
         'flow-beat-subscribe',

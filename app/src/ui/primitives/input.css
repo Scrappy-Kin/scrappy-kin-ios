@@ -53,8 +53,9 @@
 }
 
 textarea.app-input__control {
-  resize: vertical;
-  min-height: 120px;
+  resize: none;
+  overflow: hidden;
+  min-height: calc(3 * var(--line-height-control) + (2 * var(--space-3)));
   padding-top: var(--space-3);
   padding-bottom: var(--space-3);
   font-family: inherit;

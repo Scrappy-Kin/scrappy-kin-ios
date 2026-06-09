@@ -49,6 +49,11 @@ TestFlight.
 | Production TestFlight | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight` | No | Builds/exports `Release`, then uploads; release-candidate only; can email real brokers. |
 | Upload signed IPA to TestFlight | `cd app && IPA_PATH=/path/to/ScrappyKin.ipa SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:upload-testflight-ipa` | No | Uploads an already-signed IPA; does not build or export. |
 
+Apple marketing versions use semver shape (`MAJOR.MINOR.PATCH`) in
+`MARKETING_VERSION` / `CFBundleShortVersionString`. Apple build numbers stay
+separate in `CURRENT_PROJECT_VERSION` / `CFBundleVersion`; do not use suffixes
+or build metadata in the marketing version.
+
 Before a new production TestFlight build, bump and commit the checked-in Xcode
 build number:
 

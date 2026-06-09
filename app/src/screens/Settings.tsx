@@ -27,6 +27,7 @@ import {
 import { disconnectGmail, getGmailStatus } from '../services/googleAuth'
 import { wipeAllLocalData } from '../services/secureStore'
 import {
+  buildRestoreSubscriptionNotice,
   getSubscriptionSnapshot,
   purchaseSubscription,
   restoreSubscriptionPurchases,
@@ -400,11 +401,7 @@ export default function Settings() {
     const result = await restoreSubscriptionPurchases()
     setSubscriptionBusy(null)
     setSubscriptionSnapshot(result.snapshot)
-    setSubscriptionNotice({
-      variant: result.status === 'restored' ? 'success' : 'error',
-      title: result.status === 'restored' ? 'Purchases restored' : 'Restore didn’t complete',
-      body: result.message,
-    })
+    setSubscriptionNotice(buildRestoreSubscriptionNotice(result))
   }
 
   function renderHome() {

@@ -67,6 +67,7 @@ export default function Home() {
         {
           gmailConnected: gmailStatus.connected,
           hasProfile: Boolean(profile),
+          subscriptionActive: subscriptionSnapshotResult.active,
           onboardingSentCount,
           totalSentCount,
           sentReviewItemCount: sentLog.length,
@@ -192,7 +193,7 @@ export default function Home() {
               <div className="app-stack">
                 {copy.primaryActionKind === 'start_round' ? (
                   <AppButton fullWidth onClick={() => history.push(nextBatchHref)}>
-                    Start next round
+                    {copy.stateId === 'active_no_local_history' ? 'Set up a round' : 'Start next round'}
                   </AppButton>
                 ) : copy.primaryActionKind === 'subscribe' ? (
                   <AppButton

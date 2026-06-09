@@ -64,14 +64,29 @@ describe('deriveRoundState', () => {
   it('subscribed + Gmail disconnected returns gmail_disconnected', () => {
     const result = deriveRoundState({
       brokers: [broker('a')],
+      sentLog: [sent('a', 1)],
+      subscriptionActive: true,
+      gmailConnected: false,
+      totalSentCount: 1,
+      now: NOW,
+    })
+    expect(result.stateId).toBe('gmail_disconnected')
+    expect(result.primaryActionKind).toBe('reconnect_gmail')
+  })
+
+  it('subscribed + no local sent history returns active_no_local_history', () => {
+    const result = deriveRoundState({
+      brokers: [broker('a'), broker('b')],
       sentLog: [],
       subscriptionActive: true,
       gmailConnected: false,
       totalSentCount: 0,
       now: NOW,
     })
-    expect(result.stateId).toBe('gmail_disconnected')
-    expect(result.primaryActionKind).toBe('reconnect_gmail')
+    expect(result.stateId).toBe('active_no_local_history')
+    expect(result.primaryActionKind).toBe('start_round')
+    expect(result.secondaryActionKind).toBe('none')
+    expect(result.eligibleBrokerIds).toEqual(['a', 'b'])
   })
 
   it('subscribed + all brokers recently sent returns all_caught_up with next round date', () => {

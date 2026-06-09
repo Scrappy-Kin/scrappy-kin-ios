@@ -21,7 +21,13 @@ import { connectGmail, getGmailStatus } from '../services/googleAuth'
 import { deriveOnboardingRedirect } from '../services/homeState'
 import { buildOnboardingHref, buildSettingsHref, buildTemplateHref, getCurrentRoute, readSuccessTo } from '../services/navigation'
 import { getQueue } from '../services/queueStore'
-import { getSubscriptionSnapshot, purchaseSubscription, restoreSubscriptionPurchases, type SubscriptionSnapshot } from '../services/subscription'
+import {
+  buildRestoreSubscriptionNotice,
+  getSubscriptionSnapshot,
+  purchaseSubscription,
+  restoreSubscriptionPurchases,
+  type SubscriptionSnapshot,
+} from '../services/subscription'
 import {
   getDeletionTemplateDraft,
   resolveDeletionTemplate,
@@ -183,6 +189,7 @@ export default function Flow({ stepId }: FlowProps) {
         {
           gmailConnected,
           hasProfile: profileComplete,
+          subscriptionActive: subscriptionSnapshot?.active ?? false,
           onboardingSentCount,
           totalSentCount,
           sentReviewItemCount,
@@ -357,11 +364,7 @@ export default function Flow({ stepId }: FlowProps) {
       return
     }
 
-    setSubscriptionNotice({
-      variant: result.status === 'restored' ? 'success' : 'error',
-      title: result.status === 'restored' ? 'Purchases restored' : 'Restore didn’t complete',
-      body: result.message,
-    })
+    setSubscriptionNotice(buildRestoreSubscriptionNotice(result))
   }
 
   async function handleBeatLater() {
