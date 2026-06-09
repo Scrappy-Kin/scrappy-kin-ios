@@ -140,8 +140,8 @@ export function deriveRoundState(input: RoundStateInput): DashboardCopy {
     return {
       stateId: 'active_no_local_history',
       hero: 'Your subscription is active',
-      metricValue: eligibleBrokerIds.length,
-      metricLabel: formatBrokerMetricLabel(eligibleBrokerIds.length),
+      metricValue: 0,
+      metricLabel: formatSentMetricLabel(0),
       bodyText:
         'This is a fresh install, so Scrappy Kin does not have your previous app history. Set up your email details and Gmail when you’re ready to send a round.',
       primaryActionKind: 'start_round',
@@ -168,6 +168,9 @@ export function deriveRoundState(input: RoundStateInput): DashboardCopy {
 
   // Active subscription, Gmail connected — do we have eligible brokers?
   if (eligibleBrokerIds.length > 0) {
+    const hasEligibleUnsentBrokers = eligibility.some(
+      (entry) => entry.eligible && entry.lastSentAt === null,
+    )
     return {
       stateId: 'next_round_ready',
       hero: hasAnySent ? 'Your next round is ready' : 'Next up',
@@ -175,9 +178,7 @@ export function deriveRoundState(input: RoundStateInput): DashboardCopy {
       metricLabel: hasAnySent
         ? formatSentMetricLabel(sentCount)
         : formatBrokerMetricLabel(eligibleBrokerIds.length),
-      bodyText: hasAnySent
-        ? `${formatBrokerAvailability(eligibleBrokerIds.length)} for your next round. Brokers can re-add people over time. Send a fresh round of opt-outs to the current audited list.`
-        : null,
+      bodyText: buildNextRoundBodyText(hasAnySent, hasEligibleUnsentBrokers, eligibleBrokerIds.length),
       primaryActionKind: 'start_round',
       secondaryActionKind: hasAnySent ? 'view_sent' : 'none',
       nextRoundOpensLabel: null,
@@ -210,6 +211,22 @@ function formatBrokerMetricLabel(count: number): string {
 
 function formatBrokerAvailability(count: number): string {
   return `${count} ${count === 1 ? 'broker is' : 'brokers are'} available`
+}
+
+function buildNextRoundBodyText(
+  hasAnySent: boolean,
+  hasEligibleUnsentBrokers: boolean,
+  eligibleBrokerCount: number,
+) {
+  if (!hasAnySent) {
+    return null
+  }
+
+  if (hasEligibleUnsentBrokers) {
+    return `${formatBrokerAvailability(eligibleBrokerCount)} with your subscription.`
+  }
+
+  return 'Brokers can re-add people over time. Send a fresh round of opt-outs to the current audited list.'
 }
 
 function formatSentMetricLabel(count: number): string {
@@ -264,8 +281,8 @@ function buildQaOverrideState(
       return {
         stateId,
         hero: 'Your subscription is active',
-        metricValue: input.brokers.length,
-        metricLabel: formatBrokerMetricLabel(input.brokers.length),
+        metricValue: 0,
+        metricLabel: formatSentMetricLabel(0),
         bodyText:
           'This is a fresh install, so Scrappy Kin does not have your previous app history. Set up your email details and Gmail when you’re ready to send a round.',
         primaryActionKind: 'start_round',
@@ -295,7 +312,7 @@ function buildQaOverrideState(
         hero: 'Your next round is ready',
         metricValue: sentCount,
         metricLabel: formatSentMetricLabel(sentCount),
-        bodyText: `${formatBrokerAvailability(input.brokers.length)} for your next round. Brokers can re-add people over time. Send a fresh round of opt-outs to the current audited list.`,
+        bodyText: `${formatBrokerAvailability(input.brokers.length)} with your subscription.`,
         primaryActionKind: 'start_round',
         secondaryActionKind: 'view_sent',
         nextRoundOpensLabel: null,

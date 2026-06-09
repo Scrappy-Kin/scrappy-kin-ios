@@ -104,9 +104,29 @@ describe('deriveRoundState', () => {
       now: NOW,
     })
     expect(result.stateId).toBe('active_no_local_history')
+    expect(result.metricValue).toBe(0)
+    expect(result.metricLabel).toBe('opt-out emails sent')
     expect(result.primaryActionKind).toBe('start_round')
     expect(result.secondaryActionKind).toBe('none')
     expect(result.eligibleBrokerIds).toEqual(['a', 'b'])
+  })
+
+  it('subscribed after starter send keeps sent count and uses remaining-broker copy', () => {
+    const result = deriveRoundState({
+      brokers: [broker('a'), broker('b'), broker('c')],
+      sentLog: [sent('a', 1)],
+      subscriptionActive: true,
+      gmailConnected: true,
+      totalSentCount: 1,
+      now: NOW,
+    })
+
+    expect(result.stateId).toBe('next_round_ready')
+    expect(result.metricValue).toBe(1)
+    expect(result.metricLabel).toBe('opt-out email sent')
+    expect(result.bodyText).toBe('2 brokers are available with your subscription.')
+    expect(result.primaryActionKind).toBe('start_round')
+    expect(result.eligibleBrokerIds).toEqual(['b', 'c'])
   })
 
   it('subscribed + all brokers recently sent returns all_caught_up with next round date', () => {
@@ -135,7 +155,7 @@ describe('deriveRoundState', () => {
     expect(result.stateId).toBe('next_round_ready')
     expect(result.metricValue).toBe(2)
     expect(result.metricLabel).toBe('opt-out emails sent')
-    expect(result.bodyText).toContain('2 brokers are available')
+    expect(result.bodyText).toContain('Brokers can re-add people over time')
     expect(result.primaryActionKind).toBe('start_round')
     expect(result.eligibleBrokerIds).toEqual(['a', 'b'])
   })
