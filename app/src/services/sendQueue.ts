@@ -7,7 +7,7 @@ import { sendEmail } from './gmailSend'
 import { incrementTotalSentCount } from './metricsStore'
 import { appendSentLogEntries } from './sentLog'
 import { getDeletionTemplateDraft, resolveDeletionTemplate } from './templateStore'
-import { getUserProfile } from './userProfile'
+import { getUserProfile, getUserProfileValidationErrors } from './userProfile'
 import { getQueue, initializeQueue, resetFailedToPending, setQueue, summarizeQueue, type QueueItem, updateQueueItem } from './queueStore'
 
 function classifyError(error: unknown) {
@@ -62,6 +62,9 @@ export async function sendAll(brokers: Broker[], brokerIds: string[], onProgress
   const profile = await getUserProfile()
   if (!profile) {
     throw new Error('Profile not set. Please complete your profile before sending.')
+  }
+  if (Object.keys(getUserProfileValidationErrors(profile)).length > 0) {
+    throw new Error('Profile is invalid. Please correct your profile before sending.')
   }
   const template = resolveDeletionTemplate(profile, await getDeletionTemplateDraft())
 
