@@ -285,6 +285,9 @@ export default function Settings() {
     await setUserProfile(profileDraft)
     await clearUserProfileDraft()
     setProfileSaved(true)
+    if (returnTo) {
+      history.replace(returnTo)
+    }
   }
 
   const logOptInRemaining = useMemo(() => {
@@ -622,7 +625,9 @@ export default function Settings() {
           maxLength={4}
           placeholder="1234"
         />
-        <AppButton onClick={handleSaveProfile}>Save profile</AppButton>
+        <AppButton onClick={handleSaveProfile}>
+          {returnTo ? 'Save and continue' : 'Save profile'}
+        </AppButton>
       </section>
     )
   }
