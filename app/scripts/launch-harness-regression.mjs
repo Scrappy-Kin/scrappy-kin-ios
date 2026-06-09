@@ -365,7 +365,7 @@ const checks = [
       assertDashboardState(page, 'home-subscribed', [
         'Your next round is ready',
         `${launchStarterCount} opt-out emails sent`,
-        new RegExp(`${paidBrokerCount} (?:more )?brokers are available`, 'i'),
+        new RegExp(`${paidBrokerCount} (?:more )?brokers are available with your subscription`, 'i'),
         'Start next round',
         'View previous sends',
       ]),
@@ -392,7 +392,7 @@ const checks = [
         'home-active-no-local-history',
         [
           'Your subscription is active',
-          new RegExp(`${launchBrokerCount} (?:more )?brokers available`, 'i'),
+          '0 opt-out emails sent',
           'This is a fresh install',
           'Set up a round',
         ],
