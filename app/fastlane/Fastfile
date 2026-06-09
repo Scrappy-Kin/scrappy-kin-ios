@@ -136,7 +136,7 @@ def ensure_testflight_build_number_is_new!(api_key)
 end
 
 def xcode_project_setting!(name)
-  project_path = "ios/App/App.xcodeproj/project.pbxproj"
+  project_path = File.expand_path("../ios/App/App.xcodeproj/project.pbxproj", __dir__)
   values = File.read(project_path).scan(/#{Regexp.escape(name)} = ([^;]+);/).flatten.map(&:strip).uniq
   UI.user_error!("No #{name} values found in #{project_path}.") if values.empty?
   UI.user_error!("Conflicting #{name} values in #{project_path}: #{values.join(', ')}") if values.length > 1
