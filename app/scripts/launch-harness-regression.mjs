@@ -353,7 +353,8 @@ const checks = [
     run: (page) =>
       assertDashboardState(page, 'home-unsubscribed', [
         'Next up',
-        new RegExp(`${paidBrokerCount} (?:more )?brokers available`, 'i'),
+        `${launchStarterCount} opt-out emails sent`,
+        new RegExp(`${paidBrokerCount} (?:more )?brokers are available`, 'i'),
         /Subscribe/i,
         'Apple manages billing',
       ]),
@@ -363,7 +364,8 @@ const checks = [
     run: (page) =>
       assertDashboardState(page, 'home-subscribed', [
         'Your next round is ready',
-        new RegExp(`${paidBrokerCount} (?:more )?brokers available`, 'i'),
+        `${launchStarterCount} opt-out emails sent`,
+        new RegExp(`${paidBrokerCount} (?:more )?brokers are available`, 'i'),
         'Start next round',
         'View previous sends',
       ]),
@@ -415,7 +417,8 @@ const checks = [
     run: (page) =>
       assertDashboardState(page, 'home-entitlement-expired', [
         'Next up',
-        '0 brokers available',
+        `${launchBrokerCount} opt-out emails sent`,
+        /0 brokers are available/i,
         /Subscribe/i,
         'Apple manages billing',
       ]),
@@ -468,7 +471,8 @@ const checks = [
       await clickButtonByName(page, 'Later')
       await assertNoCrashOrForbiddenCopy(page)
       await assertVisibleText(page, 'Next up')
-      await assertVisibleText(page, new RegExp(`${paidBrokerCount} (?:more )?brokers available`, 'i'))
+      await assertVisibleText(page, `${launchStarterCount} opt-out emails sent`)
+      await assertVisibleText(page, new RegExp(`${paidBrokerCount} (?:more )?brokers are available`, 'i'))
       await assertVisibleText(page, /Subscribe/i)
     },
   },

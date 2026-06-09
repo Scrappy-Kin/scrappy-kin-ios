@@ -104,14 +104,19 @@ export function deriveRoundState(input: RoundStateInput): DashboardCopy {
 
   // No active entitlement and no remaining access
   if (!input.subscriptionActive) {
-    const paidBrokerCount = eligibleBrokerIds.length
-    if (paidBrokerCount > 0 || hasAnySent) {
+    const availableBrokerCount = eligibleBrokerIds.length
+    if (availableBrokerCount > 0 || hasAnySent) {
+      const showSentMetric = hasAnySent
       return {
         stateId: 'free_remaining_locked',
         hero: 'Next up',
-        metricValue: paidBrokerCount,
-        metricLabel: paidBrokerCount === 1 ? 'broker available' : 'brokers available',
-        bodyText: 'Subscribe to send opt-outs to the full audited list.',
+        metricValue: showSentMetric ? sentCount : availableBrokerCount,
+        metricLabel: showSentMetric
+          ? formatSentMetricLabel(sentCount)
+          : formatBrokerMetricLabel(availableBrokerCount),
+        bodyText: showSentMetric
+          ? `${formatBrokerAvailability(availableBrokerCount)} after your first round. Subscribe to send opt-outs to the full audited list.`
+          : 'Subscribe to send opt-outs to the full audited list.',
         primaryActionKind: 'subscribe',
         secondaryActionKind: hasAnySent ? 'view_sent' : 'none',
         nextRoundOpensLabel: null,
@@ -136,7 +141,7 @@ export function deriveRoundState(input: RoundStateInput): DashboardCopy {
       stateId: 'active_no_local_history',
       hero: 'Your subscription is active',
       metricValue: eligibleBrokerIds.length,
-      metricLabel: eligibleBrokerIds.length === 1 ? 'broker available' : 'brokers available',
+      metricLabel: formatBrokerMetricLabel(eligibleBrokerIds.length),
       bodyText:
         'This is a fresh install, so Scrappy Kin does not have your previous app history. Set up your email details and Gmail when you’re ready to send a round.',
       primaryActionKind: 'start_round',
@@ -152,7 +157,7 @@ export function deriveRoundState(input: RoundStateInput): DashboardCopy {
       stateId: 'gmail_disconnected',
       hero: 'Reconnect Gmail',
       metricValue: sentCount,
-      metricLabel: sentCount === 1 ? 'opt-out email sent' : 'opt-out emails sent',
+      metricLabel: formatSentMetricLabel(sentCount),
       bodyText: 'Reconnect Gmail before you send your next round.',
       primaryActionKind: 'reconnect_gmail',
       secondaryActionKind: hasAnySent ? 'view_sent' : 'none',
@@ -166,10 +171,12 @@ export function deriveRoundState(input: RoundStateInput): DashboardCopy {
     return {
       stateId: 'next_round_ready',
       hero: hasAnySent ? 'Your next round is ready' : 'Next up',
-      metricValue: eligibleBrokerIds.length,
-      metricLabel: eligibleBrokerIds.length === 1 ? 'broker available' : 'brokers available',
+      metricValue: hasAnySent ? sentCount : eligibleBrokerIds.length,
+      metricLabel: hasAnySent
+        ? formatSentMetricLabel(sentCount)
+        : formatBrokerMetricLabel(eligibleBrokerIds.length),
       bodyText: hasAnySent
-        ? 'Brokers can re-add people over time. Send a fresh round of opt-outs to the current audited list.'
+        ? `${formatBrokerAvailability(eligibleBrokerIds.length)} for your next round. Brokers can re-add people over time. Send a fresh round of opt-outs to the current audited list.`
         : null,
       primaryActionKind: 'start_round',
       secondaryActionKind: hasAnySent ? 'view_sent' : 'none',
@@ -188,13 +195,25 @@ export function deriveRoundState(input: RoundStateInput): DashboardCopy {
     stateId: 'all_caught_up',
     hero: "You're all set!",
     metricValue: sentCount,
-    metricLabel: sentCount === 1 ? 'opt-out email sent' : 'opt-out emails sent',
+    metricLabel: formatSentMetricLabel(sentCount),
     bodyText: null,
     primaryActionKind: 'none',
     secondaryActionKind: hasAnySent ? 'view_sent' : 'none',
     nextRoundOpensLabel,
     eligibleBrokerIds: [],
   }
+}
+
+function formatBrokerMetricLabel(count: number): string {
+  return count === 1 ? 'broker available' : 'brokers available'
+}
+
+function formatBrokerAvailability(count: number): string {
+  return `${count} ${count === 1 ? 'broker is' : 'brokers are'} available`
+}
+
+function formatSentMetricLabel(count: number): string {
+  return count === 1 ? 'opt-out email sent' : 'opt-out emails sent'
 }
 
 function computeNextRoundDate(
@@ -225,15 +244,16 @@ function buildQaOverrideState(
 ): DashboardCopy {
   const sentCount = Math.max(input.totalSentCount, input.sentLog.length)
   const hasAnySent = sentCount > 0
+  const availableAfterFreeRound = Math.max(0, input.brokers.length - Math.min(sentCount, input.brokers.length))
 
   switch (stateId) {
     case 'free_remaining_locked':
       return {
         stateId,
         hero: 'Next up',
-        metricValue: input.brokers.length,
-        metricLabel: 'brokers available',
-        bodyText: 'Subscribe to send opt-outs to the full audited list.',
+        metricValue: sentCount,
+        metricLabel: formatSentMetricLabel(sentCount),
+        bodyText: `${formatBrokerAvailability(availableAfterFreeRound)} after your first round. Subscribe to send opt-outs to the full audited list.`,
         primaryActionKind: 'subscribe',
         secondaryActionKind: hasAnySent ? 'view_sent' : 'none',
         nextRoundOpensLabel: null,
@@ -245,7 +265,7 @@ function buildQaOverrideState(
         stateId,
         hero: 'Your subscription is active',
         metricValue: input.brokers.length,
-        metricLabel: 'brokers available',
+        metricLabel: formatBrokerMetricLabel(input.brokers.length),
         bodyText:
           'This is a fresh install, so Scrappy Kin does not have your previous app history. Set up your email details and Gmail when you’re ready to send a round.',
         primaryActionKind: 'start_round',
@@ -260,7 +280,7 @@ function buildQaOverrideState(
         stateId,
         hero: "You're all set!",
         metricValue: sentCount || 12,
-        metricLabel: 'opt-out emails sent',
+        metricLabel: formatSentMetricLabel(sentCount || 12),
         bodyText: null,
         primaryActionKind: 'none',
         secondaryActionKind: 'view_sent',
@@ -273,9 +293,9 @@ function buildQaOverrideState(
       return {
         stateId,
         hero: 'Your next round is ready',
-        metricValue: input.brokers.length,
-        metricLabel: 'brokers available',
-        bodyText: 'Brokers can re-add people over time. Send a fresh round of opt-outs to the current audited list.',
+        metricValue: sentCount,
+        metricLabel: formatSentMetricLabel(sentCount),
+        bodyText: `${formatBrokerAvailability(input.brokers.length)} for your next round. Brokers can re-add people over time. Send a fresh round of opt-outs to the current audited list.`,
         primaryActionKind: 'start_round',
         secondaryActionKind: 'view_sent',
         nextRoundOpensLabel: null,
@@ -287,7 +307,7 @@ function buildQaOverrideState(
         stateId,
         hero: 'Reconnect Gmail',
         metricValue: sentCount,
-        metricLabel: 'opt-out emails sent',
+        metricLabel: formatSentMetricLabel(sentCount),
         bodyText: 'Reconnect Gmail before you send your next round.',
         primaryActionKind: 'reconnect_gmail',
         secondaryActionKind: hasAnySent ? 'view_sent' : 'none',
