@@ -209,6 +209,12 @@ const captureScenarios: Record<string, CaptureScenarioDefinition> = {
       await setDevSubscriptionEntitled(true)
     },
   },
+  'home-active-no-local-history': {
+    route: '/home',
+    seed: async () => {
+      await setDevSubscriptionEntitled(true)
+    },
+  },
   'home-all-caught-up': {
     route: '/home',
     seed: async () => {

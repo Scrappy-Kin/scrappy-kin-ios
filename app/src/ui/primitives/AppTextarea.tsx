@@ -1,4 +1,4 @@
-import { useId, useRef } from 'react'
+import { useId, useLayoutEffect, useRef } from 'react'
 import AppText from './AppText'
 import { scrollFieldIntoKeyboardSafeView } from './scrollFieldIntoKeyboardSafeView'
 import './input.css'
@@ -24,11 +24,20 @@ export default function AppTextarea({
 }: AppTextareaProps) {
   const generatedId = useId()
   const wrapperRef = useRef<HTMLDivElement | null>(null)
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const descriptionId = error
     ? `${generatedId}-error`
     : helpText
       ? `${generatedId}-help`
       : undefined
+
+  useLayoutEffect(() => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+
+    textarea.style.height = 'auto'
+    textarea.style.height = `${textarea.scrollHeight}px`
+  }, [value])
 
   function handleFocus() {
     requestAnimationFrame(() => {
@@ -45,11 +54,17 @@ export default function AppTextarea({
         <AppText intent="label">{label}</AppText>
       </label>
       <textarea
+        ref={textareaRef}
         id={generatedId}
         className="app-input__control"
         value={value}
         placeholder={placeholder}
         rows={rows}
+        style={{
+          minHeight: rows
+            ? `calc(${rows} * var(--line-height-control) + (2 * var(--space-3)))`
+            : undefined,
+        }}
         onChange={(event) => onChange(event.target.value)}
         onFocus={handleFocus}
         aria-invalid={Boolean(error)}

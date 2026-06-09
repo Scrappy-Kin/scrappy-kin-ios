@@ -1,4 +1,4 @@
-import { checkmarkCircle, createOutline } from 'ionicons/icons'
+import { checkmarkCircle, createOutline, informationCircle } from 'ionicons/icons'
 import type { ReactNode } from 'react'
 import AppIcon from '../primitives/AppIcon'
 import AppText from '../primitives/AppText'
@@ -11,6 +11,7 @@ type RoundReviewSummaryProps = {
   gmailAction?: ReactNode
   brokersAction?: ReactNode
   templateAction?: ReactNode
+  showAppReviewDemoRecipients?: boolean
 }
 
 export function ReviewEditIconButton({
@@ -39,6 +40,7 @@ export default function RoundReviewSummary({
   gmailAction,
   brokersAction,
   templateAction,
+  showAppReviewDemoRecipients = false,
 }: RoundReviewSummaryProps) {
   return (
     <>
@@ -59,6 +61,22 @@ export default function RoundReviewSummary({
         <AppText intent="body">
           {brokerNames.join(', ')}.
         </AppText>
+        {showAppReviewDemoRecipients ? (
+          <div className="review-asset-card__app-review-recipients">
+            <div className="review-asset-card__app-review-title">
+              <AppIcon icon={informationCircle} size="sm" />
+              <AppText intent="label">APP REVIEW DEMO RECIPIENTS</AppText>
+            </div>
+            <AppText intent="body">
+              For the App Review demo email, these emails are sent to Scrappy Kin test
+              inboxes instead of broker inboxes.
+            </AppText>
+            <AppText intent="body">
+              The broker list, email content, Gmail authorization and send flow, and
+              sent history work the same as the live app.
+            </AppText>
+          </div>
+        ) : null}
       </ReviewAssetCard>
       <ReviewAssetCard
         title="Email template setup"

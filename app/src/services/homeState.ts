@@ -6,6 +6,7 @@ type HomeRedirectTarget = string
 type EntryRouteInput = {
   gmailConnected: boolean
   hasProfile: boolean
+  subscriptionActive: boolean
   onboardingSentCount: number
   totalSentCount: number
   sentReviewItemCount: number
@@ -52,6 +53,10 @@ export function deriveEntryTarget(
   }
 
   if (hasAnyCompletedSend(input)) {
+    return null
+  }
+
+  if (input.subscriptionActive) {
     return null
   }
 

@@ -8,6 +8,7 @@ import type { SentLogEntry } from './sentLog'
 
 export type DashboardStateId =
   | 'free_remaining_locked'   // completed free round, paid brokers exist, no active subscription
+  | 'active_no_local_history'  // active access after local data was deleted or app was reinstalled
   | 'all_caught_up'           // active access, nothing eligible to send right now
   | 'next_round_ready'        // active access, eligible brokers are available
   | 'gmail_disconnected'      // active access, but Gmail is not connected
@@ -130,6 +131,21 @@ export function deriveRoundState(input: RoundStateInput): DashboardCopy {
     }
   }
 
+  if (!hasAnySent) {
+    return {
+      stateId: 'active_no_local_history',
+      hero: 'Your subscription is active',
+      metricValue: eligibleBrokerIds.length,
+      metricLabel: eligibleBrokerIds.length === 1 ? 'broker available' : 'brokers available',
+      bodyText:
+        'This is a fresh install, so Scrappy Kin does not have your previous app history. Set up your email details and Gmail when you’re ready to send a round.',
+      primaryActionKind: 'start_round',
+      secondaryActionKind: 'none',
+      nextRoundOpensLabel: null,
+      eligibleBrokerIds,
+    }
+  }
+
   // Active subscription — check Gmail
   if (!input.gmailConnected) {
     return {
@@ -220,6 +236,20 @@ function buildQaOverrideState(
         bodyText: 'Subscribe to send opt-outs to the full audited list.',
         primaryActionKind: 'subscribe',
         secondaryActionKind: hasAnySent ? 'view_sent' : 'none',
+        nextRoundOpensLabel: null,
+        eligibleBrokerIds: input.brokers.map((b) => b.id),
+      }
+
+    case 'active_no_local_history':
+      return {
+        stateId,
+        hero: 'Your subscription is active',
+        metricValue: input.brokers.length,
+        metricLabel: 'brokers available',
+        bodyText:
+          'This is a fresh install, so Scrappy Kin does not have your previous app history. Set up your email details and Gmail when you’re ready to send a round.',
+        primaryActionKind: 'start_round',
+        secondaryActionKind: 'none',
         nextRoundOpensLabel: null,
         eligibleBrokerIds: input.brokers.map((b) => b.id),
       }

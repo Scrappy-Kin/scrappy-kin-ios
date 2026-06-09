@@ -1,10 +1,5 @@
 export const APP_REVIEW_PROFILE_EMAIL = 'app-review-redacted-02@example.invalid'
 
-export const APP_REVIEW_TEST_RECIPIENT_NOTICE = {
-  title: 'App Review test recipients',
-  body: 'This review profile sends emails through Gmail to Scrappy Kin test inboxes instead of broker addresses.',
-} as const
-
 export const APP_REVIEW_TEST_RECIPIENT_EMAILS = [
   'app-review-redacted-03@example.invalid',
   'app-review-redacted-04@example.invalid',

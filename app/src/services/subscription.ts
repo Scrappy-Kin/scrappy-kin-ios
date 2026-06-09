@@ -100,15 +100,26 @@ export type SubscriptionRestoreResult =
     }
   | {
       status: 'error'
+      reason: 'none_found' | 'check_failed'
       snapshot: SubscriptionSnapshot
       message: string
     }
+
+export type SubscriptionNoticeCopy = {
+  variant: 'success' | 'error'
+  title: string
+  body: string
+}
 
 const DEV_SUBSCRIPTION_ACTIVE_KEY = 'dev_subscription_active'
 const NATIVE_SUBSCRIPTION_TIMEOUT_MS = 4000
 const SubscriptionNative = registerPlugin<SubscriptionPlugin>('Subscription')
 const PURCHASE_CANCELLED_MESSAGE =
   'Purchase did not finish. You were not charged. Try again, or email support@scrappykin.com if you need a hand. You do not need to tell us who you are to get support.'
+const RESTORE_NONE_FOUND_MESSAGE =
+  'Apple did not show an active Scrappy Kin subscription for this Apple Account. Check your iPhone subscription settings, or email support@scrappykin.com if you need help.'
+const RESTORE_CHECK_FAILED_MESSAGE =
+  'Apple could not check purchases right now. Try again in a minute. If your subscription looks active in your iPhone subscription settings, email support@scrappykin.com and we’ll help.'
 
 function buildFallbackProduct(): SubscriptionProduct {
   return {
@@ -388,8 +399,9 @@ export async function restoreSubscriptionPurchases(): Promise<SubscriptionRestor
 
     return {
       status: 'error',
+      reason: 'none_found',
       snapshot,
-      message: 'No active subscription was found to restore.',
+      message: RESTORE_NONE_FOUND_MESSAGE,
     }
   }
 
@@ -407,15 +419,36 @@ export async function restoreSubscriptionPurchases(): Promise<SubscriptionRestor
 
     return {
       status: 'error',
+      reason: 'none_found',
       snapshot,
-      message: 'No active subscription was found to restore.',
+      message: RESTORE_NONE_FOUND_MESSAGE,
     }
-  } catch (error) {
+  } catch {
     return {
       status: 'error',
+      reason: 'check_failed',
       snapshot: await getSubscriptionSnapshot(),
-      message: extractMessage(error, 'Restore Purchases did not complete.'),
+      message: RESTORE_CHECK_FAILED_MESSAGE,
     }
+  }
+}
+
+export function buildRestoreSubscriptionNotice(result: SubscriptionRestoreResult): SubscriptionNoticeCopy {
+  if (result.status === 'restored') {
+    return {
+      variant: 'success',
+      title: 'Purchases restored',
+      body: result.message,
+    }
+  }
+
+  return {
+    variant: 'error',
+    title:
+      result.reason === 'none_found'
+        ? 'No active subscription found'
+        : 'Purchases could not be checked',
+    body: result.message,
   }
 }
 

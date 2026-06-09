@@ -32,6 +32,11 @@ const PRESETS: Preset[] = [
     description: 'Free round done; paid brokers locked behind subscription.',
   },
   {
+    id: 'active_no_local_history',
+    label: 'Active, no local history',
+    description: 'Subscription restored after local app history is gone.',
+  },
+  {
     id: 'all_caught_up',
     label: 'All caught up',
     description: 'Active access, nothing to send, show cooldown date.',

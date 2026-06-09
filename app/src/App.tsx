@@ -33,6 +33,7 @@ import {
 import { deriveEntryTarget } from './services/homeState'
 import { getTotalSentCount } from './services/metricsStore'
 import { getQueue } from './services/queueStore'
+import { getSubscriptionSnapshot } from './services/subscription'
 import { getUserProfile } from './services/userProfile'
 import { buildOnboardingHref } from './services/navigation'
 
@@ -120,14 +121,16 @@ function EntryGate() {
         getOnboardingSentCount(),
         getQueue(),
         getTotalSentCount(),
+        getSubscriptionSnapshot(),
       ]),
     )
-      .then(([gmailStatus, profile, flowStarted, lastFlowStep, onboardingSentCount, queue, totalSent]) => {
+      .then(([gmailStatus, profile, flowStarted, lastFlowStep, onboardingSentCount, queue, totalSent, subscriptionSnapshot]) => {
         if (cancelled) return
         const nextTarget =
           deriveEntryTarget({
             gmailConnected: gmailStatus.connected,
             hasProfile: Boolean(profile),
+            subscriptionActive: subscriptionSnapshot.active,
             onboardingSentCount,
             totalSentCount: totalSent,
             sentReviewItemCount: queue.filter((item) => item.status === 'sent').length,

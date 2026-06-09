@@ -87,6 +87,13 @@ const reviewStates: ReviewState[] = [
     seedsLocalState: true,
   },
   {
+    id: 'home-active-no-local-history',
+    title: 'Home: active, no local history',
+    route: '/capture/home-active-no-local-history?qa=1',
+    description: 'Fresh install or deleted local data with active Apple subscription.',
+    seedsLocalState: true,
+  },
+  {
     id: 'settings',
     title: 'Settings',
     route: '/capture/settings?qa=1',

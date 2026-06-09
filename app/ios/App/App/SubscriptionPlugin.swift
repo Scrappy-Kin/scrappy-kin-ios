@@ -139,11 +139,23 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func restorePurchases(_ call: CAPPluginCall) {
         Task {
+            let activeBeforeSync = await currentEntitlementProductIds(filteredTo: nil)
+            if !activeBeforeSync.isEmpty {
+                call.resolve(["activeProductIds": activeBeforeSync])
+                return
+            }
+
             do {
                 try await AppStore.sync()
                 let activeProductIds = await currentEntitlementProductIds(filteredTo: nil)
                 call.resolve(["activeProductIds": activeProductIds])
             } catch {
+                let activeProductIds = await currentEntitlementProductIds(filteredTo: nil)
+                if !activeProductIds.isEmpty {
+                    call.resolve(["activeProductIds": activeProductIds])
+                    return
+                }
+
                 call.reject(error.localizedDescription, "RESTORE_FAILED")
             }
         }

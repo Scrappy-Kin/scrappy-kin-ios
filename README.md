@@ -154,6 +154,11 @@ TestFlight command builds/exports a Release IPA and uploads it. The upload-only
 lane is for already-signed IPAs; it does not build or export a production
 archive.
 
+Apple marketing versions use semver shape (`MAJOR.MINOR.PATCH`) in
+`MARKETING_VERSION` / `CFBundleShortVersionString`. Apple build numbers stay
+separate in `CURRENT_PROJECT_VERSION` / `CFBundleVersion`; do not use suffixes
+or build metadata in the marketing version.
+
 Before producing a new production TestFlight build, bump the checked-in Xcode
 build number:
 

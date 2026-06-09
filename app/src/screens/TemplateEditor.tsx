@@ -26,13 +26,6 @@ const emptyProfile: UserProfile = {
   partialZip: '',
 }
 
-function getTextareaRows(value: string, minRows: number, maxRows: number) {
-  const estimatedRows = value.split('\n').reduce((total, line) => {
-    return total + Math.max(1, Math.ceil(line.length / 42))
-  }, 0)
-  return Math.min(maxRows, Math.max(minRows, estimatedRows))
-}
-
 export default function TemplateEditor() {
   const history = useHistory()
   const location = useLocation()
@@ -116,7 +109,7 @@ export default function TemplateEditor() {
                 setSaveMessage('')
                 setIntro(value)
               }}
-              rows={getTextareaRows(intro, 3, 7)}
+              rows={3}
             />
           </div>
 
@@ -128,7 +121,7 @@ export default function TemplateEditor() {
                 setSaveMessage('')
                 setRequestBlock(value)
               }}
-              rows={getTextareaRows(requestBlock, 8, 16)}
+              rows={5}
             />
           </div>
 
@@ -140,7 +133,7 @@ export default function TemplateEditor() {
                 setSaveMessage('')
                 setSignOff(value)
               }}
-              rows={getTextareaRows(signOff, 2, 4)}
+              rows={2}
             />
           </div>
 

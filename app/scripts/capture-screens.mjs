@@ -107,12 +107,20 @@ const capturePlan = [
     file: '10-home-subscribed.png',
   },
   {
+    id: 'home-active-no-local-history',
+    title: 'Home: active, no local history',
+    description: 'Fresh install or deleted local data with active Apple subscription.',
+    group: 'dashboard',
+    route: '/capture/home-active-no-local-history?qa=1',
+    file: '11-home-active-no-local-history.png',
+  },
+  {
     id: 'settings',
     title: 'Settings',
     description: 'Top-level Settings entry point for profile, Gmail, subscription, privacy, diagnostics, and support.',
     group: 'settings',
     route: '/capture/settings?qa=1',
-    file: '11-settings-home.png',
+    file: '12-settings-home.png',
   },
   {
     id: 'settings-subscription',
@@ -120,7 +128,7 @@ const capturePlan = [
     description: 'Top-level subscription management with restore and Apple billing copy.',
     group: 'settings',
     route: '/capture/settings-subscription?qa=1',
-    file: '12-settings-subscription.png',
+    file: '13-settings-subscription.png',
   },
   {
     id: 'settings-profile',
@@ -128,7 +136,7 @@ const capturePlan = [
     description: 'Editable personal details used in broker opt-out emails.',
     group: 'settings',
     route: '/capture/settings-profile?qa=1',
-    file: '13-settings-profile.png',
+    file: '14-settings-profile.png',
   },
   {
     id: 'settings-privacy',
@@ -136,7 +144,7 @@ const capturePlan = [
     description: 'On-device data and deletion controls.',
     group: 'settings',
     route: '/capture/settings-privacy?qa=1',
-    file: '14-settings-privacy.png',
+    file: '15-settings-privacy.png',
   },
   {
     id: 'settings-diagnostics',
@@ -144,7 +152,7 @@ const capturePlan = [
     description: 'Local diagnostics capture, export, and wipe actions.',
     group: 'settings',
     route: '/capture/settings-diagnostics?qa=1',
-    file: '15-settings-diagnostics.png',
+    file: '16-settings-diagnostics.png',
   },
   {
     id: 'settings-support',
@@ -152,7 +160,7 @@ const capturePlan = [
     description: 'Help, legal links, support email, and build metadata on one surface.',
     group: 'settings',
     route: '/capture/settings-support?qa=1',
-    file: '16-settings-support.png',
+    file: '17-settings-support.png',
   },
 ]
 
