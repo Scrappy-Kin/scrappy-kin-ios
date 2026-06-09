@@ -59,10 +59,6 @@
   color: currentColor;
 }
 
-.review-asset-card__app-review-title .text-label {
-  color: currentColor;
-}
-
 .review-asset-card__icon-action {
   display: inline-flex;
   align-items: center;
