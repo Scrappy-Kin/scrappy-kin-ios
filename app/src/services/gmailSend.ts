@@ -36,7 +36,16 @@ function base64UrlEncode(text: string) {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
 }
 
+function assertNoHeaderInjection(value: string | undefined, field: string) {
+  if (value !== undefined && /[\r\n]/.test(value)) {
+    throw new Error(`Gmail send blocked: illegal newline in ${field} header.`)
+  }
+}
+
 function buildMimeMessage({ to, subject, body, replyTo }: SendEmailInput) {
+  assertNoHeaderInjection(to, 'To')
+  assertNoHeaderInjection(subject, 'Subject')
+  assertNoHeaderInjection(replyTo, 'Reply-To')
   const headers = [
     `To: ${to}`,
     `Subject: ${subject}`,
@@ -49,6 +58,10 @@ function buildMimeMessage({ to, subject, body, replyTo }: SendEmailInput) {
 }
 
 export async function sendEmail(input: SendEmailInput) {
+  assertNoHeaderInjection(input.to, 'To')
+  assertNoHeaderInjection(input.subject, 'Subject')
+  assertNoHeaderInjection(input.replyTo, 'Reply-To')
+
   if (input.appReviewTestRecipients && !isAppReviewSinkEmail(input.to)) {
     throw new Error('App Review test-recipient mode blocked a non-test broker recipient before Gmail send.')
   }
