@@ -19,6 +19,35 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
+describe('sendEmail MIME header CRLF guard', () => {
+  const fields = [
+    { field: 'to', value: 'privacy@broker.example\r\nBcc: attacker@evil.example' },
+    { field: 'subject', value: 'Deletion\nX-Injected: 1' },
+    { field: 'replyTo', value: 'me@example.com\rX-Injected: 1' },
+  ] as const
+
+  for (const { field, value } of fields) {
+    it(`rejects newlines in ${field} before Gmail token lookup or network send`, async () => {
+      const fetchSpy = vi.fn()
+      vi.stubGlobal('fetch', fetchSpy)
+
+      const input = {
+        to: 'privacy@broker.example',
+        subject: 'Personal Data Deletion Request',
+        body: 'Body',
+        replyTo: 'me@example.com',
+        [field]: value,
+      }
+
+      await expect(sendEmail(input)).rejects.toThrow(/illegal newline/)
+
+      expect(mockGetAccessToken).not.toHaveBeenCalled()
+      expect(fetchSpy).not.toHaveBeenCalled()
+      vi.unstubAllGlobals()
+    })
+  }
+})
+
 describe('sendEmail App Review recipient guard', () => {
   it('blocks non-test recipients before Gmail token lookup in App Review test-recipient mode', async () => {
     await expect(

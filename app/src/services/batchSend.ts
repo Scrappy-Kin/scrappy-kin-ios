@@ -28,11 +28,15 @@ export async function executeBatchSend(
   const brokers = await loadBrokers()
   const selectedIds = await getSelectedBrokerIds()
   const targetIds =
-    targetBrokerIds && targetBrokerIds.length > 0
-      ? targetBrokerIds
-      : selectedIds.length > 0
-        ? selectedIds
-        : brokers.map((broker) => broker.id)
+    targetBrokerIds && targetBrokerIds.length > 0 ? targetBrokerIds : selectedIds
+
+  if (targetIds.length === 0) {
+    return {
+      sentCount: 0,
+      failureMessage: 'No brokers selected. Select at least one broker before sending.',
+    }
+  }
+
   const summary = await sendAll(brokers, targetIds)
 
   const selectedRoundSize = await getSelectedRoundSize()
