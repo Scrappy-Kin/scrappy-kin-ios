@@ -31,7 +31,7 @@ signoff begins, see `docs/qa-policy.md`.
 - Display name: `Scrappy Dev`
 - Google project: `Scrappy-Kin-Dev`
 - Google client ID: `914858229260-ns59pecm40udl9fi18ugrb1njlqie0m1.apps.googleusercontent.com`
-- Broker catalog: deterministic fixture brokers only
+- Broker catalog: launch broker names with deterministic `testbot+...@scrappykin.com` fixture recipients
 
 Build-time client IDs are lane defaults in `app/vite.config.ts`; a fresh clone
 does not need local `.env` files just to produce a working DEV or PROD web
@@ -67,13 +67,8 @@ Canonical local runbook:
 - Dev lane
   - select Xcode scheme `Scrappy Kin Dev`
   - run `npm run ios:sync:dev`
-  - expect the 5 neutral fixture brokers:
-    - `Fixture Broker One`
-    - `Fixture Broker Two`
-    - `Fixture Broker Three`
-    - `Very Long Broker Name For Layout Testing`
-    - `Fixture Broker Four`
-  - fixture emails use `testbot+broker-fixture_...@scrappykin.com` plus `testbot+broker-long_name@scrappykin.com`
+  - expect the current launch broker names with fixture recipients derived from broker IDs
+  - fixture emails use `testbot+<broker-id>@scrappykin.com` with non-alphanumeric characters normalized to `_`
   - if the simulator shows only the pink app background, rerun with
     `npm run ios:sync:dev:diagnostics`; this injects a dev-only boot overlay
     that reports whether HTML loaded, the app bundle loaded, or startup threw
