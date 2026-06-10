@@ -33,7 +33,7 @@ export async function executeBatchSend(
   if (targetIds.length === 0) {
     return {
       sentCount: 0,
-      failureMessage: 'No brokers selected. Select at least one broker before sending.',
+      failureMessage: 'No brokers selected. Please select at least one broker before sending.',
     }
   }
 

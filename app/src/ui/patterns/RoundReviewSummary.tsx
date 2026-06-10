@@ -66,11 +66,11 @@ export default function RoundReviewSummary({
             <div className="review-asset-card__app-review-title">
               <AppIcon icon={informationCircle} size="sm" />
               <AppText intent="label" tone="danger">
-                APP REVIEW DEMO RECIPIENTS
+                APP REVIEW TEST RECIPIENTS
               </AppText>
             </div>
             <AppText intent="body">
-              For the App Review demo email, these emails are sent to Scrappy Kin test
+              For Apple App Review, these emails are sent to Scrappy Kin test
               inboxes instead of broker inboxes.
             </AppText>
             <AppText intent="body">
