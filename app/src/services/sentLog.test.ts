@@ -91,4 +91,20 @@ describe('getMergedSentLog', () => {
 
     expect(result).toHaveLength(0)
   })
+
+  it('preserves durable recipient routing metadata', async () => {
+    mockGetEncrypted.mockResolvedValue([
+      {
+        ...logEntry('a', 'REF-A'),
+        recipientMode: 'app_review_test',
+        recipientEmail: 'testbot+testround-broker-a@scrappykin.com',
+      },
+    ])
+    mockGetQueue.mockResolvedValue([])
+
+    const result = await getMergedSentLog()
+
+    expect(result[0].recipientMode).toBe('app_review_test')
+    expect(result[0].recipientEmail).toBe('testbot+testround-broker-a@scrappykin.com')
+  })
 })

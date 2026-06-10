@@ -12,7 +12,7 @@ export default function AppCard({ title, actions, children }: AppCardProps) {
   const hasHeader = Boolean(title || actions)
 
   return (
-    <section className={`app-card${hasHeader ? ' app-card--with-header' : ''}`}>
+    <section className="app-card">
       {hasHeader && (
         <header className="app-card__header">
           {title ? <AppText intent="label">{title}</AppText> : <span />}

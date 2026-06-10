@@ -7,6 +7,8 @@ export type SentLogEntry = {
   brokerName: string
   sentAt: string
   referenceId: string
+  recipientMode?: 'broker' | 'app_review_test'
+  recipientEmail?: string
 }
 
 const SENT_LOG_KEY = 'sent_log'
