@@ -23,6 +23,7 @@ Server-side infrastructure (there isn't much — see [SECURITY.md](../SECURITY.m
 
 | Date | Scope | Findings | Status |
 |------|-------|----------|--------|
+| [2026-06-09](./audit-2026-06-09.md) | scrappy-kin-ios — second AI-assisted pass: Gmail send path, Apple App Review test-recipient path, local storage, diagnostics, build boundaries | 0 P0s · 0 P1s · 4 P3s | 3 fixed before submission; 1 narrow Apple App Review test-recipient edge mitigated and documented |
 | [2026-05-30](./audit-2026-05-30.md) | scrappy-kin-ios — OAuth, keychain, send path, deps, build | 0 P0s · 2 P1s · 1 P2 · 1 P3 | All resolved or policy-accepted before launch |
 
 ## Found something we missed?
