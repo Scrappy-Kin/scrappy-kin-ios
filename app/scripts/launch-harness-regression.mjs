@@ -448,10 +448,10 @@ const checks = [
     run: async (page) => {
       for (const scenario of ['flow-final-review', 'review-batch']) {
         await openScenario(page, scenario)
-        await assertVisibleText(page, 'App Review demo recipients')
+        await assertVisibleText(page, 'App Review test recipients')
         await assertVisibleText(
           page,
-          'For the App Review demo email, these emails are sent to Scrappy Kin test inboxes instead of broker inboxes.',
+          'For Apple App Review, these emails are sent to Scrappy Kin test inboxes instead of broker inboxes.',
         )
         await assertVisibleText(
           page,
