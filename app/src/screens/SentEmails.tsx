@@ -60,6 +60,17 @@ export default function SentEmails() {
                         : 'Recorded on this device'}
                     </AppText>
                   </AppSegmentedCardSection>
+                  {entry.recipientMode === 'app_review_test' ? (
+                    <AppSegmentedCardSection>
+                      <AppText intent="label" tone="danger">App Review demo recipient</AppText>
+                      <AppText intent="body">
+                        Sent to a Scrappy Kin test inbox instead of the broker inbox.
+                      </AppText>
+                      {entry.recipientEmail ? (
+                        <AppText intent="caption">{entry.recipientEmail}</AppText>
+                      ) : null}
+                    </AppSegmentedCardSection>
+                  ) : null}
                 </AppSegmentedCard>
               ))}
             </div>

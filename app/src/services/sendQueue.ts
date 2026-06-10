@@ -123,6 +123,8 @@ export async function sendAll(brokers: Broker[], brokerIds: string[], onProgress
           brokerName: broker.name,
           sentAt,
           referenceId: item.referenceId,
+          recipientMode: recipient.usesAppReviewTestRecipient ? 'app_review_test' : 'broker',
+          recipientEmail: recipient.to,
         },
       ])
       summary = summarizeQueue(updated)
