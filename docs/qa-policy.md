@@ -156,6 +156,17 @@ Internal TestFlight is the final truth surface for paid-flow confidence.
 Internal TestFlight is not the safe-send QA surface. A TestFlight build produced
 from `Release` may send to real broker recipients.
 
+Sandbox subscription reset note:
+
+- Clearing purchase history in App Store Connect is not enough by itself for a
+  device that is already signed in to that Sandbox Apple Account.
+- After clearing purchase history, sign out of the Sandbox Apple Account on the
+  iPhone to clear the device purchase-history cache, then sign back in and
+  restart the app.
+- If the account has been used heavily or still reports an active entitlement,
+  create a fresh Sandbox Apple Account with an email address that is not already
+  an Apple Account and use that for clean-slate purchase/restore QA.
+
 Signing authority and upload authority are separate. A release machine may build
 and sign the production IPA, while another bounded surface may upload that
 already-signed IPA to TestFlight using `ios:fastlane:upload-testflight-ipa`.

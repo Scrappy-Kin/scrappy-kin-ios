@@ -192,10 +192,30 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
                 continue
             }
 
+            guard Self.isActiveEntitlement(transaction) else {
+                continue
+            }
+
             activeProductIds.append(transaction.productID)
         }
 
         return activeProductIds
+    }
+
+    private static func isActiveEntitlement(_ transaction: Transaction) -> Bool {
+        if transaction.revocationDate != nil {
+            return false
+        }
+
+        if let expirationDate = transaction.expirationDate, expirationDate < Date() {
+            return false
+        }
+
+        if transaction.isUpgraded {
+            return false
+        }
+
+        return true
     }
 
     private static func serializeProduct(_ product: Product) -> [String: Any] {
