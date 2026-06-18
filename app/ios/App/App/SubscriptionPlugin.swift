@@ -72,7 +72,7 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
                 diagnostics["productLoadErrorMessage"] = error.localizedDescription
             }
 
-            let activeProductIds = await currentEntitlementProductIds(filteredTo: productIds)
+            let activeProductIds = await currentSubscriptionProductIds(productIds: productIds)
             diagnostics["entitlementLookupCompleted"] = true
             diagnostics["activeProductIds"] = activeProductIds
 
@@ -85,7 +85,7 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
         let productIds = call.getArray("productIds", String.self) ?? []
 
         Task {
-            let activeProductIds = await currentEntitlementProductIds(filteredTo: productIds)
+            let activeProductIds = await currentSubscriptionProductIds(productIds: productIds)
             call.resolve(["activeProductIds": activeProductIds])
         }
     }
@@ -110,7 +110,7 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
                     switch verificationResult {
                     case .verified(let transaction):
                         await transaction.finish()
-                        let activeProductIds = await currentEntitlementProductIds(filteredTo: [productId])
+                        let activeProductIds = await currentSubscriptionProductIds(productIds: [productId])
                         call.resolve([
                             "status": "purchased",
                             "activeProductIds": activeProductIds
@@ -138,19 +138,15 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc func restorePurchases(_ call: CAPPluginCall) {
-        Task {
-            let activeBeforeSync = await currentEntitlementProductIds(filteredTo: nil)
-            if !activeBeforeSync.isEmpty {
-                call.resolve(["activeProductIds": activeBeforeSync])
-                return
-            }
+        let productIds = call.getArray("productIds", String.self) ?? []
 
+        Task {
             do {
                 try await AppStore.sync()
-                let activeProductIds = await currentEntitlementProductIds(filteredTo: nil)
+                let activeProductIds = await currentSubscriptionProductIds(productIds: productIds)
                 call.resolve(["activeProductIds": activeProductIds])
             } catch {
-                let activeProductIds = await currentEntitlementProductIds(filteredTo: nil)
+                let activeProductIds = await currentSubscriptionProductIds(productIds: productIds)
                 if !activeProductIds.isEmpty {
                     call.resolve(["activeProductIds": activeProductIds])
                     return
@@ -167,11 +163,14 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
             guard let self else { return }
 
             for await result in Transaction.updates {
+                var updatedProductIds: [String] = []
+
                 if case .verified(let transaction) = result {
+                    updatedProductIds = [transaction.productID]
                     await transaction.finish()
                 }
 
-                let activeProductIds = await self.currentEntitlementProductIds(filteredTo: nil)
+                let activeProductIds = await self.currentSubscriptionProductIds(productIds: updatedProductIds)
                 self.notifyListeners("entitlementUpdated", data: [
                     "activeProductIds": activeProductIds
                 ])
@@ -179,47 +178,52 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
         }
     }
 
-    private func currentEntitlementProductIds(filteredTo productIds: [String]?) async -> [String] {
-        let filter = productIds.map(Set.init)
-        var activeProductIds: [String] = []
-
-        for await result in Transaction.currentEntitlements {
-            guard case .verified(let transaction) = result else {
-                continue
-            }
-
-            if let filter, !filter.contains(transaction.productID) {
-                continue
-            }
-
-            guard Self.isActiveEntitlement(transaction) else {
-                continue
-            }
-
-            activeProductIds.append(transaction.productID)
+    private func currentSubscriptionProductIds(productIds: [String]) async -> [String] {
+        let requestedProductIds = Array(Set(productIds.filter { !$0.isEmpty }))
+        if requestedProductIds.isEmpty {
+            return []
         }
 
-        return activeProductIds
+        do {
+            let products = try await Product.products(for: requestedProductIds)
+            var activeProductIds = Set<String>()
+
+            for product in products where product.type == .autoRenewable {
+                guard requestedProductIds.contains(product.id),
+                      let statuses = try await product.subscription?.status else {
+                    continue
+                }
+
+                for status in statuses {
+                    guard Self.isEntitledSubscriptionStatus(status) else {
+                        continue
+                    }
+
+                    guard case .verified(let transaction) = status.transaction,
+                          transaction.productID == product.id else {
+                        continue
+                    }
+
+                    activeProductIds.insert(product.id)
+                    break
+                }
+            }
+
+            return requestedProductIds.filter { activeProductIds.contains($0) }
+        } catch {
+            return []
+        }
     }
 
-    private static func isActiveEntitlement(_ transaction: Transaction) -> Bool {
-        guard transaction.productType == .autoRenewable else {
+    private static func isEntitledSubscriptionStatus(_ status: Product.SubscriptionInfo.Status) -> Bool {
+        switch status.state {
+        case .subscribed, .inGracePeriod:
+            return true
+        case .expired, .inBillingRetryPeriod, .revoked:
+            return false
+        default:
             return false
         }
-
-        if transaction.revocationDate != nil {
-            return false
-        }
-
-        if transaction.isUpgraded {
-            return false
-        }
-
-        guard let expirationDate = transaction.expirationDate, expirationDate > Date() else {
-            return false
-        }
-
-        return true
     }
 
     private static func serializeProduct(_ product: Product) -> [String: Any] {
