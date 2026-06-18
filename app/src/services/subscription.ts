@@ -51,7 +51,7 @@ type SubscriptionPlugin = {
   diagnoseProducts(options: { productIds: string[] }): Promise<{ diagnostics: SubscriptionDiagnostics }>
   getEntitlement(options: { productIds: string[] }): Promise<NativeEntitlementResponse>
   purchase(options: { productId: string }): Promise<NativePurchaseResponse>
-  restorePurchases(): Promise<NativeEntitlementResponse>
+  restorePurchases(options: { productIds: string[] }): Promise<NativeEntitlementResponse>
   addListener(
     eventName: 'entitlementUpdated',
     listenerFunc: (event: NativeEntitlementResponse) => void,
@@ -406,7 +406,7 @@ export async function restoreSubscriptionPurchases(): Promise<SubscriptionRestor
   }
 
   try {
-    await SubscriptionNative.restorePurchases()
+    await SubscriptionNative.restorePurchases({ productIds: [SUBSCRIPTION_PRODUCT_ID] })
     const snapshot = await getSubscriptionSnapshot()
 
     if (snapshot.active) {
