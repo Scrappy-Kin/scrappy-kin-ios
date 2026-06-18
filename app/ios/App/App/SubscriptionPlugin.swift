@@ -203,15 +203,19 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     private static func isActiveEntitlement(_ transaction: Transaction) -> Bool {
+        guard transaction.productType == .autoRenewable else {
+            return false
+        }
+
         if transaction.revocationDate != nil {
             return false
         }
 
-        if let expirationDate = transaction.expirationDate, expirationDate < Date() {
+        if transaction.isUpgraded {
             return false
         }
 
-        if transaction.isUpgraded {
+        guard let expirationDate = transaction.expirationDate, expirationDate > Date() else {
             return false
         }
 
