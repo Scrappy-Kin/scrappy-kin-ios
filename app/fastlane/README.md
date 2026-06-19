@@ -21,7 +21,7 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 [bundle exec] fastlane ios qa_device
 ```
 
-Build, verify, install, and launch the QADevice lane on a connected iPhone.
+Build, verify, install, and launch QADevice on a connected iPhone.
 
 ### ios qa_device_fast
 
@@ -37,7 +37,7 @@ Fast web-only QADevice loop: rebuild web assets, copy them into iOS, install, an
 [bundle exec] fastlane ios qa_simulator
 ```
 
-Build, verify, install, and launch the QADevice lane on a simulator.
+Build, verify, install, and launch QADevice on a simulator.
 
 ### ios prod_archive
 
