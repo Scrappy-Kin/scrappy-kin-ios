@@ -23,7 +23,7 @@ import {
   getOAuthBrowserOpenSnapshot,
   subscribeOAuthBrowserOpen,
 } from './services/googleAuth'
-import { isDevAppLane, isQaStoreKitLane } from './config/buildInfo'
+import { isDevAppLane, isQaDeviceLane } from './config/buildInfo'
 import {
   getOnboardingSentCount,
   getSavedFlowStep,
@@ -51,7 +51,7 @@ const DevAppUrlBridge = DEV_SURFACES_ENABLED ? lazy(() => import('./dev/AppUrlBr
 const DevCaptureScenarioRoute = DEV_SURFACES_ENABLED
   ? lazy(() => import('./dev/CaptureScenarioRoute'))
   : null
-const QaDashboardSheet = (DEV_SURFACES_ENABLED || isQaStoreKitLane())
+const QaDashboardSheet = (DEV_SURFACES_ENABLED || isQaDeviceLane())
   ? lazy(() => import('./dev/QaDashboardSheet'))
   : null
 
@@ -241,8 +241,8 @@ function AppShell() {
     getOAuthBrowserOpenSnapshot,
   )
   const showDevTools = DEV_SURFACES_ENABLED && showDevLaneUi
-  const showQaStoreKitUi = isQaStoreKitLane()
-  const showQaBadge = showDevTools || showQaStoreKitUi
+  const showQaDeviceUi = isQaDeviceLane()
+  const showQaBadge = showDevTools || showQaDeviceUi
 
   const devRoutes = showDevTools
     ? [
@@ -298,14 +298,14 @@ function AppShell() {
           type="button"
           className={[
             'execution-lane-badge',
-            showQaStoreKitUi ? 'execution-lane-badge--qa' : 'execution-lane-badge--dev',
+            showQaDeviceUi ? 'execution-lane-badge--qa' : 'execution-lane-badge--dev',
           ].join(' ')}
           aria-label="Open QA dashboard presets"
           onClick={() => setQaSheetOpen(true)}
         >
           <span className="execution-lane-badge__dot" />
           <span className="execution-lane-badge__label">
-            {showQaStoreKitUi ? 'QA' : 'DEV'}
+            {showQaDeviceUi ? 'QA' : 'DEV'}
           </span>
         </button>
       ) : null}

@@ -4,7 +4,7 @@ import {
 import type { ReactElement, ReactNode } from 'react'
 import onboardingSuccessIllustration from '../../assets/illustrations/onboarding-success.svg'
 import { isAppReviewProfileEmail } from '../../config/appReviewTestRecipients'
-import { QA_STOREKIT_SEND_NOTICE } from '../../config/qaStoreKit'
+import { QA_DEVICE_SEND_NOTICE } from '../../config/qaDevice'
 import { buildDeletionSubject } from '../../services/emailTemplate'
 import type { Broker } from '../../services/brokerStore'
 import type { FlowStepId } from '../../services/flowProgress'
@@ -60,7 +60,7 @@ type BuildFlowStepsInput = {
   sendError: string | null
   sendInFlight: boolean
   onboardingSentCount: number
-  isQaStoreKit: boolean
+  isQaDevice: boolean
   subscriptionSnapshot: SubscriptionSnapshot | null
   subscriptionNotice: FlowInlineNotice | null
   subscriptionBusy: 'purchase' | 'restore' | null
@@ -101,7 +101,7 @@ export function buildFlowSteps({
   sendError,
   sendInFlight,
   onboardingSentCount,
-  isQaStoreKit,
+  isQaDevice,
   subscriptionSnapshot,
   subscriptionNotice,
   subscriptionBusy,
@@ -369,9 +369,9 @@ export function buildFlowSteps({
           <ServerBoundaryClaim />
         </section>
       ),
-      qaFooter: isQaStoreKit ? (
+      qaFooter: isQaDevice ? (
         <AppNotice variant="warning" title="QA send lane">
-          {QA_STOREKIT_SEND_NOTICE}
+          {QA_DEVICE_SEND_NOTICE}
         </AppNotice>
       ) : null,
       showNext: false,
@@ -456,7 +456,7 @@ export function buildFlowSteps({
           </div>
         </section>
       ),
-      qaFooter: isQaStoreKit ? (
+      qaFooter: isQaDevice ? (
         <SubscriptionDiagnosticsNotice snapshot={subscriptionSnapshot} />
       ) : null,
       showNext: false,

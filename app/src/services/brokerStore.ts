@@ -1,7 +1,6 @@
 import brokersData from '../assets/broker-lists/email-only-brokers.v1.0.1.json'
 import { devFixtureBrokers } from '../assets/broker-lists/dev-fixture-brokers'
-import { isDevAppLane, isQaStoreKitLane } from '../config/buildInfo'
-import { getQaStoreKitSinkEmail } from '../config/qaStoreKit'
+import { isDevAppLane } from '../config/buildInfo'
 import { getEncrypted, setEncrypted } from './secureStore'
 
 export type Broker = {
@@ -37,38 +36,12 @@ function parseBrokerData(): Broker[] {
   return []
 }
 
-function applyQaStoreKitSinkEmails(brokers: Broker[]) {
-  const starterEmailById = new Map(
-    getStarterBrokers(brokers).map((broker, index) => [
-      broker.id,
-      getQaStoreKitSinkEmail(index),
-    ]),
-  )
-  let remainingIndex = 0
-
-  return brokers.map((broker) => {
-    const contactEmail =
-      starterEmailById.get(broker.id) ??
-      getQaStoreKitSinkEmail(remainingIndex++)
-
-    return {
-      ...broker,
-      contactEmail,
-    }
-  })
-}
-
 async function resolveBrokerCatalog(): Promise<Broker[]> {
   if (await isDevAppLane()) {
     return devFixtureBrokers
   }
 
-  const realCatalog = parseBrokerData()
-  if (isQaStoreKitLane()) {
-    return applyQaStoreKitSinkEmails(realCatalog)
-  }
-
-  return realCatalog
+  return parseBrokerData()
 }
 
 export async function loadBrokerCatalog(): Promise<Broker[]> {

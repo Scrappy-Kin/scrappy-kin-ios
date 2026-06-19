@@ -14,11 +14,11 @@ const appRoot = path.resolve(__dirname, '..')
 
 const bundleId = 'com.scrappykin.ios'
 const productId = 'com.scrappykin.ios.subscription.annual'
-const executionLane = 'qa-storekit'
+const executionLane = 'qa-device'
 const developmentTeam = process.env.IOS_DEVELOPMENT_TEAM ?? 'TF64W577SD'
 const deviceUdid = process.env.IOS_DEVICE_UDID
 const deviceName = process.env.IOS_DEVICE_NAME
-const derivedDataPath = await resolveXcodeDerivedDataPath('ScrappyKinQaStoreKitDevice')
+const derivedDataPath = await resolveXcodeDerivedDataPath('ScrappyKinQaDevice')
 const webOnly = process.env.SCRAPPY_KIN_QA_WEB_ONLY === '1'
 
 let builtAppPathCache = null
@@ -85,7 +85,7 @@ async function findPhysicalDeviceUdid() {
 }
 
 async function buildNativeApp(udid) {
-  await run('npm', ['run', webOnly ? 'ios:copy:qa-storekit' : 'ios:sync:qa-storekit'])
+  await run('npm', ['run', webOnly ? 'ios:copy:qa-device' : 'ios:sync:qa-device'])
 
   const buildConfiguration = process.env.IOS_XCODE_CONFIGURATION ?? 'QADevice'
   const signingOverrides = [
@@ -170,10 +170,10 @@ async function verifyBuiltApp() {
     .map(([, message]) => message)
 
   if (failures.length > 0) {
-    throw new Error(`QA StoreKit device build verification failed: ${failures.join(', ')}`)
+    throw new Error(`QADevice build verification failed: ${failures.join(', ')}`)
   }
 
-  console.log(`Verified QA StoreKit device app at ${builtAppPathCache}`)
+  console.log(`Verified QADevice app at ${builtAppPathCache}`)
 }
 
 async function installAndLaunch(udid) {

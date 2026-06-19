@@ -1,4 +1,4 @@
-import { isQaStoreKitLane } from '../../config/buildInfo'
+import { isQaDeviceLane } from '../../config/buildInfo'
 import type { SubscriptionSnapshot } from '../../services/subscription'
 import AppNotice from '../primitives/AppNotice'
 import './subscription-diagnostics-notice.css'
@@ -15,8 +15,16 @@ function formatList(values: string[] | undefined) {
 export default function SubscriptionDiagnosticsNotice({
   snapshot,
 }: SubscriptionDiagnosticsNoticeProps) {
-  if (!isQaStoreKitLane() || !snapshot?.diagnostics) {
+  if (!isQaDeviceLane()) {
     return null
+  }
+
+  if (!snapshot?.diagnostics) {
+    return (
+      <AppNotice variant="warning" title="StoreKit diagnostics unavailable">
+        StoreKit diagnostics did not load in this QADevice build.
+      </AppNotice>
+    )
   }
 
   const diagnostics = snapshot.diagnostics
@@ -27,6 +35,7 @@ export default function SubscriptionDiagnosticsNotice({
     `Returned: ${diagnostics.returnedProductCount} (${formatList(diagnostics.returnedProductIds)})`,
     `Product load: ${diagnostics.productLoadCompleted ? 'completed' : 'not completed'}`,
     `Entitlements: ${diagnostics.entitlementLookupCompleted ? 'checked' : 'not checked'} (${formatList(diagnostics.activeProductIds)})`,
+    `Subscription states: ${formatList(diagnostics.subscriptionStatusStates)}`,
   ]
 
   if (diagnostics.lastPurchaseStatus) {
@@ -44,7 +53,7 @@ export default function SubscriptionDiagnosticsNotice({
   }
 
   return (
-    <AppNotice variant="warning" title="QA StoreKit diagnostics">
+    <AppNotice variant="warning" title="StoreKit diagnostics">
       <span className="subscription-diagnostics-notice">
         {lines.map((line) => (
           <span key={line}>{line}</span>

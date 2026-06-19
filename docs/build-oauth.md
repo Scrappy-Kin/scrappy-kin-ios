@@ -1,4 +1,4 @@
-# Build Lane, OAuth, and QA StoreKit Guide
+# Build Lane, OAuth, and QADevice Guide
 
 This app uses build-time lanes for OAuth, StoreKit, and broker-send safety. There
 are **no user-facing runtime switches**.
@@ -16,15 +16,16 @@ signoff begins, see `docs/qa-policy.md`.
 - Broker catalog: real curated broker list
 - StoreKit product: `com.scrappykin.ios.subscription.annual`
 
-**QA StoreKit**
+**QADevice**
 - Bundle ID: `com.scrappykin.ios`
 - Display name: `Scrappy Kin`
 - Google project: `scrappy-kin`
 - Google client ID: `304151210577-2hvg4113nd77cn8om3kppubqju7eu3sj.apps.googleusercontent.com`
-- Broker catalog: real curated broker list with `contactEmail` replaced by Scrappy Kin sink inboxes
+- Broker catalog: real curated broker list
 - StoreKit product: `com.scrappykin.ios.subscription.annual`
 - Visible app badge: `QA`
-- Purpose: dogfood the real onboarding/send/subscription flow without emailing real brokers
+- Purpose: dogfood the real onboarding/send/subscription flow without widening the production `Release` path
+- Safe sends: entering `app-review-redacted-02@example.invalid` as the local profile email routes broker emails to Scrappy Kin test inboxes; non-demo recipients are blocked before Gmail send in `QADevice`
 
 **DEV**
 - Bundle ID: `com.scrappykin.ios.dev`
@@ -43,7 +44,7 @@ Native URL schemes remain set in:
 - `app/ios/release.xcconfig` (`GOOGLE_CLIENT_ID` + `GOOGLE_REDIRECT_SCHEME`)
 
 Set local env values only for optional lane-specific inputs such as
-`VITE_APPLE_SUBSCRIPTION_PRODUCT_ID` in production/QA StoreKit builds.
+`VITE_APPLE_SUBSCRIPTION_PRODUCT_ID` in production/QADevice builds.
 
 Token/keychain storage is isolated per bundle ID (no shared keychain group).
 
@@ -59,8 +60,8 @@ Use the correct build-and-sync pair so the compiled client ID matches the target
 - Xcode scheme pairing:
   - `Scrappy Kin Dev` scheme must be paired with `npm run ios:sync:dev`
   - `Scrappy Kin Prod` scheme must be paired with `npm run ios:sync:prod`
-  - `npm run ios:install:qa-storekit` builds and installs the QA StoreKit web bundle on a simulator
-  - `npm run ios:install:qa-storekit:device` builds and installs the QA StoreKit web bundle through `QADevice` on a connected iPhone
+  - `npm run ios:install:qa-device` builds and installs the QADevice web/native bundle on a simulator
+  - `npm run ios:install:qa-device:device` builds and installs the QADevice web/native bundle on a connected iPhone
   - Do not mix a dev scheme with a prod web bundle, or a prod scheme with a dev web bundle.
 
 Canonical local runbook:
@@ -77,9 +78,9 @@ Canonical local runbook:
   - select Xcode scheme `Scrappy Kin Prod`
   - run `npm run ios:sync:prod`
   - expect the real curated broker list
-- QA StoreKit lane
-  - run `npm run ios:install:qa-storekit`
-  - run `npm run ios:install:qa-storekit:device` for physical-device StoreKit sandbox QA
+- QADevice lane
+  - run `npm run ios:install:qa-device`
+  - run `npm run ios:install:qa-device:device` for physical-device StoreKit sandbox QA
   - Fastlane wrappers are available:
     - `npm run ios:fastlane:qa-simulator`
     - `npm run ios:fastlane:qa-device`
@@ -90,13 +91,9 @@ Canonical local runbook:
     - automatic Apple Development signing for tethered installs
     - `Release` remains untouched for archive/submission
   - set `IOS_DEVICE_UDID` if more than one developer-mode device is available
-  - expect real broker names/counts/order, but all sends go only to:
-    - `app-review-redacted-03@example.invalid`
-    - `app-review-redacted-04@example.invalid`
-    - `app-review-redacted-05@example.invalid`
-    - `app-review-redacted-06@example.invalid`
-    - `app-review-redacted-07@example.invalid`
-  - if any QA send attempts a non-test recipient, the app must block before calling Gmail
+  - expect real broker names/counts/order
+  - use `app-review-redacted-02@example.invalid` as the local profile email for safe demo sends to Scrappy Kin test inboxes
+  - if any QADevice send attempts a non-demo recipient, the app must block before calling Gmail
 
 ## Route model (required for debugging)
 
@@ -122,7 +119,7 @@ Info.plist uses:
 
 StoreKit:
 - The iOS target declares the In-App Purchase capability.
-- QA StoreKit diagnostics are visible only in the `qa-storekit` lane and report native bundle/build/product-load facts for sandbox troubleshooting.
+- StoreKit diagnostics are compiled/enabled only in `QADevice` and report minimal product-load and subscription-state facts for sandbox troubleshooting.
 
 Xcode scheme boundary:
 - `Scrappy Kin Prod` Run/Profile uses `QADevice` for local physical-device QA
@@ -130,7 +127,7 @@ Xcode scheme boundary:
 - do not repurpose `Release` to solve local install problems
 
 Fastlane boundary:
-- `ios qa_device` and `ios qa_simulator` wrap the QA StoreKit install scripts
+- `ios qa_device` and `ios qa_simulator` wrap the QADevice install scripts
 - `ios qa_device_fast` uses the same QADevice install path but runs `cap copy` instead of full `cap sync`; do not use it after native iOS, Capacitor config, package/dependency, signing, plugin, or StoreKit configuration changes
 - `ios prod_archive` builds the `Scrappy Kin Prod` scheme with `Release` and `export_method: app-store`
 - `ios prod_testflight` builds the same Release archive, then uploads the IPA to TestFlight

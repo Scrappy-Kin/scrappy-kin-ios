@@ -11,7 +11,7 @@ clear boundary around the production release path.
   accessibility audits where available.
 - Real-device pocket QA, VoiceOver signoff, and final release-candidate checks
   should use TestFlight.
-- Use `QADevice` / `qa-storekit` for local physical-device QA and safe sends.
+- Use `QADevice` for local physical-device QA and safe sends.
 - Use production TestFlight only for release-candidate validation; it can send to real broker recipients.
 - The current production TestFlight lane builds/exports a Release IPA and uploads it; it is not upload-only.
 - Treat `Release` as archive/submission-only. Do not change it to make local installs easier.
@@ -42,9 +42,9 @@ TestFlight.
 
 | Job | Command | Safe to Send? | Notes |
 | --- | --- | --- | --- |
-| Local iPhone QA | `cd app && npm run ios:fastlane:qa-device` | Yes | Uses `QADevice` + `qa-storekit`; broker recipients are sink inboxes. |
+| Local iPhone QA | `cd app && npm run ios:fastlane:qa-device` | Yes | Uses `QADevice`; safe sends require the App Review demo profile email. |
 | Local iPhone QA, web-only iteration | `cd app && npm run ios:fastlane:qa-device-fast` | Yes | Rebuilds web assets and uses `cap copy`; use only after JS/TS/CSS/content changes. |
-| Local simulator QA | `cd app && npm run ios:fastlane:qa-simulator` | Yes | Uses `qa-storekit`; good for fast UI checks. |
+| Local simulator QA | `cd app && npm run ios:fastlane:qa-simulator` | Yes | Uses `QADevice`; good for fast UI checks. |
 | Production archive | `cd app && npm run ios:fastlane:prod-archive` | No | Builds `Release`; use for archive verification only. |
 | Production TestFlight | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight` | No | Builds/exports `Release`, then uploads; release-candidate only; can email real brokers. |
 | Upload signed IPA to TestFlight | `cd app && IPA_PATH=/path/to/ScrappyKin.ipa SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:upload-testflight-ipa` | No | Uploads an already-signed IPA; does not build or export. |
@@ -103,7 +103,7 @@ documented reason to diverge:
 
 Allowed QA-only accommodations:
 
-- Sink-recipient override so QA sends do not email real brokers
+- Demo-recipient routing so QA/App Review demo sends do not email real brokers
 - QA badge and QA diagnostics
 - Development signing for local tethered device installs
 - Local install helpers/scripts
@@ -119,12 +119,13 @@ without contacting real brokers.
 
 Rules:
 
-- Web bundle lane: `qa-storekit`
+- Web bundle lane: `qa-device`
 - Bundle ID: `com.scrappykin.ios`
 - StoreKit product ID: `com.scrappykin.ios.subscription.annual`
 - Google OAuth: production client
 - Broker names/order/counts: real local catalog
-- Broker recipients: Scrappy Kin sink inboxes only
+- Broker recipients: real broker recipients by default
+- Safe sends: entering `app-review-redacted-02@example.invalid` as the local profile email routes broker sends to Scrappy Kin test inboxes
 
 For physical-device local installs, use the dedicated Xcode build
 configuration:
@@ -140,8 +141,9 @@ Before starting manual QA, confirm:
 
 - the app shows the visible `QA` badge
 - broker preview names/counts/order look real
-- send recipients are Scrappy Kin sink inboxes only
-- the installed app build was produced by `ios:fastlane:qa-device` or `ios:install:qa-storekit:device`
+- the App Review demo profile email routes send recipients to Scrappy Kin test inboxes
+- non-demo recipients are blocked before Gmail send in `QADevice`
+- the installed app build was produced by `ios:fastlane:qa-device` or `ios:install:qa-device:device`
 
 ### 2. Internal TestFlight
 
@@ -197,7 +199,7 @@ Rules:
 - `Scrappy Kin Prod` scheme:
   - Run/Profile -> `QADevice`
   - Archive -> `Release`
-- `qa-storekit` routes broker sends to sink inboxes and visibly marks the app as QA
+- `QADevice` visibly marks the app as QA, exposes StoreKit diagnostics, and blocks non-demo broker recipients before Gmail send
 
 ## Anti-Patterns
 

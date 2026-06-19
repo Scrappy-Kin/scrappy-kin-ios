@@ -16,11 +16,11 @@ await loadLocalEnv(path.join(appRoot, '.env.local'))
 
 const bundleId = 'com.scrappykin.ios'
 const productId = 'com.scrappykin.ios.subscription.annual'
-const executionLane = 'qa-storekit'
+const executionLane = 'qa-device'
 const simulatorName = process.env.IOS_SIMULATOR_NAME
 const simulatorRuntime = process.env.IOS_SIMULATOR_RUNTIME
 const simulatorUdid = process.env.IOS_SIMULATOR_UDID
-const derivedDataPath = await resolveXcodeDerivedDataPath('ScrappyKinQaStoreKit')
+const derivedDataPath = await resolveXcodeDerivedDataPath('ScrappyKinQaDeviceSimulator')
 
 let builtAppPathCache = null
 
@@ -96,7 +96,7 @@ async function bootDevice(udid) {
 }
 
 async function buildNativeApp(udid) {
-  await run('npm', ['run', 'ios:sync:qa-storekit'])
+  await run('npm', ['run', 'ios:sync:qa-device'])
 
   const xcodebuildArgs = [
     '-project',
@@ -104,7 +104,7 @@ async function buildNativeApp(udid) {
     '-scheme',
     'Scrappy Kin Prod',
     '-configuration',
-    'Release',
+    'QADevice',
     '-destination',
     `id=${udid}`,
     '-derivedDataPath',
@@ -188,10 +188,10 @@ async function verifyInstalledApp(udid) {
     .map(([, message]) => message)
 
   if (failures.length > 0) {
-    throw new Error(`QA StoreKit install verification failed: ${failures.join(', ')}`)
+    throw new Error(`QADevice simulator install verification failed: ${failures.join(', ')}`)
   }
 
-  console.log(`Verified QA StoreKit app at ${appBundlePath}`)
+  console.log(`Verified QADevice simulator app at ${appBundlePath}`)
 }
 
 async function main() {
