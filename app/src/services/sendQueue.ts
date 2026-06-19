@@ -5,6 +5,7 @@ import { resolveBrokerRecipientForSend } from './appReviewRecipientRouting'
 import { buildDeletionBody, buildDeletionSubject } from './emailTemplate'
 import { sendEmail } from './gmailSend'
 import { incrementTotalSentCount } from './metricsStore'
+import { QA_DEVICE_BLOCKED_SEND_MESSAGE } from './sendSafety'
 import { appendSentLogEntries } from './sentLog'
 import { getDeletionTemplateDraft, resolveDeletionTemplate } from './templateStore'
 import { getUserProfile, getUserProfileValidationErrors } from './userProfile'
@@ -22,6 +23,7 @@ function classifyError(error: unknown) {
   if (typeof status === 'number' && status >= 400 && status < 500) return 'gmail_4xx'
   if (typeof status === 'number' && status >= 500) return 'gmail_5xx'
   if (message.toLowerCase().includes('gmail')) return 'auth'
+  if (message === QA_DEVICE_BLOCKED_SEND_MESSAGE) return 'qa_blocked'
   if (error instanceof TypeError) return 'network'
   return 'unknown'
 }
@@ -46,6 +48,10 @@ export async function buildSendFailureMessage(queue: QueueItem[]) {
   }
 
   const code = buildErrorCode(firstFailed)
+  if (code === 'qa_blocked') {
+    return QA_DEVICE_BLOCKED_SEND_MESSAGE
+  }
+
   const isVerboseLane = await isVerboseDevLane()
   if (isVerboseLane && firstFailed.errorDetail) {
     return `No emails were sent. ${firstFailed.errorDetail} [${code}]`

@@ -7,9 +7,11 @@ import {
   setSelectedBrokerIds,
   setSelectedRoundSize,
 } from './brokerStore'
+import { getExecutionLane } from '../config/buildInfo'
 import { setOnboardingSentCount } from './flowProgress'
 import { computeBrokerEligibility, getEligibleBrokerIds } from './roundState'
 import { getSendFailureMessage, sendAll } from './sendQueue'
+import { deriveSendSafetyMode, QA_DEVICE_BLOCKED_SEND_MESSAGE } from './sendSafety'
 import { getMergedSentLog } from './sentLog'
 import { clearUserProfileDraft, setUserProfile, type UserProfile } from './userProfile'
 
@@ -24,6 +26,17 @@ export async function executeBatchSend(
 ): Promise<BatchSendResult> {
   await setUserProfile(profile)
   await clearUserProfileDraft()
+
+  const sendSafetyMode = deriveSendSafetyMode({
+    executionLane: getExecutionLane(),
+    profileEmail: profile.email,
+  })
+  if (sendSafetyMode === 'qa_blocked') {
+    return {
+      sentCount: 0,
+      failureMessage: QA_DEVICE_BLOCKED_SEND_MESSAGE,
+    }
+  }
 
   const brokers = await loadBrokers()
   const selectedIds = await getSelectedBrokerIds()

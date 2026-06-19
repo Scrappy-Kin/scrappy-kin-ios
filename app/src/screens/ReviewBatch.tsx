@@ -2,9 +2,7 @@ import { IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
 import dataRescueIllustration from '../assets/illustrations/onboarding-data-rescue.svg'
 import { useEffect, useRef, useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
-import { isAppReviewProfileEmail } from '../config/appReviewTestRecipients'
-import { isQaDeviceLane } from '../config/buildInfo'
-import { QA_DEVICE_SEND_NOTICE } from '../config/qaDevice'
+import { getExecutionLane } from '../config/buildInfo'
 import { executeBatchSend } from '../services/batchSend'
 import {
   DEFAULT_ROUND_SIZE,
@@ -17,6 +15,7 @@ import {
 import { getGmailStatus } from '../services/googleAuth'
 import { getCurrentRoute, readReturnTo } from '../services/navigation'
 import { computeBrokerEligibility, getEligibleBrokerIds } from '../services/roundState'
+import { deriveSendSafetyMode, isSendBlockedBySafetyMode } from '../services/sendSafety'
 import { getMergedSentLog } from '../services/sentLog'
 import {
   buildTaskHref,
@@ -25,9 +24,9 @@ import {
 import { getActiveUserProfile, type UserProfile } from '../services/userProfile'
 import AppButton from '../ui/primitives/AppButton'
 import AppHeading from '../ui/primitives/AppHeading'
-import AppNotice from '../ui/primitives/AppNotice'
 import AppTopNav from '../ui/patterns/AppTopNav'
 import RoundReviewSummary, { ReviewEditIconButton } from '../ui/patterns/RoundReviewSummary'
+import SendFailureNotice from '../ui/patterns/SendFailureNotice'
 import ServerBoundaryClaim from '../ui/patterns/ServerBoundaryClaim'
 import SettingsShortcut from '../ui/patterns/SettingsShortcut'
 import { useRouteFocus } from '../ui/patterns/useRouteFocus'
@@ -53,7 +52,11 @@ export default function ReviewBatch() {
   const [selectedBrokers, setSelectedBrokers] = useState<Broker[]>([])
   const [sendError, setSendError] = useState<string | null>(null)
   const [sendInFlight, setSendInFlight] = useState(false)
-  const isQaDevice = isQaDeviceLane()
+  const sendSafetyMode = deriveSendSafetyMode({
+    executionLane: getExecutionLane(),
+    profileEmail: profileDraft.email,
+  })
+  const sendBlockedBySafetyMode = isSendBlockedBySafetyMode(sendSafetyMode)
 
   async function refreshState() {
     const nextBrokers = await loadBrokers()
@@ -194,46 +197,35 @@ export default function ReviewBatch() {
                   }
                 />
               }
-              showAppReviewDemoRecipients={isAppReviewProfileEmail(profileDraft.email)}
+              sendSafetyMode={sendSafetyMode}
             />
             {sendError ? (
-              <AppNotice
-                variant="error"
-                title="Emails didn’t send"
-                actions={
-                  <AppButton
-                    variant="secondary"
-                    size="sm"
-                    onClick={() =>
-                      history.push(
-                        buildTaskHref('repair_gmail', {
-                          returnTo: currentRoute,
-                          successTo: currentRoute,
-                        }),
-                      )
-                    }
-                  >
-                    Review Gmail settings
-                  </AppButton>
+              <SendFailureNotice
+                message={sendError}
+                onReviewGmail={() =>
+                  history.push(
+                    buildTaskHref('repair_gmail', {
+                      returnTo: currentRoute,
+                      successTo: currentRoute,
+                    }),
+                  )
                 }
-              >
-                {sendError}
-              </AppNotice>
+              />
             ) : null}
             <AppButton
               onClick={handleSendSelected}
-              disabled={sendInFlight || !gmailConnected || selectedBrokerIds.length === 0}
+              disabled={
+                sendBlockedBySafetyMode ||
+                sendInFlight ||
+                !gmailConnected ||
+                selectedBrokerIds.length === 0
+              }
             >
               {sendInFlight
                 ? 'Sending...'
                 : `Send ${selectedBrokerIds.length || ''} opt-out emails`.trim()}
             </AppButton>
             <ServerBoundaryClaim />
-            {isQaDevice ? (
-              <AppNotice variant="warning" title="QA send lane">
-                {QA_DEVICE_SEND_NOTICE}
-              </AppNotice>
-            ) : null}
           </section>
         </div>
       </IonContent>

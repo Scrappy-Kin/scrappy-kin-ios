@@ -3,11 +3,11 @@ import {
 } from 'ionicons/icons'
 import type { ReactElement, ReactNode } from 'react'
 import onboardingSuccessIllustration from '../../assets/illustrations/onboarding-success.svg'
-import { isAppReviewProfileEmail } from '../../config/appReviewTestRecipients'
-import { QA_DEVICE_SEND_NOTICE } from '../../config/qaDevice'
+import { getExecutionLane } from '../../config/buildInfo'
 import { buildDeletionSubject } from '../../services/emailTemplate'
 import type { Broker } from '../../services/brokerStore'
 import type { FlowStepId } from '../../services/flowProgress'
+import { deriveSendSafetyMode, isSendBlockedBySafetyMode } from '../../services/sendSafety'
 import type { SubscriptionSnapshot } from '../../services/subscription'
 import type { UserProfile, UserProfileErrors, UserProfileField } from '../../services/userProfile'
 import AppButton from '../../ui/primitives/AppButton'
@@ -19,6 +19,7 @@ import AppText from '../../ui/primitives/AppText'
 import GmailAccessExplainer, { GMAIL_CONNECTED_DESCRIPTION } from '../../ui/patterns/GmailAccessExplainer'
 import GmailConnectionStatusCard from '../../ui/patterns/GmailConnectionStatusCard'
 import RoundReviewSummary, { ReviewEditIconButton } from '../../ui/patterns/RoundReviewSummary'
+import SendFailureNotice from '../../ui/patterns/SendFailureNotice'
 import ServerBoundaryClaim from '../../ui/patterns/ServerBoundaryClaim'
 import SubscriptionDiagnosticsNotice from '../../ui/patterns/SubscriptionDiagnosticsNotice'
 import SubscriptionOfferCard from '../../ui/patterns/SubscriptionOfferCard'
@@ -120,6 +121,12 @@ export function buildFlowSteps({
   onLater,
   onRestorePurchases,
 }: BuildFlowStepsInput): Record<FlowStepId, FlowStepConfig> {
+  const sendSafetyMode = deriveSendSafetyMode({
+    executionLane: getExecutionLane(),
+    profileEmail: profileDraft.email,
+  })
+  const sendBlockedBySafetyMode = isSendBlockedBySafetyMode(sendSafetyMode)
+
   return {
     intro: {
       accessibilityTitle: "Your personal information shouldn't be for sale.",
@@ -344,36 +351,20 @@ export function buildFlowSteps({
                 onClick={onEditEmailWording}
               />
             }
-            showAppReviewDemoRecipients={isAppReviewProfileEmail(profileDraft.email)}
+            sendSafetyMode={sendSafetyMode}
           />
           {sendError ? (
-            <AppNotice
-              variant="error"
-              title="Emails didn’t send"
-              actions={
-                <AppButton
-                  variant="secondary"
-                  size="sm"
-                  onClick={onManageGmail}
-                >
-                  Review Gmail settings
-                </AppButton>
-              }
-            >
-              {sendError}
-            </AppNotice>
+            <SendFailureNotice message={sendError} onReviewGmail={onManageGmail} />
           ) : null}
-          <AppButton onClick={onSendStarterRound} disabled={sendInFlight || !gmailConnected}>
+          <AppButton
+            onClick={onSendStarterRound}
+            disabled={sendBlockedBySafetyMode || sendInFlight || !gmailConnected}
+          >
             {sendInFlight ? 'Sending...' : `Send ${starterBrokers.length} opt-out emails`}
           </AppButton>
           <ServerBoundaryClaim />
         </section>
       ),
-      qaFooter: isQaDevice ? (
-        <AppNotice variant="warning" title="QA send lane">
-          {QA_DEVICE_SEND_NOTICE}
-        </AppNotice>
-      ) : null,
       showNext: false,
       showFooterClaim: false,
     },

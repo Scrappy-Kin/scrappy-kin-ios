@@ -1,8 +1,12 @@
 import {
   getAppReviewSinkEmail,
-  isAppReviewProfileEmail,
 } from '../config/appReviewTestRecipients'
+import { getExecutionLane } from '../config/buildInfo'
 import type { Broker } from './brokerStore'
+import {
+  deriveSendSafetyMode,
+  usesAppReviewTestRecipients,
+} from './sendSafety'
 
 type RecipientRoutingInput = {
   broker: Pick<Broker, 'contactEmail'>
@@ -20,7 +24,12 @@ export function resolveBrokerRecipientForSend({
   brokerIndex,
   profileEmail,
 }: RecipientRoutingInput): RecipientRoutingResult {
-  if (!isAppReviewProfileEmail(profileEmail)) {
+  const mode = deriveSendSafetyMode({
+    executionLane: getExecutionLane(),
+    profileEmail,
+  })
+
+  if (!usesAppReviewTestRecipients(mode)) {
     return {
       to: broker.contactEmail,
       usesAppReviewTestRecipient: false,
