@@ -16,7 +16,7 @@ import { getTotalSentCount } from '../services/metricsStore'
 import { getMergedSentLog } from '../services/sentLog'
 import { deriveRoundState, type DashboardCopy } from '../services/roundState'
 import { getQaOverride, subscribeQaOverride } from '../services/qaOverrideStore'
-import { isQaStoreKitLane, IS_DEV_BUILD } from '../config/buildInfo'
+import { isQaDeviceLane, IS_DEV_BUILD } from '../config/buildInfo'
 import { buildTaskHref, deriveNextBatchTaskTarget } from '../services/taskRoutes'
 import { getSubscriptionSnapshot, purchaseSubscription } from '../services/subscription'
 import type { SubscriptionSnapshot } from '../services/subscription'
@@ -26,7 +26,7 @@ import SettingsShortcut from '../ui/patterns/SettingsShortcut'
 import SubscriptionBillingClaim from '../ui/patterns/SubscriptionBillingClaim'
 import SubscriptionDiagnosticsNotice from '../ui/patterns/SubscriptionDiagnosticsNotice'
 
-const IS_QA_LANE = isQaStoreKitLane() || IS_DEV_BUILD
+const IS_QA_LANE = isQaDeviceLane() || IS_DEV_BUILD
 
 export default function Home() {
   const history = useHistory()

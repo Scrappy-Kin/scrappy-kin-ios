@@ -7,7 +7,7 @@ import {
   SUBSCRIPTION_PRODUCT_ID,
   isSubscriptionProductConfigured,
 } from '../config/subscription'
-import { isDevAppLane, isQaStoreKitLane } from '../config/buildInfo'
+import { isDevAppLane, isQaDeviceLane } from '../config/buildInfo'
 
 type NativeSubscriptionProduct = {
   id: string
@@ -20,6 +20,7 @@ export type SubscriptionDiagnostics = {
   requestedProductIds: string[]
   returnedProductIds: string[]
   activeProductIds: string[]
+  subscriptionStatusStates?: string[]
   lastPurchaseStatus?: 'purchased' | 'cancelled' | 'pending' | 'error'
   lastPurchaseActiveProductIds?: string[]
   lastPurchaseErrorMessage?: string
@@ -224,7 +225,7 @@ function withNativeSubscriptionTimeout<T>(promise: Promise<T>): Promise<T> {
 }
 
 async function readSubscriptionDiagnostics(): Promise<SubscriptionDiagnostics | null> {
-  if (!isQaStoreKitLane() || !Capacitor.isNativePlatform() || !isSubscriptionProductConfigured()) {
+  if (!isQaDeviceLane() || !Capacitor.isNativePlatform() || !isSubscriptionProductConfigured()) {
     return null
   }
 

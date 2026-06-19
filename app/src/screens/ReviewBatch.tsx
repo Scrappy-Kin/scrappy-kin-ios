@@ -3,8 +3,8 @@ import dataRescueIllustration from '../assets/illustrations/onboarding-data-resc
 import { useEffect, useRef, useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
 import { isAppReviewProfileEmail } from '../config/appReviewTestRecipients'
-import { isQaStoreKitLane } from '../config/buildInfo'
-import { QA_STOREKIT_SEND_NOTICE } from '../config/qaStoreKit'
+import { isQaDeviceLane } from '../config/buildInfo'
+import { QA_DEVICE_SEND_NOTICE } from '../config/qaDevice'
 import { executeBatchSend } from '../services/batchSend'
 import {
   DEFAULT_ROUND_SIZE,
@@ -53,7 +53,7 @@ export default function ReviewBatch() {
   const [selectedBrokers, setSelectedBrokers] = useState<Broker[]>([])
   const [sendError, setSendError] = useState<string | null>(null)
   const [sendInFlight, setSendInFlight] = useState(false)
-  const isQaStoreKit = isQaStoreKitLane()
+  const isQaDevice = isQaDeviceLane()
 
   async function refreshState() {
     const nextBrokers = await loadBrokers()
@@ -229,9 +229,9 @@ export default function ReviewBatch() {
                 : `Send ${selectedBrokerIds.length || ''} opt-out emails`.trim()}
             </AppButton>
             <ServerBoundaryClaim />
-            {isQaStoreKit ? (
+            {isQaDevice ? (
               <AppNotice variant="warning" title="QA send lane">
-                {QA_STOREKIT_SEND_NOTICE}
+                {QA_DEVICE_SEND_NOTICE}
               </AppNotice>
             ) : null}
           </section>

@@ -2,7 +2,7 @@ import type { DashboardStateId } from './roundState'
 
 // ---------------------------------------------------------------------------
 // QA-only in-memory override store.
-// This module is imported in qa-storekit and dev lanes only via the
+// This module is imported in QADevice and dev lanes only via the
 // QaDashboardSheet component. It has no effect in production.
 // ---------------------------------------------------------------------------
 

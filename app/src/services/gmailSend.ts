@@ -1,7 +1,6 @@
 import { getAccessToken } from './googleAuth'
-import { isQaStoreKitLane, isVerboseDevLane } from '../config/buildInfo'
+import { isQaDeviceLane, isVerboseDevLane } from '../config/buildInfo'
 import { isAppReviewSinkEmail } from '../config/appReviewTestRecipients'
-import { isQaStoreKitSinkEmail } from '../config/qaStoreKit'
 
 type SendEmailInput = {
   to: string
@@ -66,8 +65,8 @@ export async function sendEmail(input: SendEmailInput) {
     throw new Error('App Review test-recipient mode blocked a non-test broker recipient before Gmail send.')
   }
 
-  if (isQaStoreKitLane() && !isQaStoreKitSinkEmail(input.to)) {
-    throw new Error('QA StoreKit build blocked a non-test broker recipient before Gmail send.')
+  if (isQaDeviceLane() && !isAppReviewSinkEmail(input.to)) {
+    throw new Error('QADevice blocked a non-demo recipient before Gmail send. Use the App Review demo profile email for safe local sends.')
   }
 
   const token = await getAccessToken()

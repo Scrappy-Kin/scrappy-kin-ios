@@ -5,18 +5,21 @@ vi.mock('./googleAuth', () => ({
 }))
 
 vi.mock('../config/buildInfo', () => ({
-  isQaStoreKitLane: vi.fn(() => false),
+  isQaDeviceLane: vi.fn(() => false),
   isVerboseDevLane: vi.fn(() => false),
 }))
 
 import { APP_REVIEW_TEST_RECIPIENT_EMAILS } from '../config/appReviewTestRecipients'
+import { isQaDeviceLane } from '../config/buildInfo'
 import { getAccessToken } from './googleAuth'
 import { sendEmail } from './gmailSend'
 
 const mockGetAccessToken = vi.mocked(getAccessToken)
+const mockIsQaDeviceLane = vi.mocked(isQaDeviceLane)
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockIsQaDeviceLane.mockReturnValue(false)
 })
 
 describe('sendEmail MIME header CRLF guard', () => {
@@ -78,6 +81,46 @@ describe('sendEmail App Review recipient guard', () => {
         subject: 'Personal Data Deletion Request',
         body: 'Body',
         appReviewTestRecipients: true,
+      }),
+    ).resolves.toEqual({ id: 'gmail-message-id' })
+
+    expect(mockGetAccessToken).toHaveBeenCalledOnce()
+    expect(fetch).toHaveBeenCalledOnce()
+    vi.unstubAllGlobals()
+  })
+})
+
+describe('sendEmail QADevice recipient guard', () => {
+  it('blocks non-demo recipients before Gmail token lookup in QADevice', async () => {
+    mockIsQaDeviceLane.mockReturnValue(true)
+
+    await expect(
+      sendEmail({
+        to: 'privacy@broker.example',
+        subject: 'Personal Data Deletion Request',
+        body: 'Body',
+      }),
+    ).rejects.toThrow('QADevice blocked a non-demo recipient before Gmail send.')
+
+    expect(mockGetAccessToken).not.toHaveBeenCalled()
+  })
+
+  it('allows App Review demo inboxes through to the normal Gmail send path in QADevice', async () => {
+    mockIsQaDeviceLane.mockReturnValue(true)
+    mockGetAccessToken.mockResolvedValue('token')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ id: 'gmail-message-id' }),
+      }),
+    )
+
+    await expect(
+      sendEmail({
+        to: APP_REVIEW_TEST_RECIPIENT_EMAILS[0],
+        subject: 'Personal Data Deletion Request',
+        body: 'Body',
       }),
     ).resolves.toEqual({ id: 'gmail-message-id' })
 

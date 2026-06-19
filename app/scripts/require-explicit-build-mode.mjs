@@ -4,11 +4,11 @@ console.error(
     'Choose an explicit lane instead:',
     '- `npm run build:dev`',
     '- `npm run build:prod`',
-    '- `npm run build:qa-storekit`',
+    '- `npm run build:qa-device`',
     '- `npm run ios:sync:dev`',
     '- `npm run ios:sync:prod`',
-    '- `npm run ios:sync:qa-storekit`',
-    '- `npm run ios:install:qa-storekit`',
+    '- `npm run ios:sync:qa-device`',
+    '- `npm run ios:install:qa-device`',
   ].join('\n'),
 )
 

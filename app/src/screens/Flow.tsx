@@ -1,7 +1,7 @@
 import { IonContent, IonPage, useIonRouter, useIonViewWillEnter } from '@ionic/react'
 import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { isQaStoreKitLane } from '../config/buildInfo'
+import { isQaDeviceLane } from '../config/buildInfo'
 import { SUBSCRIPTION_PRICE_BUTTON_LABEL } from '../config/subscription'
 import { completeOnboardingSend } from '../services/batchSend'
 import {
@@ -123,7 +123,7 @@ export default function Flow({ stepId }: FlowProps) {
   const [subscriptionBusy, setSubscriptionBusy] = useState<'purchase' | 'restore' | null>(null)
   const [totalSentCount, setTotalSentCount] = useState(0)
   const [sentReviewItemCount, setSentReviewItemCount] = useState(0)
-  const isQaStoreKit = isQaStoreKitLane()
+  const isQaDevice = isQaDeviceLane()
 
   async function refreshState() {
     try {
@@ -437,7 +437,7 @@ export default function Flow({ stepId }: FlowProps) {
     sendError,
     sendInFlight,
     onboardingSentCount,
-    isQaStoreKit,
+    isQaDevice,
     subscriptionSnapshot,
     subscriptionNotice,
     subscriptionBusy,

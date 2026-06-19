@@ -1,19 +1,19 @@
 default_platform(:ios)
 
 platform :ios do
-  desc "Build, verify, install, and launch the QA StoreKit lane on a connected iPhone via QADevice."
+  desc "Build, verify, install, and launch QADevice on a connected iPhone."
   lane :qa_device do
-    sh("npm run ios:install:qa-storekit:device")
+    sh("npm run ios:install:qa-device:device")
   end
 
   desc "Fast web-only QADevice loop: rebuild web assets, copy them into iOS, install, and launch."
   lane :qa_device_fast do
-    sh("npm run ios:install:qa-storekit:device:fast")
+    sh("npm run ios:install:qa-device:device:fast")
   end
 
-  desc "Build, verify, install, and launch the QA StoreKit lane on a simulator."
+  desc "Build, verify, install, and launch QADevice on a simulator."
   lane :qa_simulator do
-    sh("npm run ios:install:qa-storekit")
+    sh("npm run ios:install:qa-device")
   end
 
   desc "Build the production Release archive for App Store Connect without uploading."

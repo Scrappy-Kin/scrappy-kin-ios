@@ -55,6 +55,7 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc func diagnoseProducts(_ call: CAPPluginCall) {
+#if SCRAPPY_KIN_QA
         let productIds = call.getArray("productIds", String.self) ?? []
         Task {
             var diagnostics = Self.baseProductDiagnostics(productIds: productIds)
@@ -75,10 +76,13 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
             let activeProductIds = await currentSubscriptionProductIds(productIds: productIds)
             diagnostics["entitlementLookupCompleted"] = true
             diagnostics["activeProductIds"] = activeProductIds
+            diagnostics["subscriptionStatusStates"] = await currentSubscriptionStatusStates(productIds: productIds)
 
-            print("StoreKit subscription diagnostics: \(diagnostics)")
             call.resolve(["diagnostics": diagnostics])
         }
+#else
+        call.reject("StoreKit diagnostics are unavailable in this build.", "DIAGNOSTICS_UNAVAILABLE")
+#endif
     }
 
     @objc func getEntitlement(_ call: CAPPluginCall) {
@@ -215,6 +219,33 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
         }
     }
 
+    private func currentSubscriptionStatusStates(productIds: [String]) async -> [String] {
+        let requestedProductIds = Array(Set(productIds.filter { !$0.isEmpty }))
+        if requestedProductIds.isEmpty {
+            return []
+        }
+
+        do {
+            let products = try await Product.products(for: requestedProductIds)
+            var states: [String] = []
+
+            for product in products where product.type == .autoRenewable {
+                guard requestedProductIds.contains(product.id),
+                      let statuses = try await product.subscription?.status else {
+                    continue
+                }
+
+                for status in statuses {
+                    states.append("\(product.id):\(Self.subscriptionStateName(status))")
+                }
+            }
+
+            return states.sorted()
+        } catch {
+            return []
+        }
+    }
+
     private static func isEntitledSubscriptionStatus(_ status: Product.SubscriptionInfo.Status) -> Bool {
         switch status.state {
         case .subscribed, .inGracePeriod:
@@ -223,6 +254,23 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
             return false
         default:
             return false
+        }
+    }
+
+    private static func subscriptionStateName(_ status: Product.SubscriptionInfo.Status) -> String {
+        switch status.state {
+        case .subscribed:
+            return "subscribed"
+        case .expired:
+            return "expired"
+        case .inBillingRetryPeriod:
+            return "inBillingRetryPeriod"
+        case .inGracePeriod:
+            return "inGracePeriod"
+        case .revoked:
+            return "revoked"
+        default:
+            return "unknown"
         }
     }
 

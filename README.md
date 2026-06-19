@@ -33,8 +33,8 @@ npm run ios:sync:dev
 # Sync prod web bundle
 npm run ios:sync:prod
 
-# Install QA StoreKit lane on connected device
-npm run ios:install:qa-storekit:device
+# Install QADevice lane on connected device
+npm run ios:install:qa-device:device
 
 # Open Xcode project
 npx cap open ios
@@ -135,9 +135,12 @@ For the bend/hold line between local QA, TestFlight, and release, see
 
 ## QA and release commands
 
-The safe default for physical-device QA is `QADevice` / `qa-storekit`. It uses
-the production bundle ID, production OAuth, production StoreKit product ID, real
-broker names/counts/order, and sink inbox recipients.
+The safe default for physical-device QA is `QADevice`. It uses the production
+bundle ID, production OAuth, production StoreKit product ID, and real broker
+names/counts/order. Safe sends use the same App Review demo profile email as
+production-config TestFlight: enter `scrappykin365@gmail.com` as the local
+profile email to route broker emails to Scrappy Kin test inboxes. `QADevice`
+blocks non-demo recipients before Gmail send.
 
 | Job | Command | Safe to Send? |
 | --- | --- | --- |
