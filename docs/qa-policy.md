@@ -76,8 +76,8 @@ Fastlane user state and npm cache default to repo-local `app/tmp/` via
 `scripts/run-fastlane.mjs`. This keeps the VM lane bounded while preserving the
 host cache path when it is available.
 
-If the task is "QA the send flow without emailing brokers", the answer is
-always `ios:fastlane:qa-device` on a connected iPhone.
+If the task is "QA the send flow without emailing brokers", use
+`ios:fastlane:qa-device` on a connected iPhone.
 
 For tight UI/accessibility loops where only web assets changed, use
 `ios:fastlane:qa-device-fast`. Return to the normal QADevice lane after any
@@ -142,7 +142,7 @@ Before starting manual QA, confirm:
 - the app shows the visible `QA` badge
 - broker preview names/counts/order look real
 - the App Review demo profile email routes send recipients to Scrappy Kin test inboxes
-- non-demo recipients are blocked before Gmail send in `QADevice`
+- non-demo recipients show the demo-profile-required notice on final review, disable the send button, and remain blocked before Gmail send in `QADevice`
 - the installed app build was produced by `ios:fastlane:qa-device` or `ios:install:qa-device:device`
 
 ### 2. Internal TestFlight
@@ -181,7 +181,7 @@ Use only for archive, App Store submission, and reviewer-facing builds.
 
 Rules:
 
-- `Release` is sacred
+- `Release` is archive/submission-only
 - do not modify `Release` to make local QA easier
 - do not rely on QA-only affordances for App Review or launch signoff
 

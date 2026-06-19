@@ -33,11 +33,18 @@ vi.mock('./userProfile', () => ({
   setUserProfile: vi.fn(),
 }))
 
+vi.mock('../config/buildInfo', () => ({
+  getExecutionLane: vi.fn(() => 'production'),
+}))
+
+import { getExecutionLane } from '../config/buildInfo'
 import { getSelectedBrokerIds, loadBrokers, setSelectedBrokerIds } from './brokerStore'
 import { sendAll } from './sendQueue'
 import { executeBatchSend } from './batchSend'
+import { QA_DEVICE_BLOCKED_SEND_MESSAGE } from './sendSafety'
 import type { UserProfile } from './userProfile'
 
+const mockGetExecutionLane = vi.mocked(getExecutionLane)
 const mockGetSelectedBrokerIds = vi.mocked(getSelectedBrokerIds)
 const mockLoadBrokers = vi.mocked(loadBrokers)
 const mockSendAll = vi.mocked(sendAll)
@@ -58,6 +65,7 @@ const BROKERS = [
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockGetExecutionLane.mockReturnValue('production')
   mockLoadBrokers.mockResolvedValue(BROKERS as never)
 })
 
@@ -108,5 +116,19 @@ describe('executeBatchSend empty-selection guard', () => {
     await executeBatchSend(PROFILE)
 
     expect(mockSendAll).toHaveBeenCalledWith(BROKERS, ['b2'])
+  })
+
+  it('blocks non-demo QADevice sends before loading broker recipients', async () => {
+    mockGetExecutionLane.mockReturnValue('qa-device')
+    mockGetSelectedBrokerIds.mockResolvedValue(['b1'])
+
+    const result = await executeBatchSend(PROFILE, ['b1'])
+
+    expect(result).toEqual({
+      sentCount: 0,
+      failureMessage: QA_DEVICE_BLOCKED_SEND_MESSAGE,
+    })
+    expect(mockLoadBrokers).not.toHaveBeenCalled()
+    expect(mockSendAll).not.toHaveBeenCalled()
   })
 })

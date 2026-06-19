@@ -1,6 +1,6 @@
 import { getAccessToken } from './googleAuth'
-import { isQaDeviceLane, isVerboseDevLane } from '../config/buildInfo'
-import { isAppReviewSinkEmail } from '../config/appReviewTestRecipients'
+import { getExecutionLane, isVerboseDevLane } from '../config/buildInfo'
+import { assertCanSendToRecipient } from './sendSafety'
 
 type SendEmailInput = {
   to: string
@@ -61,13 +61,11 @@ export async function sendEmail(input: SendEmailInput) {
   assertNoHeaderInjection(input.subject, 'Subject')
   assertNoHeaderInjection(input.replyTo, 'Reply-To')
 
-  if (input.appReviewTestRecipients && !isAppReviewSinkEmail(input.to)) {
-    throw new Error('App Review test-recipient mode blocked a non-test broker recipient before Gmail send.')
-  }
-
-  if (isQaDeviceLane() && !isAppReviewSinkEmail(input.to)) {
-    throw new Error('QADevice blocked a non-demo recipient before Gmail send. Use the App Review demo profile email for safe local sends.')
-  }
+  assertCanSendToRecipient({
+    executionLane: getExecutionLane(),
+    recipientEmail: input.to,
+    appReviewTestRecipients: input.appReviewTestRecipients,
+  })
 
   const token = await getAccessToken()
   const raw = base64UrlEncode(buildMimeMessage(input))

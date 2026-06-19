@@ -5,21 +5,22 @@ vi.mock('./googleAuth', () => ({
 }))
 
 vi.mock('../config/buildInfo', () => ({
-  isQaDeviceLane: vi.fn(() => false),
+  getExecutionLane: vi.fn(() => 'production'),
   isVerboseDevLane: vi.fn(() => false),
 }))
 
 import { APP_REVIEW_TEST_RECIPIENT_EMAILS } from '../config/appReviewTestRecipients'
-import { isQaDeviceLane } from '../config/buildInfo'
+import { getExecutionLane } from '../config/buildInfo'
 import { getAccessToken } from './googleAuth'
 import { sendEmail } from './gmailSend'
+import { QA_DEVICE_BLOCKED_SEND_MESSAGE } from './sendSafety'
 
 const mockGetAccessToken = vi.mocked(getAccessToken)
-const mockIsQaDeviceLane = vi.mocked(isQaDeviceLane)
+const mockGetExecutionLane = vi.mocked(getExecutionLane)
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mockIsQaDeviceLane.mockReturnValue(false)
+  mockGetExecutionLane.mockReturnValue('production')
 })
 
 describe('sendEmail MIME header CRLF guard', () => {
@@ -92,7 +93,7 @@ describe('sendEmail App Review recipient guard', () => {
 
 describe('sendEmail QADevice recipient guard', () => {
   it('blocks non-demo recipients before Gmail token lookup in QADevice', async () => {
-    mockIsQaDeviceLane.mockReturnValue(true)
+    mockGetExecutionLane.mockReturnValue('qa-device')
 
     await expect(
       sendEmail({
@@ -100,13 +101,13 @@ describe('sendEmail QADevice recipient guard', () => {
         subject: 'Personal Data Deletion Request',
         body: 'Body',
       }),
-    ).rejects.toThrow('QADevice blocked a non-demo recipient before Gmail send.')
+    ).rejects.toThrow(QA_DEVICE_BLOCKED_SEND_MESSAGE)
 
     expect(mockGetAccessToken).not.toHaveBeenCalled()
   })
 
   it('allows App Review demo inboxes through to the normal Gmail send path in QADevice', async () => {
-    mockIsQaDeviceLane.mockReturnValue(true)
+    mockGetExecutionLane.mockReturnValue('qa-device')
     mockGetAccessToken.mockResolvedValue('token')
     vi.stubGlobal(
       'fetch',
