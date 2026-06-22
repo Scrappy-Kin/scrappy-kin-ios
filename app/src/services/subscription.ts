@@ -19,6 +19,7 @@ type NativeSubscriptionProduct = {
 export type SubscriptionDiagnostics = {
   requestedProductIds: string[]
   returnedProductIds: string[]
+  productDisplayPrices?: string[]
   activeProductIds: string[]
   subscriptionStatusStates?: string[]
   lastPurchaseStatus?: 'purchased' | 'cancelled' | 'pending' | 'error'
@@ -53,6 +54,7 @@ type SubscriptionPlugin = {
   getEntitlement(options: { productIds: string[] }): Promise<NativeEntitlementResponse>
   purchase(options: { productId: string }): Promise<NativePurchaseResponse>
   restorePurchases(options: { productIds: string[] }): Promise<NativeEntitlementResponse>
+  manageSubscriptions(): Promise<void>
   addListener(
     eventName: 'entitlementUpdated',
     listenerFunc: (event: NativeEntitlementResponse) => void,
@@ -106,10 +108,29 @@ export type SubscriptionRestoreResult =
       message: string
     }
 
+export type SubscriptionManageResult =
+  | {
+      status: 'opened'
+      snapshot: SubscriptionSnapshot
+    }
+  | {
+      status: 'error'
+      snapshot: SubscriptionSnapshot
+      message: string
+    }
+
 export type SubscriptionNoticeCopy = {
   variant: 'success' | 'error'
   title: string
   body: string
+}
+
+export function isSubscriptionPurchaseReady(snapshot: SubscriptionSnapshot | null) {
+  return snapshot?.isAvailable === true
+}
+
+export function buildSubscriptionButtonLabel(snapshot: SubscriptionSnapshot | null) {
+  return snapshot?.product.buttonPriceLabel ?? null
 }
 
 const DEV_SUBSCRIPTION_ACTIVE_KEY = 'dev_subscription_active'
@@ -121,6 +142,8 @@ const RESTORE_NONE_FOUND_MESSAGE =
   'Apple did not show an active Scrappy Kin subscription for this Apple Account. Check your iPhone subscription settings, or email support@scrappykin.com if you need help.'
 const RESTORE_CHECK_FAILED_MESSAGE =
   'Apple could not check purchases right now. Try again in a minute. If your subscription looks active in your iPhone subscription settings, email support@scrappykin.com and we’ll help.'
+const MANAGE_SUBSCRIPTION_FAILED_MESSAGE =
+  'Apple could not open subscription settings right now. You can also manage subscriptions in your iPhone Settings under your Apple Account.'
 
 function buildFallbackProduct(): SubscriptionProduct {
   return {
@@ -430,6 +453,29 @@ export async function restoreSubscriptionPurchases(): Promise<SubscriptionRestor
       reason: 'check_failed',
       snapshot: await getSubscriptionSnapshot(),
       message: RESTORE_CHECK_FAILED_MESSAGE,
+    }
+  }
+}
+
+export async function manageSubscriptionSettings(): Promise<SubscriptionManageResult> {
+  if (await shouldUseDevMock()) {
+    return {
+      status: 'opened',
+      snapshot: await getDevSnapshot(),
+    }
+  }
+
+  try {
+    await SubscriptionNative.manageSubscriptions()
+    return {
+      status: 'opened',
+      snapshot: await getSubscriptionSnapshot(),
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      snapshot: await getSubscriptionSnapshot(),
+      message: extractMessage(error, MANAGE_SUBSCRIPTION_FAILED_MESSAGE),
     }
   }
 }
