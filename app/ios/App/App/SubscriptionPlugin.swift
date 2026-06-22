@@ -40,15 +40,19 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
                 let sortedProducts = products.sorted {
                     (orderMap[$0.id] ?? Int.max) < (orderMap[$1.id] ?? Int.max)
                 }
+                var response: [String: Any] = [
+                    "products": sortedProducts.map(Self.serializeProduct)
+                ]
+
+#if SCRAPPY_KIN_QA
                 var diagnostics = Self.baseProductDiagnostics(productIds: productIds)
                 diagnostics["productLoadCompleted"] = true
                 diagnostics["returnedProductCount"] = sortedProducts.count
                 diagnostics["returnedProductIds"] = sortedProducts.map(\.id)
+                response["diagnostics"] = diagnostics
+#endif
 
-                call.resolve([
-                    "products": sortedProducts.map(Self.serializeProduct),
-                    "diagnostics": diagnostics
-                ])
+                call.resolve(response)
             } catch {
                 call.reject(error.localizedDescription, "PRODUCT_LOAD_FAILED")
             }
