@@ -1,7 +1,6 @@
 import { IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
 import { useEffect, useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
-import { SUBSCRIPTION_PRICE_BUTTON_LABEL } from '../config/subscription'
 import AppButton from '../ui/primitives/AppButton'
 import AppCard from '../ui/primitives/AppCard'
 import AppHeading from '../ui/primitives/AppHeading'
@@ -18,7 +17,12 @@ import { deriveRoundState, type DashboardCopy } from '../services/roundState'
 import { getQaOverride, subscribeQaOverride } from '../services/qaOverrideStore'
 import { isQaDeviceLane, IS_DEV_BUILD } from '../config/buildInfo'
 import { buildTaskHref, deriveNextBatchTaskTarget } from '../services/taskRoutes'
-import { getSubscriptionSnapshot, purchaseSubscription } from '../services/subscription'
+import {
+  buildSubscriptionButtonLabel,
+  getSubscriptionSnapshot,
+  isSubscriptionPurchaseReady,
+  purchaseSubscription,
+} from '../services/subscription'
 import type { SubscriptionSnapshot } from '../services/subscription'
 import { getUserProfile } from '../services/userProfile'
 import AppTopNav from '../ui/patterns/AppTopNav'
@@ -148,7 +152,7 @@ export default function Home() {
   }
 
   const subscribeButtonLabel =
-    subscriptionSnapshot?.product.buttonPriceLabel ?? SUBSCRIPTION_PRICE_BUTTON_LABEL
+    buildSubscriptionButtonLabel(subscriptionSnapshot)
 
   const copy = dashboardCopy
 
@@ -200,9 +204,13 @@ export default function Home() {
                     fullWidth
                     onClick={() => void handleSubscribe()}
                     loading={purchaseInFlight}
-                    disabled={purchaseInFlight || Boolean(subscriptionUnavailable)}
+                    disabled={
+                      purchaseInFlight ||
+                      Boolean(subscriptionUnavailable) ||
+                      !isSubscriptionPurchaseReady(subscriptionSnapshot)
+                    }
                   >
-                    Subscribe — {subscribeButtonLabel}
+                    {subscribeButtonLabel ? `Subscribe — ${subscribeButtonLabel}` : 'Loading subscription'}
                   </AppButton>
                 ) : copy.primaryActionKind === 'reconnect_gmail' ? (
                   <AppButton fullWidth onClick={() => history.push(nextBatchHref)}>

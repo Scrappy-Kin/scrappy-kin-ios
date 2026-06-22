@@ -2,7 +2,6 @@ import { IonContent, IonPage, useIonRouter, useIonViewWillEnter } from '@ionic/r
 import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { isQaDeviceLane } from '../config/buildInfo'
-import { SUBSCRIPTION_PRICE_BUTTON_LABEL } from '../config/subscription'
 import { completeOnboardingSend } from '../services/batchSend'
 import {
   loadStarterBrokers,
@@ -23,6 +22,7 @@ import { buildOnboardingHref, buildSettingsHref, buildTemplateHref, getCurrentRo
 import { getQueue } from '../services/queueStore'
 import {
   buildRestoreSubscriptionNotice,
+  buildSubscriptionButtonLabel,
   getSubscriptionSnapshot,
   purchaseSubscription,
   restoreSubscriptionPurchases,
@@ -301,7 +301,7 @@ export default function Flow({ stepId }: FlowProps) {
   }
 
   const subscribeButtonLabel =
-    subscriptionSnapshot?.product.buttonPriceLabel ?? SUBSCRIPTION_PRICE_BUTTON_LABEL
+    buildSubscriptionButtonLabel(subscriptionSnapshot)
 
   async function handleSendStarterRound() {
     try {

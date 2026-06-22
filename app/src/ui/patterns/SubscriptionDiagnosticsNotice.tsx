@@ -33,6 +33,7 @@ export default function SubscriptionDiagnosticsNotice({
     `Version: ${diagnostics.appVersion ?? 'unknown'} (${diagnostics.appBuild ?? 'unknown'})`,
     `Requested: ${formatList(diagnostics.requestedProductIds)}`,
     `Returned: ${diagnostics.returnedProductCount} (${formatList(diagnostics.returnedProductIds)})`,
+    `Display prices: ${formatList(diagnostics.productDisplayPrices)}`,
     `Product load: ${diagnostics.productLoadCompleted ? 'completed' : 'not completed'}`,
     `Entitlements: ${diagnostics.entitlementLookupCompleted ? 'checked' : 'not checked'} (${formatList(diagnostics.activeProductIds)})`,
     `Subscription states: ${formatList(diagnostics.subscriptionStatusStates)}`,

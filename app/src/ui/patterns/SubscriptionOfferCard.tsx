@@ -9,10 +9,11 @@ import AppText from '../primitives/AppText'
 
 type SubscriptionOfferCardProps = {
   product?: SubscriptionProduct | null
+  loading?: boolean
 }
 
-export default function SubscriptionOfferCard({ product }: SubscriptionOfferCardProps) {
-  const displayPrice = product?.displayPrice ?? SUBSCRIPTION_PRICE_DISPLAY
+export default function SubscriptionOfferCard({ product, loading = false }: SubscriptionOfferCardProps) {
+  const displayPrice = loading ? 'Loading price...' : product?.displayPrice ?? SUBSCRIPTION_PRICE_DISPLAY
   const priceSubtext = product?.priceSubtext ?? SUBSCRIPTION_PRICE_SUBTEXT
   const priceMatch = displayPrice.match(/^(.*?)(\s*\/.*)$/)
   const priceAmount = priceMatch?.[1] ?? displayPrice

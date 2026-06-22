@@ -8,7 +8,10 @@ import { buildDeletionSubject } from '../../services/emailTemplate'
 import type { Broker } from '../../services/brokerStore'
 import type { FlowStepId } from '../../services/flowProgress'
 import { deriveSendSafetyMode, isSendBlockedBySafetyMode } from '../../services/sendSafety'
-import type { SubscriptionSnapshot } from '../../services/subscription'
+import {
+  isSubscriptionPurchaseReady,
+  type SubscriptionSnapshot,
+} from '../../services/subscription'
 import type { UserProfile, UserProfileErrors, UserProfileField } from '../../services/userProfile'
 import AppButton from '../../ui/primitives/AppButton'
 import AppIcon from '../../ui/primitives/AppIcon'
@@ -65,7 +68,7 @@ type BuildFlowStepsInput = {
   subscriptionSnapshot: SubscriptionSnapshot | null
   subscriptionNotice: FlowInlineNotice | null
   subscriptionBusy: 'purchase' | 'restore' | null
-  subscribeButtonLabel: string
+  subscribeButtonLabel: string | null
   updateProfile: (next: Partial<UserProfile>) => void
   normalizeZipInput: (value: string) => string
   validateProfileField: (field: UserProfileField) => void
@@ -407,6 +410,7 @@ export function buildFlowSteps({
         <section className="app-section-shell">
           <SubscriptionOfferCard
             product={subscriptionSnapshot?.product}
+            loading={subscriptionSnapshot == null}
           />
           {subscriptionSnapshot?.loadError ? (
             <AppNotice variant="error" title="Subscription unavailable">
@@ -423,9 +427,9 @@ export function buildFlowSteps({
               fullWidth
               onClick={onSubscribe}
               loading={subscriptionBusy === 'purchase'}
-              disabled={subscriptionBusy !== null || subscriptionSnapshot?.isAvailable === false}
+              disabled={subscriptionBusy !== null || !isSubscriptionPurchaseReady(subscriptionSnapshot)}
             >
-              Subscribe — {subscribeButtonLabel}
+              {subscribeButtonLabel ? `Subscribe — ${subscribeButtonLabel}` : 'Loading subscription'}
             </AppButton>
             <AppButton
               variant="ghost"

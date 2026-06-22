@@ -11,7 +11,8 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "diagnoseProducts", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getEntitlement", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "purchase", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "restorePurchases", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "restorePurchases", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "manageSubscriptions", returnType: CAPPluginReturnPromise)
     ]
 
     private var transactionUpdatesTask: Task<Void, Never>?
@@ -65,6 +66,7 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
                 diagnostics["productLoadCompleted"] = true
                 diagnostics["returnedProductCount"] = products.count
                 diagnostics["returnedProductIds"] = products.map(\.id)
+                diagnostics["productDisplayPrices"] = products.map { "\($0.id):\($0.displayPrice)" }
             } catch {
                 let nsError = error as NSError
                 diagnostics["productLoadCompleted"] = false
@@ -157,6 +159,22 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
                 }
 
                 call.reject(error.localizedDescription, "RESTORE_FAILED")
+            }
+        }
+    }
+
+    @objc func manageSubscriptions(_ call: CAPPluginCall) {
+        Task { @MainActor in
+            guard let windowScene = self.bridge?.viewController?.view.window?.windowScene else {
+                call.reject("Subscription management is unavailable right now.", "MANAGE_SUBSCRIPTIONS_UNAVAILABLE")
+                return
+            }
+
+            do {
+                try await AppStore.showManageSubscriptions(in: windowScene)
+                call.resolve()
+            } catch {
+                call.reject(error.localizedDescription, "MANAGE_SUBSCRIPTIONS_FAILED")
             }
         }
     }
@@ -293,6 +311,7 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
             "productLoadCompleted": false,
             "returnedProductCount": 0,
             "returnedProductIds": [],
+            "productDisplayPrices": [],
             "entitlementLookupCompleted": false,
             "activeProductIds": []
         ]

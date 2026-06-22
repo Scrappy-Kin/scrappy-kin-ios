@@ -5,7 +5,6 @@ import { Share } from '@capacitor/share'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Redirect, useHistory, useLocation } from 'react-router-dom'
 import { BUILD_MODE, BUILD_SHA, BUILD_TIME, isDevAppLane } from '../config/buildInfo'
-import { SUBSCRIPTION_PRICE_BUTTON_LABEL } from '../config/subscription'
 import {
   buildSettingsHref,
   type SettingsView as SettingsRouteView,
@@ -28,7 +27,10 @@ import { disconnectGmail, getGmailStatus } from '../services/googleAuth'
 import { wipeAllLocalData } from '../services/secureStore'
 import {
   buildRestoreSubscriptionNotice,
+  buildSubscriptionButtonLabel,
   getSubscriptionSnapshot,
+  isSubscriptionPurchaseReady,
+  manageSubscriptionSettings,
   purchaseSubscription,
   restoreSubscriptionPurchases,
   type SubscriptionSnapshot,
@@ -141,7 +143,7 @@ export default function Settings() {
   const [profileSaved, setProfileSaved] = useState(false)
   const [profileErrors, setProfileErrors] = useState<UserProfileErrors>({})
   const [subscriptionSnapshot, setSubscriptionSnapshot] = useState<SubscriptionSnapshot | null>(null)
-  const [subscriptionBusy, setSubscriptionBusy] = useState<'purchase' | 'restore' | null>(null)
+  const [subscriptionBusy, setSubscriptionBusy] = useState<'purchase' | 'restore' | 'manage' | null>(null)
   const [subscriptionNotice, setSubscriptionNotice] = useState<{
     variant: 'error' | 'success' | 'info'
     title: string
@@ -149,7 +151,7 @@ export default function Settings() {
   } | null>(null)
   const [localDataDeleted, setLocalDataDeleted] = useState(false)
   const subscribeButtonLabel =
-    subscriptionSnapshot?.product.buttonPriceLabel ?? SUBSCRIPTION_PRICE_BUTTON_LABEL
+    buildSubscriptionButtonLabel(subscriptionSnapshot)
 
   async function refreshLogOptIn() {
     const status = await getLogOptInStatus()
@@ -407,6 +409,22 @@ export default function Settings() {
     setSubscriptionNotice(buildRestoreSubscriptionNotice(result))
   }
 
+  async function handleManageSubscription() {
+    setSubscriptionNotice(null)
+    setSubscriptionBusy('manage')
+    const result = await manageSubscriptionSettings()
+    setSubscriptionBusy(null)
+    setSubscriptionSnapshot(result.snapshot)
+
+    if (result.status === 'error') {
+      setSubscriptionNotice({
+        variant: 'error',
+        title: 'Subscription settings didn’t open',
+        body: result.message,
+      })
+    }
+  }
+
   function renderHome() {
     return (
       <section className="app-section-shell settings-home">
@@ -512,6 +530,7 @@ export default function Settings() {
 
         <SubscriptionOfferCard
           product={subscriptionSnapshot?.product}
+          loading={subscriptionSnapshot == null}
         />
 
         {subscriptionSnapshot?.loadError ? (
@@ -536,9 +555,9 @@ export default function Settings() {
               fullWidth
               onClick={() => void handlePurchaseSubscription()}
               loading={subscriptionBusy === 'purchase'}
-              disabled={subscriptionBusy !== null || subscriptionSnapshot?.isAvailable === false}
+              disabled={subscriptionBusy !== null || !isSubscriptionPurchaseReady(subscriptionSnapshot)}
             >
-              Subscribe — {subscribeButtonLabel}
+              {subscribeButtonLabel ? `Subscribe — ${subscribeButtonLabel}` : 'Loading subscription'}
             </AppButton>
           )}
           <AppButton
@@ -549,6 +568,16 @@ export default function Settings() {
           >
             Restore Purchases
           </AppButton>
+          {subscriptionSnapshot?.active ? (
+            <AppButton
+              variant="secondary"
+              onClick={() => void handleManageSubscription()}
+              loading={subscriptionBusy === 'manage'}
+              disabled={subscriptionBusy !== null}
+            >
+              Manage Subscription
+            </AppButton>
+          ) : null}
         </div>
 
         <AppList header="Policies">
