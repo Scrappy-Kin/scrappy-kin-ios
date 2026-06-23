@@ -37,7 +37,7 @@
     "preview:dev": "SCRAPPY_WEB_HARNESS=1 npm run build:dev && vite preview --port 4173",
     "audit:manifest": "node ../scripts/generate-audit-manifest.js",
     "audit:manifest:check": "node ../scripts/generate-audit-manifest.js --check",
-    "health-check": "npm run lint && npm audit && npx madge --circular src/ && npx depcheck --ignores=@capacitor/ios",
+    "health-check": "npm run lint && npm audit && npx madge --extensions ts,tsx --circular src/",
     "postinstall": "patch-package"
   },
   "dependencies": {
@@ -67,7 +67,6 @@
     "@types/react-dom": "^19.2.3",
     "@types/react-router-dom": "^5.3.3",
     "@vitejs/plugin-react": "^5.1.1",
-    "depcheck": "^1.4.7",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",

@@ -1,5 +1,5 @@
 import brokersData from './email-only-brokers.v1.0.1.json'
-import type { Broker } from '../../services/brokerStore'
+import type { Broker } from '../../types/broker'
 
 const sourceBrokers = Array.isArray(brokersData)
   ? (brokersData as Broker[])

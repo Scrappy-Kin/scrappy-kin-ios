@@ -1,19 +1,10 @@
 import brokersData from '../assets/broker-lists/email-only-brokers.v1.0.1.json'
 import { devFixtureBrokers } from '../assets/broker-lists/dev-fixture-brokers'
 import { isDevAppLane } from '../config/buildInfo'
+import type { Broker } from '../types/broker'
 import { getEncrypted, setEncrypted } from './secureStore'
 
-export type Broker = {
-  id: string
-  name: string
-  domain?: string
-  contactEmail: string
-  tier?: string
-  childCompanies?: string[]
-  inTop30?: boolean
-  verifiedResolutions?: number
-  starterOrder?: number
-}
+export type { Broker } from '../types/broker'
 
 export type BrokerCatalogSummary = {
   starterCount: number
