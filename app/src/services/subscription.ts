@@ -1,8 +1,6 @@
 import { Capacitor, registerPlugin, type PluginListenerHandle } from '@capacitor/core'
 import { Preferences } from '@capacitor/preferences'
 import {
-  SUBSCRIPTION_PRICE_BUTTON_LABEL,
-  SUBSCRIPTION_PRICE_DISPLAY,
   SUBSCRIPTION_PRICE_SUBTEXT,
   SUBSCRIPTION_PRODUCT_ID,
   isSubscriptionProductConfigured,
@@ -65,8 +63,8 @@ export type SubscriptionProduct = {
   id: string
   displayName: string
   description: string
-  displayPrice: string
-  buttonPriceLabel: string
+  displayPrice: string | null
+  buttonPriceLabel: string | null
   priceSubtext: string
 }
 
@@ -130,7 +128,11 @@ export function isSubscriptionPurchaseReady(snapshot: SubscriptionSnapshot | nul
 }
 
 export function buildSubscriptionButtonLabel(snapshot: SubscriptionSnapshot | null) {
-  return snapshot?.product.buttonPriceLabel ?? null
+  if (snapshot?.isAvailable !== true) {
+    return null
+  }
+
+  return snapshot.product.buttonPriceLabel
 }
 
 const DEV_SUBSCRIPTION_ACTIVE_KEY = 'dev_subscription_active'
@@ -144,14 +146,16 @@ const RESTORE_CHECK_FAILED_MESSAGE =
   'Apple could not check purchases right now. Try again in a minute. If your subscription looks active in your iPhone subscription settings, email support@scrappykin.com and we’ll help.'
 const MANAGE_SUBSCRIPTION_FAILED_MESSAGE =
   'Apple could not open subscription settings right now. You can also manage subscriptions in your iPhone Settings under your Apple Account.'
+const PRICE_LOAD_FAILED_MESSAGE =
+  'Apple did not return the subscription price. Check your connection and try again. If this keeps happening, email support@scrappykin.com. You do not need to tell us who you are to get help.'
 
 function buildFallbackProduct(): SubscriptionProduct {
   return {
     id: SUBSCRIPTION_PRODUCT_ID || 'com.scrappykin.subscription.unconfigured',
     displayName: 'Scrappy Kin',
     description: 'Keep sending opt-out emails from your account.',
-    displayPrice: SUBSCRIPTION_PRICE_DISPLAY,
-    buttonPriceLabel: SUBSCRIPTION_PRICE_BUTTON_LABEL,
+    displayPrice: null,
+    buttonPriceLabel: null,
     priceSubtext: SUBSCRIPTION_PRICE_SUBTEXT,
   }
 }
@@ -178,16 +182,12 @@ function normalizeSnapshot(input: {
   const fallbackProduct = buildFallbackProduct()
   const nativeProduct = input.product
   const nativeDisplayPrice = nativeProduct?.displayPrice?.trim()
-  const displayPrice = nativeDisplayPrice
-    ? buildAnnualPriceDisplay(nativeDisplayPrice)
-    : fallbackProduct.displayPrice
-  const buttonPriceLabel = nativeDisplayPrice
-    ? buildAnnualButtonPriceLabel(nativeDisplayPrice)
-    : fallbackProduct.buttonPriceLabel
+  const displayPrice = nativeDisplayPrice ? buildAnnualPriceDisplay(nativeDisplayPrice) : null
+  const buttonPriceLabel = nativeDisplayPrice ? buildAnnualButtonPriceLabel(nativeDisplayPrice) : null
 
   return {
     active: input.active,
-    isAvailable: input.isAvailable,
+    isAvailable: input.isAvailable && Boolean(displayPrice),
     isConfigured: isSubscriptionProductConfigured(),
     loadError: input.loadError,
     diagnostics: input.diagnostics ?? null,
@@ -233,6 +233,14 @@ function extractMessage(error: unknown, fallback: string) {
     return error.message
   }
   return fallback
+}
+
+function buildSubscriptionLoadError(error: unknown) {
+  const message = extractMessage(error, PRICE_LOAD_FAILED_MESSAGE)
+  if (message.includes('support@scrappykin.com')) {
+    return message
+  }
+  return `${message} If this keeps happening, email support@scrappykin.com. You do not need to tell us who you are to get help.`
 }
 
 function withNativeSubscriptionTimeout<T>(promise: Promise<T>): Promise<T> {
@@ -308,14 +316,14 @@ async function readNativeSnapshot(): Promise<SubscriptionSnapshot> {
       active,
       product,
       isAvailable: Boolean(product),
-      loadError: product ? null : 'Subscription product couldn’t be loaded.',
+      loadError: product ? null : PRICE_LOAD_FAILED_MESSAGE,
       diagnostics,
     })
   } catch (error) {
     return normalizeSnapshot({
       active: false,
       isAvailable: false,
-      loadError: extractMessage(error, 'Subscription status could not be loaded.'),
+      loadError: buildSubscriptionLoadError(error),
       diagnostics: await readSubscriptionDiagnostics(),
     })
   }
