@@ -47,6 +47,7 @@ TestFlight.
 | Local simulator QA | `cd app && npm run ios:fastlane:qa-simulator` | Yes | Uses `QADevice`; good for fast UI checks. |
 | Production archive | `cd app && npm run ios:fastlane:prod-archive` | No | Builds `Release`; use for archive verification only. |
 | Production TestFlight | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight` | No | Builds/exports `Release`, then uploads; release-candidate only; can email real brokers. |
+| Production TestFlight, auto-next build | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight-next` | No | Queries App Store Connect, sets the next checked-in build number, builds/exports `Release`, then uploads. |
 | Upload signed IPA to TestFlight | `cd app && IPA_PATH=/path/to/ScrappyKin.ipa SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:upload-testflight-ipa` | No | Uploads an already-signed IPA; does not build or export. |
 
 Apple marketing versions use semver shape (`MAJOR.MINOR.PATCH`) in
@@ -63,8 +64,25 @@ npm run ios:version:set -- --build <next-build-number>
 ```
 
 Use the next number after the latest TestFlight build for the current marketing
-version. The production TestFlight lane checks App Store Connect before
+version. Check App Store Connect before bumping:
+
+```bash
+cd app
+npm run ios:testflight:build-status
+```
+
+The production TestFlight lane uses the same App Store Connect lookup before
 archiving and fails fast if the checked-in build number is stale.
+
+For the usual release-candidate path, prefer the auto-next lane:
+
+```bash
+cd app
+SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight-next
+```
+
+After a successful upload, commit the resulting Xcode project build-number
+change so the repo stays aligned with TestFlight.
 
 Local QA scripts resolve DerivedData/cache roots in this order:
 
