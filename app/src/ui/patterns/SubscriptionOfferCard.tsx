@@ -1,7 +1,4 @@
-import {
-  SUBSCRIPTION_PRICE_DISPLAY,
-  SUBSCRIPTION_PRICE_SUBTEXT,
-} from '../../config/subscription'
+import { SUBSCRIPTION_PRICE_SUBTEXT } from '../../config/subscription'
 import type { SubscriptionProduct } from '../../services/subscription'
 import AppBulletRow from '../primitives/AppBulletRow'
 import AppSegmentedCard, { AppSegmentedCardSection } from '../primitives/AppSegmentedCard'
@@ -13,26 +10,33 @@ type SubscriptionOfferCardProps = {
 }
 
 export default function SubscriptionOfferCard({ product, loading = false }: SubscriptionOfferCardProps) {
-  const displayPrice = loading ? 'Loading price...' : product?.displayPrice ?? SUBSCRIPTION_PRICE_DISPLAY
+  const displayPrice = product?.displayPrice ?? null
   const priceSubtext = product?.priceSubtext ?? SUBSCRIPTION_PRICE_SUBTEXT
-  const priceMatch = displayPrice.match(/^(.*?)(\s*\/.*)$/)
+  const priceMatch = displayPrice?.match(/^(.*?)(\s*\/.*)$/)
   const priceAmount = priceMatch?.[1] ?? displayPrice
   const pricePeriod = priceMatch?.[2] ?? ''
+  const priceStatus = loading ? 'Loading price from App Store...' : 'Price unavailable'
 
   return (
     <AppSegmentedCard>
       <AppSegmentedCardSection>
         <AppText intent="supporting">{priceSubtext}</AppText>
-        <AppText
-          intent="body"
-          className="subscription-offer-card__price"
-          accessibilityLabel={displayPrice}
-        >
-          <span className="subscription-offer-card__price-amount">{priceAmount}</span>
-          {pricePeriod ? (
-            <span className="subscription-offer-card__price-period">{pricePeriod}</span>
-          ) : null}
-        </AppText>
+        {displayPrice ? (
+          <AppText
+            intent="body"
+            className="subscription-offer-card__price"
+            accessibilityLabel={displayPrice}
+          >
+            <span className="subscription-offer-card__price-amount">{priceAmount}</span>
+            {pricePeriod ? (
+              <span className="subscription-offer-card__price-period">{pricePeriod}</span>
+            ) : null}
+          </AppText>
+        ) : (
+          <AppText intent="body" emphasis>
+            {priceStatus}
+          </AppText>
+        )}
       </AppSegmentedCardSection>
       <AppSegmentedCardSection>
         <div className="app-stack">
