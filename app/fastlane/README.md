@@ -55,6 +55,14 @@ Build the production Release archive for App Store Connect without uploading.
 
 Build the production Release archive and upload it to TestFlight. Requires SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1.
 
+### ios prod_testflight_next
+
+```sh
+[bundle exec] fastlane ios prod_testflight_next
+```
+
+Set the checked-in build to the next TestFlight number, then build and upload Release. Requires SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1.
+
 ### ios upload_testflight_ipa
 
 ```sh
@@ -62,6 +70,14 @@ Build the production Release archive and upload it to TestFlight. Requires SCRAP
 ```
 
 Upload an already-signed IPA to TestFlight without building. Requires IPA_PATH and SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1.
+
+### ios testflight_build_status
+
+```sh
+[bundle exec] fastlane ios testflight_build_status
+```
+
+Print checked-in, latest TestFlight, and next build number for the current marketing version.
 
 ----
 

@@ -31,6 +31,20 @@ platform :ios do
     perform_testflight_upload(Actions.lane_context[SharedValues::IPA_OUTPUT_PATH], api_key)
   end
 
+  desc "Set the checked-in build to the next TestFlight number, then build and upload Release. Requires SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1."
+  lane :prod_testflight_next do
+    ensure_prod_testflight_allowed!
+    api_key = app_store_connect_api_key_from_env(required: true)
+    status = testflight_build_status(api_key)
+    next_build = status.fetch(:latest) + 1
+
+    set_xcode_project_build_number!(next_build)
+    UI.message("Set checked-in Xcode build to #{next_build} for TestFlight upload.")
+
+    build_release_archive
+    perform_testflight_upload(Actions.lane_context[SharedValues::IPA_OUTPUT_PATH], api_key)
+  end
+
   desc "Upload an already-signed IPA to TestFlight without building. Requires IPA_PATH and SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1."
   lane :upload_testflight_ipa do
     ensure_prod_testflight_allowed!
@@ -40,6 +54,11 @@ platform :ios do
     UI.user_error!("IPA_PATH does not exist: #{ipa_path}") unless File.file?(ipa_path)
 
     perform_testflight_upload(ipa_path, app_store_connect_api_key_from_env)
+  end
+
+  desc "Print checked-in, latest TestFlight, and next build number for the current marketing version."
+  lane :testflight_build_status do
+    print_testflight_build_status!(app_store_connect_api_key_from_env(required: true))
   end
 
   private_lane :build_release_archive do
@@ -110,16 +129,10 @@ def app_store_connect_api_key_from_env(required: false)
 end
 
 def ensure_testflight_build_number_is_new!(api_key)
-  version = xcode_project_setting!("MARKETING_VERSION")
-  build_number = Integer(xcode_project_setting!("CURRENT_PROJECT_VERSION"), exception: false)
-  UI.user_error!("CURRENT_PROJECT_VERSION must be a positive integer.") unless build_number&.positive?
-
-  latest = latest_testflight_build_number(
-    app_identifier: "com.scrappykin.ios",
-    version: version,
-    api_key: api_key,
-    initial_build_number: 0
-  )
+  status = testflight_build_status(api_key)
+  version = status.fetch(:version)
+  build_number = status.fetch(:build_number)
+  latest = status.fetch(:latest)
 
   if build_number <= latest
     UI.user_error!(
@@ -135,10 +148,60 @@ def ensure_testflight_build_number_is_new!(api_key)
   UI.message("Release version check passed: #{version} (#{build_number}) > latest TestFlight build #{latest}.")
 end
 
+def print_testflight_build_status!(api_key)
+  status = testflight_build_status(api_key)
+  version = status.fetch(:version)
+  build_number = status.fetch(:build_number)
+  latest = status.fetch(:latest)
+  next_build = latest + 1
+
+  UI.message("Marketing version: #{version}")
+  UI.message("Checked-in Xcode build: #{build_number}")
+  UI.message("Latest TestFlight build: #{latest}")
+  UI.message("Next TestFlight build number: #{next_build}")
+  if build_number <= latest
+    UI.message("Checked-in build is stale. For the normal release-candidate path, run: SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight-next")
+    UI.message("For a manual build-only bump, run: npm run ios:version:set -- --build #{next_build}")
+  else
+    UI.message("Checked-in build is upload-ready for TestFlight.")
+  end
+end
+
+def testflight_build_status(api_key)
+  version = xcode_project_setting!("MARKETING_VERSION")
+  build_number = Integer(xcode_project_setting!("CURRENT_PROJECT_VERSION"), exception: false)
+  UI.user_error!("CURRENT_PROJECT_VERSION must be a positive integer.") unless build_number&.positive?
+
+  latest = latest_testflight_build_number(
+    app_identifier: "com.scrappykin.ios",
+    version: version,
+    api_key: api_key,
+    initial_build_number: 0
+  )
+
+  {
+    version: version,
+    build_number: build_number,
+    latest: latest
+  }
+end
+
 def xcode_project_setting!(name)
   project_path = File.expand_path("../ios/App/App.xcodeproj/project.pbxproj", __dir__)
   values = File.read(project_path).scan(/#{Regexp.escape(name)} = ([^;]+);/).flatten.map(&:strip).uniq
   UI.user_error!("No #{name} values found in #{project_path}.") if values.empty?
   UI.user_error!("Conflicting #{name} values in #{project_path}: #{values.join(', ')}") if values.length > 1
   values.first
+end
+
+def set_xcode_project_build_number!(build_number)
+  UI.user_error!("Build number must be a positive integer.") unless build_number.is_a?(Integer) && build_number.positive?
+
+  project_path = File.expand_path("../ios/App/App.xcodeproj/project.pbxproj", __dir__)
+  project = File.read(project_path)
+  matches = project.scan(/CURRENT_PROJECT_VERSION = [^;]+;/)
+  UI.user_error!("No CURRENT_PROJECT_VERSION values found in #{project_path}.") if matches.empty?
+
+  updated = project.gsub(/CURRENT_PROJECT_VERSION = [^;]+;/, "CURRENT_PROJECT_VERSION = #{build_number};")
+  File.write(project_path, updated)
 end

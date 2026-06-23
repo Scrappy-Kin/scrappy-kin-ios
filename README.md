@@ -149,6 +149,7 @@ blocks non-demo recipients before Gmail send.
 | Local simulator QA | `cd app && npm run ios:fastlane:qa-simulator` | Yes |
 | Production archive | `cd app && npm run ios:fastlane:prod-archive` | No |
 | Production TestFlight | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight` | No |
+| Production TestFlight, auto-next build | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight-next` | No |
 | Upload signed IPA to TestFlight | `cd app && IPA_PATH=/path/to/ScrappyKin.ipa SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:upload-testflight-ipa` | No |
 
 Production TestFlight uses `Release` and can send real broker emails. Use it only
@@ -170,10 +171,29 @@ cd app
 npm run ios:version:set -- --build 16
 ```
 
-Use the next build number after the latest TestFlight build. The production
-TestFlight lane checks App Store Connect before archiving and refuses to upload
-when the checked-in build number is not newer than the latest TestFlight build
-for the current marketing version.
+Use the next build number after the latest TestFlight build. Check App Store
+Connect before bumping:
+
+```bash
+cd app
+npm run ios:testflight:build-status
+```
+
+The production TestFlight lane uses the same App Store Connect lookup before
+archiving and refuses to upload when the checked-in build number is not newer
+than the latest TestFlight build for the current marketing version.
+
+For the normal release-candidate path, use the auto-next lane instead of
+manually copying build numbers:
+
+```bash
+cd app
+SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight-next
+```
+
+That lane queries App Store Connect, sets `CURRENT_PROJECT_VERSION` to the next
+build number, builds Release, and uploads to TestFlight. Commit the resulting
+Xcode project build-number change after a successful upload.
 
 Local QA scripts choose Xcode/Fastlane cache roots dynamically:
 
