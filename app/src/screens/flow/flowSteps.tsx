@@ -203,6 +203,14 @@ export function buildFlowSteps({
                     <AppText intent="label">Body</AppText>
                     <pre className="flow-email-plaintext">{previewBodyTopText}</pre>
                   </div>
+                  <div className="flow-stack--tight">
+                    <AppText intent="body" emphasis>
+                      Identity for lookup
+                    </AppText>
+                    <AppText intent="caption">
+                      These details help brokers find the right record.
+                    </AppText>
+                  </div>
                   <div className="form-stack">
                     <AppInput
                       label="Full name"
