@@ -92,7 +92,8 @@ function RoundSizeOptionButton({
     <button
       type="button"
       className={`batch-size-option ${selected ? 'batch-size-option--selected' : ''}`}
-      aria-pressed={selected}
+      role="radio"
+      aria-checked={selected}
       onClick={onSelect}
     >
       <AppText intent="body" className="batch-size-option__label">
@@ -193,7 +194,11 @@ export default function BatchSize() {
               <AppText intent="body">
                 Go smaller for a quieter inbox, or larger to move faster.
               </AppText>
-              <section className="app-card batch-size-picker" aria-label="Round size options">
+              <section
+                className="app-card batch-size-picker"
+                role="radiogroup"
+                aria-label="Email group size"
+              >
                 {options.map((option) => (
                   <RoundSizeOptionButton
                     key={option.id}

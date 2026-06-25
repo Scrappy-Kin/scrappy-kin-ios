@@ -7,6 +7,7 @@ type HeadingLevel = 1 | 2 | 3
 type AppHeadingProps = {
   intent: HeadingIntent
   level?: HeadingLevel
+  id?: string
   accessibilityLabel?: string
   tabIndex?: number
   children: ReactNode
@@ -19,13 +20,14 @@ const headingMap: Record<HeadingIntent, { tag: 'h1' | 'h2' | 'h3'; classes: stri
 }
 
 const AppHeading = forwardRef<HTMLHeadingElement, AppHeadingProps>(function AppHeading(
-  { intent, level, accessibilityLabel, tabIndex, children },
+  { intent, level, id, accessibilityLabel, tabIndex, children },
   ref,
 ) {
   const { tag, classes } = headingMap[intent]
   const Tag = level ? (`h${level}` as const) : tag
   return (
     <Tag
+      id={id}
       className={`app-heading ${classes}`}
       ref={ref}
       tabIndex={tabIndex}

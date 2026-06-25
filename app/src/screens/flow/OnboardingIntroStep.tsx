@@ -177,7 +177,7 @@ export default function OnboardingIntroStep() {
 
       <AppText intent="body">Your first five removals are free.</AppText>
 
-      <AppText intent="body">No signup required.</AppText>
+      <AppText intent="body">No sign-up required.</AppText>
     </section>
   )
 }

@@ -214,6 +214,7 @@ body {
 }
 
 .flow-stack--tight {
+  display: grid;
   gap: var(--space-1);
 }
 

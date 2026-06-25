@@ -403,7 +403,7 @@ export default function Flow({ stepId }: FlowProps) {
     templateDraft?.signOff?.trim()
       ? resolvedTemplate.signOff
       : profileDraft.fullName.trim() || '[Your name]'
-  const previewBodyTopText = `To [broker privacy team],\n\n${resolvedTemplate.intro}\n\nIDENTITY FOR LOOKUP:`
+  const previewBodyTopText = `To [broker privacy team],\n\n${resolvedTemplate.intro}`
   const previewBodyBottomText = `WHAT I'M REQUESTING:\n${resolvedTemplate.requestBlock}\n\n${previewSignOff}`
 
   function getStepNavConfig(): StepNavConfig {

@@ -92,8 +92,8 @@ export default function AppInput({
         onChange={(event) => onChange(event.target.value)}
         onBlur={onBlur}
         onFocus={handleFocus}
+        required={required}
         aria-invalid={Boolean(error)}
-        aria-required={required}
         aria-describedby={descriptionId}
         aria-errormessage={error ? descriptionId : undefined}
       />
