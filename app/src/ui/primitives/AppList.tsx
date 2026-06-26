@@ -9,9 +9,9 @@ type AppListProps = {
 
 export default function AppList({ header, children }: AppListProps) {
   return (
-    <section className="app-list">
+    <section className="app-list" aria-label={header || undefined}>
       {header ? (
-        <div className="app-list__header">
+        <div className="app-list__header" aria-hidden="true">
           <AppText intent="label">{header}</AppText>
         </div>
       ) : null}

@@ -55,9 +55,13 @@ export default function SubscriptionDiagnosticsNotice({
 
   return (
     <AppNotice variant="warning" title="StoreKit diagnostics">
-      <span className="subscription-diagnostics-notice">
+      <span
+        className="subscription-diagnostics-notice"
+        role="group"
+        aria-label={lines.join('. ')}
+      >
         {lines.map((line) => (
-          <span key={line}>{line}</span>
+          <span key={line} aria-hidden="true">{line}</span>
         ))}
       </span>
     </AppNotice>

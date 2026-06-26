@@ -67,7 +67,7 @@ export default function AppInput({
       data-field-id={fieldId}
       ref={wrapperRef}
     >
-      <label className="app-input__label" htmlFor={baseId}>
+      <label className="app-input__label" htmlFor={baseId} aria-hidden="true">
         <span className="app-input__label-row">
           <AppText intent="label">{visibleLabel}</AppText>
           {labelNote ? (
@@ -93,6 +93,7 @@ export default function AppInput({
         onBlur={onBlur}
         onFocus={handleFocus}
         required={required}
+        aria-label={labelNote ? `${visibleLabel}. ${labelNote}` : visibleLabel}
         aria-invalid={Boolean(error)}
         aria-describedby={descriptionId}
         aria-errormessage={error ? descriptionId : undefined}

@@ -8,6 +8,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+#if SCRAPPY_KIN_QA
+        Self.seedQaCaptureRouteFromLaunchArguments()
+#endif
+
         // On first launch after a fresh install, clear any keychain data left over from a
         // previous install. UserDefaults is wiped on uninstall; the keychain is not.
         // This ensures Gmail tokens and local state do not silently survive app deletion.
@@ -53,5 +57,27 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // tracking app url opens, make sure to keep this call
         return ApplicationDelegateProxy.shared.application(application, continue: userActivity, restorationHandler: restorationHandler)
     }
+
+#if SCRAPPY_KIN_QA
+    private static func seedQaCaptureRouteFromLaunchArguments() {
+        let argumentName = "--scrappy-capture-route"
+        let preferenceKey = "CapacitorStorage.dev_capture_route"
+        let arguments = ProcessInfo.processInfo.arguments
+
+        guard let argumentIndex = arguments.firstIndex(of: argumentName),
+              arguments.indices.contains(argumentIndex + 1) else {
+            return
+        }
+
+        let route = arguments[argumentIndex + 1]
+        guard route.hasPrefix("/capture/") else {
+            return
+        }
+
+        // QA-only bridge for XCTest accessibility audits. Release/TestFlight builds do
+        // not compile this path, so production cannot be steered by launch arguments.
+        UserDefaults.standard.set(route, forKey: preferenceKey)
+    }
+#endif
 
 }

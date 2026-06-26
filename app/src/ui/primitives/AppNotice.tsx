@@ -33,11 +33,16 @@ export default function AppNotice({ variant, title, children, actions }: AppNoti
   const role = variant === 'error' ? 'alert' : 'status'
 
   return (
-    <section className={`app-notice app-notice--${variant}`} role={role} aria-live={role === 'alert' ? 'assertive' : 'polite'}>
+    <section
+      className={`app-notice app-notice--${variant}`}
+      role={role}
+      aria-live={role === 'alert' ? 'assertive' : 'polite'}
+      aria-label={title}
+    >
       {title ? (
         <div className="app-notice__title">
           <IonIcon aria-hidden="true" className={`app-notice__icon app-notice__icon--${variant}`} icon={icon} />
-          <AppText intent="label" tone={tone}>
+          <AppText intent="label" tone={tone} accessibilityHidden>
             {title}
           </AppText>
         </div>

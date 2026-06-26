@@ -50,7 +50,7 @@ export default function AppTextarea({
 
   return (
     <div className={`app-input${error ? ' app-input--error' : ''}`} ref={wrapperRef}>
-      <label className="app-input__label" htmlFor={generatedId}>
+      <label className="app-input__label" htmlFor={generatedId} aria-hidden="true">
         <AppText intent="label">{label}</AppText>
       </label>
       <textarea
@@ -67,6 +67,7 @@ export default function AppTextarea({
         }}
         onChange={(event) => onChange(event.target.value)}
         onFocus={handleFocus}
+        aria-label={label}
         aria-invalid={Boolean(error)}
         aria-describedby={descriptionId}
         aria-errormessage={error ? descriptionId : undefined}
