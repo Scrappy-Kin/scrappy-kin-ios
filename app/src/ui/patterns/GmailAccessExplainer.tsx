@@ -21,7 +21,9 @@ export default function GmailAccessExplainer({
         Opt-out emails go from your Gmail account, not ours. You approve each round, and your
         data doesn&apos;t pass through Scrappy Kin servers.
       </AppText>
-      <AppText intent="label">What Gmail access does</AppText>
+      <AppText intent="label" accessibilityHidden>
+        What Gmail access does
+      </AppText>
       <AppSegmentedCard>
         <AppSegmentedCardSection>
           <AppBulletRow

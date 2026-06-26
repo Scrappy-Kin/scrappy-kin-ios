@@ -520,9 +520,11 @@ export default function Settings() {
                 : 'Not active on this device.'
             }
             right={
-              <AppText intent="caption">
-                {subscriptionSnapshot?.active ? 'Active' : 'Inactive'}
-              </AppText>
+              <span aria-hidden="true">
+                <AppText intent="caption">
+                  {subscriptionSnapshot?.active ? 'Active' : 'Inactive'}
+                </AppText>
+              </span>
             }
             emphasis={false}
           />

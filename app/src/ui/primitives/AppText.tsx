@@ -11,6 +11,7 @@ type AppTextProps = {
   tone?: TextTone
   truncate?: boolean
   accessibilityLabel?: string
+  accessibilityHidden?: boolean
   className?: string
   children: ReactNode
 }
@@ -29,6 +30,7 @@ export default function AppText({
   tone = 'default',
   truncate = false,
   accessibilityLabel,
+  accessibilityHidden = false,
   className,
   children,
 }: AppTextProps) {
@@ -44,8 +46,10 @@ export default function AppText({
     .join(' ')
 
   return (
-    <IonText className={classes} aria-label={accessibilityLabel}>
-      <span className="app-text__content">{children}</span>
+    <IonText className={classes} aria-label={accessibilityLabel} aria-hidden={accessibilityHidden}>
+      <span className="app-text__content" aria-hidden={accessibilityHidden}>
+        {children}
+      </span>
     </IonText>
   )
 }

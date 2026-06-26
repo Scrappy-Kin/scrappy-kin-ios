@@ -27,9 +27,9 @@ export default function SubscriptionOfferCard({ product, loading = false }: Subs
             className="subscription-offer-card__price"
             accessibilityLabel={displayPrice}
           >
-            <span className="subscription-offer-card__price-amount">{priceAmount}</span>
+            <span className="subscription-offer-card__price-amount" aria-hidden="true">{priceAmount}</span>
             {pricePeriod ? (
-              <span className="subscription-offer-card__price-period">{pricePeriod}</span>
+              <span className="subscription-offer-card__price-period" aria-hidden="true">{pricePeriod}</span>
             ) : null}
           </AppText>
         ) : (

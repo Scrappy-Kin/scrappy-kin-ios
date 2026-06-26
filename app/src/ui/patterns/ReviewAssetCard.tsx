@@ -17,11 +17,11 @@ export default function ReviewAssetCard({
   children,
 }: ReviewAssetCardProps) {
   return (
-    <section className="review-asset-card">
+    <section className="review-asset-card" role="group" aria-label={title}>
       <header className="review-asset-card__header">
         <div className="review-asset-card__title">
           {icon ? <IonIcon aria-hidden="true" className="review-asset-card__icon" icon={icon} /> : null}
-          <AppText intent="label">{title}</AppText>
+          <AppText intent="label" accessibilityHidden>{title}</AppText>
         </div>
         {action ? <div className="review-asset-card__action">{action}</div> : null}
       </header>

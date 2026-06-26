@@ -1,4 +1,4 @@
-import { IS_DEV_BUILD } from '../config/buildInfo'
+import { IS_DEV_BUILD, isQaDeviceLane } from '../config/buildInfo'
 import { APP_REVIEW_PROFILE_EMAIL } from '../config/appReviewTestRecipients'
 import {
   loadBrokers,
@@ -258,8 +258,8 @@ export function listCaptureScenarios() {
 }
 
 export async function applyCaptureScenario(id: string) {
-  if (!IS_DEV_BUILD) {
-    throw new Error('Capture scenarios are available in dev builds only.')
+  if (!IS_DEV_BUILD && !isQaDeviceLane()) {
+    throw new Error('Capture scenarios are available in dev and QADevice builds only.')
   }
 
   const scenario = captureScenarios[id]

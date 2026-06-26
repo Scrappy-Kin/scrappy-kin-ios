@@ -195,21 +195,39 @@ export function buildFlowSteps({
             <AppSegmentedCard>
               <AppSegmentedCardSection>
                 <div className="flow-request-preview__content">
-                  <div className="flow-stack--tight">
-                    <AppText intent="label">Subject</AppText>
-                    <AppText intent="body">{buildDeletionSubject()}</AppText>
+                  <div
+                    className="flow-stack--tight"
+                    role="text"
+                    aria-label={`Subject. ${buildDeletionSubject()}`}
+                  >
+                    <div aria-hidden="true">
+                      <AppText intent="label">Subject</AppText>
+                      <AppText intent="body">{buildDeletionSubject()}</AppText>
+                    </div>
                   </div>
-                  <div className="flow-stack--tight">
-                    <AppText intent="label">Body</AppText>
-                    <pre className="flow-email-plaintext">{previewBodyTopText}</pre>
+                  <div
+                    className="flow-stack--tight"
+                    role="text"
+                    aria-label={`Body. ${previewBodyTopText}`}
+                  >
+                    <div aria-hidden="true">
+                      <AppText intent="label">Body</AppText>
+                      <pre className="flow-email-plaintext">{previewBodyTopText}</pre>
+                    </div>
                   </div>
-                  <div className="flow-stack--tight">
-                    <AppText intent="body" emphasis>
-                      Identity for lookup
-                    </AppText>
-                    <AppText intent="caption">
-                      These details help brokers find the right record.
-                    </AppText>
+                  <div
+                    className="flow-stack--tight"
+                    role="text"
+                    aria-label="Identity for lookup. These details help brokers find the right record."
+                  >
+                    <div aria-hidden="true">
+                      <AppText intent="body" emphasis>
+                        Identity for lookup
+                      </AppText>
+                      <AppText intent="caption">
+                        These details help brokers find the right record.
+                      </AppText>
+                    </div>
                   </div>
                   <div className="form-stack">
                     <AppInput

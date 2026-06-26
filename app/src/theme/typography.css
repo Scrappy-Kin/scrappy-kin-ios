@@ -32,6 +32,29 @@
   --letter-spacing-wide: 0.02em;
 }
 
+html.scrappy-a11y-text-large {
+  --font-size-xs: 15px;
+  --font-size-sm: 17px;
+  --font-size-md: 19px;
+  --font-size-lg: 22px;
+  --font-size-xl: 36px;
+  --font-size-subheading: 24px;
+  --font-size-2xl: 32px;
+  --font-size-3xl: 38px;
+  --font-size-display: clamp(112px, 30vw, 200px);
+  --font-size-control: 19px;
+
+  --line-height-xs: 20px;
+  --line-height-sm: 24px;
+  --line-height-md: 28px;
+  --line-height-lg: 32px;
+  --line-height-xl: 44px;
+  --line-height-subheading: 32px;
+  --line-height-2xl: 40px;
+  --line-height-3xl: 46px;
+  --line-height-control: 28px;
+}
+
 body {
   font-family: var(--font-family-sans);
   font-size: var(--font-size-md);

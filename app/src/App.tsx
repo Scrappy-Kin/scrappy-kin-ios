@@ -40,6 +40,7 @@ import { buildOnboardingHref } from './services/navigation'
 const DEV_SURFACES_ENABLED =
   import.meta.env.VITE_EXECUTION_LANE === 'dev' ||
   (!import.meta.env.VITE_EXECUTION_LANE && import.meta.env.DEV)
+const CAPTURE_SURFACES_ENABLED = DEV_SURFACES_ENABLED || isQaDeviceLane()
 const ENTRY_ROUTE_TIMEOUT_MS = 5000
 const DevHarnessHome = DEV_SURFACES_ENABLED ? lazy(() => import('./ui/harness/HarnessHome')) : null
 const DevScreenshotGallery = DEV_SURFACES_ENABLED ? lazy(() => import('./ui/harness/ScreenshotGallery')) : null
@@ -47,8 +48,8 @@ const DevReviewBoard = DEV_SURFACES_ENABLED ? lazy(() => import('./ui/harness/Re
 const DevPatterns = DEV_SURFACES_ENABLED ? lazy(() => import('./ui/harness/Patterns')) : null
 const DevPrimitives = DEV_SURFACES_ENABLED ? lazy(() => import('./ui/harness/Primitives')) : null
 const DevTokens = DEV_SURFACES_ENABLED ? lazy(() => import('./ui/harness/Tokens')) : null
-const DevAppUrlBridge = DEV_SURFACES_ENABLED ? lazy(() => import('./dev/AppUrlBridge')) : null
-const DevCaptureScenarioRoute = DEV_SURFACES_ENABLED
+const DevAppUrlBridge = CAPTURE_SURFACES_ENABLED ? lazy(() => import('./dev/AppUrlBridge')) : null
+const DevCaptureScenarioRoute = CAPTURE_SURFACES_ENABLED
   ? lazy(() => import('./dev/CaptureScenarioRoute'))
   : null
 const QaDashboardSheet = (DEV_SURFACES_ENABLED || isQaDeviceLane())
@@ -177,6 +178,33 @@ function FallbackRedirect() {
   return <Redirect to="/home" />
 }
 
+function A11yTextScaleProbe({ enabled }: { enabled: boolean }) {
+  useEffect(() => {
+    if (!enabled) {
+      document.documentElement.classList.remove('scrappy-a11y-text-large')
+      return
+    }
+
+    const applyClass = () => {
+      const params = new URLSearchParams(window.location.search)
+      document.documentElement.classList.toggle(
+        'scrappy-a11y-text-large',
+        params.get('a11yText') === 'large',
+      )
+    }
+
+    applyClass()
+    window.addEventListener('popstate', applyClass)
+
+    return () => {
+      window.removeEventListener('popstate', applyClass)
+      document.documentElement.classList.remove('scrappy-a11y-text-large')
+    }
+  }, [enabled])
+
+  return null
+}
+
 function renderLazyDevComponent<T extends Record<string, unknown>>(
   Component: ComponentType<T> | null,
   props?: T,
@@ -243,6 +271,7 @@ function AppShell() {
   const showDevTools = DEV_SURFACES_ENABLED && showDevLaneUi
   const showQaDeviceUi = isQaDeviceLane()
   const showQaBadge = showDevTools || showQaDeviceUi
+  const showCaptureRoutes = CAPTURE_SURFACES_ENABLED && (showDevTools || showQaDeviceUi)
 
   const devRoutes = showDevTools
     ? [
@@ -282,6 +311,11 @@ function AppShell() {
           render={() => renderLazyDevComponent(DevPatterns)}
           key="ui-harness-patterns"
         />,
+      ]
+    : []
+
+  const captureRoutes = showCaptureRoutes
+    ? [
         <Route
           exact
           path="/capture/:scenario"
@@ -293,6 +327,7 @@ function AppShell() {
 
   return (
     <>
+      <A11yTextScaleProbe enabled={showCaptureRoutes} />
       {showQaBadge ? (
         <button
           type="button"
@@ -314,7 +349,7 @@ function AppShell() {
           <QaDashboardSheet open={qaSheetOpen} onDismiss={() => setQaSheetOpen(false)} />
         </Suspense>
       ) : null}
-      {showDevTools ? renderLazyDevComponent(DevAppUrlBridge) : null}
+      {showCaptureRoutes ? renderLazyDevComponent(DevAppUrlBridge) : null}
       <div
         aria-hidden={oauthBrowserOpen || undefined}
         inert={oauthBrowserOpen || undefined}
@@ -330,6 +365,7 @@ function AppShell() {
           <Route exact path="/settings" component={Settings} />
           <Route exact path="/template" component={TemplateEditor} />
           {devRoutes}
+          {captureRoutes}
           <Route component={FallbackRedirect} />
         </IonRouterOutlet>
       </div>

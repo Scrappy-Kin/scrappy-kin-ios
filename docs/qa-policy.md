@@ -45,6 +45,7 @@ TestFlight.
 | Local iPhone QA | `cd app && npm run ios:fastlane:qa-device` | Yes | Uses `QADevice`; safe sends require the App Review demo profile email. |
 | Local iPhone QA, web-only iteration | `cd app && npm run ios:fastlane:qa-device-fast` | Yes | Rebuilds web assets and uses `cap copy`; use only after JS/TS/CSS/content changes. |
 | Local simulator QA | `cd app && npm run ios:fastlane:qa-simulator` | Yes | Uses `QADevice`; good for fast UI checks. |
+| Simulator accessibility audit | `cd app && npm run ios:test:a11y` | Yes | Runs XCTest accessibility audits against launch-critical screens in `QADevice`; complements, but does not replace, manual VoiceOver QA. |
 | Production archive | `cd app && npm run ios:fastlane:prod-archive` | No | Builds `Release`; use for archive verification only. |
 | Production TestFlight | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight` | No | Builds/exports `Release`, then uploads; release-candidate only; can email real brokers. |
 | Production TestFlight, auto-next build | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight-next` | No | Queries App Store Connect, sets the next checked-in build number, builds/exports `Release`, then uploads. |

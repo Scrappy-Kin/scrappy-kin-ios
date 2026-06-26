@@ -1,6 +1,7 @@
 import { IonContent, IonPage } from '@ionic/react'
+import { Capacitor } from '@capacitor/core'
 import { useEffect, useState } from 'react'
-import { useLocation, useParams } from 'react-router-dom'
+import { useHistory, useLocation, useParams } from 'react-router-dom'
 import AppText from '../ui/primitives/AppText'
 import { applyCaptureScenario } from './captureScenarios'
 
@@ -13,6 +14,18 @@ type CaptureScenarioRouteProps = {
   searchOverride?: string
 }
 
+function routeWithAuditParams(route: string, a11yText: string | null) {
+  if (!a11yText) return route
+
+  const [pathAndSearch, hash = ''] = route.split('#', 2)
+  const [path, routeSearch = ''] = pathAndSearch.split('?', 2)
+  const targetParams = new URLSearchParams(routeSearch)
+  targetParams.set('a11yText', a11yText)
+  const query = targetParams.toString()
+
+  return `${path}${query ? `?${query}` : ''}${hash ? `#${hash}` : ''}`
+}
+
 export function CaptureScenarioRunner({
   scenario,
   search,
@@ -20,10 +33,13 @@ export function CaptureScenarioRunner({
   scenario: string
   search: string
 }) {
+  const history = useHistory()
   const [error, setError] = useState<string | null>(null)
   const [preparedRoute, setPreparedRoute] = useState<string | null>(null)
-  const qaArmed = new URLSearchParams(search).get('qa') === '1'
-  const inspectMode = new URLSearchParams(search).get('inspect') === '1'
+  const params = new URLSearchParams(search)
+  const qaArmed = params.get('qa') === '1'
+  const inspectMode = params.get('inspect') === '1'
+  const a11yText = params.get('a11yText')
 
   useEffect(() => {
     if (!qaArmed) return
@@ -33,13 +49,18 @@ export function CaptureScenarioRunner({
     applyCaptureScenario(scenario)
       .then((targetRoute) => {
         if (cancelled) return
+        const preparedTargetRoute = routeWithAuditParams(targetRoute, a11yText)
         if (inspectMode) {
-          setPreparedRoute(targetRoute)
+          setPreparedRoute(preparedTargetRoute)
+          return
+        }
+        if (Capacitor.isNativePlatform()) {
+          history.replace(preparedTargetRoute)
           return
         }
         // Capture routes need a cold boot from seeded storage so stale in-memory
         // onboarding state cannot leak between scenarios in the same browser session.
-        window.location.replace(targetRoute)
+        window.location.replace(preparedTargetRoute)
       })
       .catch((cause) => {
         if (cancelled) return
@@ -49,7 +70,7 @@ export function CaptureScenarioRunner({
     return () => {
       cancelled = true
     }
-  }, [inspectMode, qaArmed, scenario])
+  }, [a11yText, history, inspectMode, qaArmed, scenario])
 
   return (
     <IonPage>

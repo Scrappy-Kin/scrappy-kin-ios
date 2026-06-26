@@ -21,6 +21,8 @@
     "ios:fastlane:qa-device": "node scripts/run-fastlane.mjs ios qa_device",
     "ios:fastlane:qa-device-fast": "node scripts/run-fastlane.mjs ios qa_device_fast",
     "ios:fastlane:qa-simulator": "node scripts/run-fastlane.mjs ios qa_simulator",
+    "ios:test:a11y": "node scripts/run-ios-a11y-tests.mjs",
+    "ios:test:a11y:spot": "node scripts/run-ios-a11y-tests.mjs --scenario",
     "ios:fastlane:prod-archive": "node scripts/fastlane-with-keychain-asc.mjs ios prod_archive",
     "ios:fastlane:prod-testflight": "node scripts/fastlane-with-keychain-asc.mjs ios prod_testflight",
     "ios:fastlane:prod-testflight-next": "node scripts/fastlane-with-keychain-asc.mjs ios prod_testflight_next",

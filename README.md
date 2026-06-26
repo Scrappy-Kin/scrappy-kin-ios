@@ -147,6 +147,7 @@ blocks non-demo recipients before Gmail send.
 | Local iPhone QA | `cd app && npm run ios:fastlane:qa-device` | Yes |
 | Local iPhone QA, web-only iteration | `cd app && npm run ios:fastlane:qa-device-fast` | Yes |
 | Local simulator QA | `cd app && npm run ios:fastlane:qa-simulator` | Yes |
+| Simulator accessibility audit | `cd app && npm run ios:test:a11y` | Yes |
 | Production archive | `cd app && npm run ios:fastlane:prod-archive` | No |
 | Production TestFlight | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight` | No |
 | Production TestFlight, auto-next build | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight-next` | No |

@@ -62,13 +62,19 @@ export default function RoundReviewSummary({
           action={brokersAction}
         >
         <AppText intent="body">
-          {brokerNames.join(', ')}.
+          {brokerNames.join(', ')}
         </AppText>
         {sendSafetyNotice ? (
-          <div className="review-asset-card__send-safety-notice">
+          <div
+            className="review-asset-card__send-safety-notice"
+            role="group"
+            aria-label={sendSafetyNotice.title}
+          >
             <div className="review-asset-card__send-safety-title">
-              <AppIcon icon={informationCircle} size="sm" />
-              <AppText intent="label" tone="danger">
+              <span aria-hidden="true">
+                <AppIcon icon={informationCircle} size="sm" />
+              </span>
+              <AppText intent="label" tone="danger" accessibilityHidden>
                 {sendSafetyNotice.title}
               </AppText>
             </div>
