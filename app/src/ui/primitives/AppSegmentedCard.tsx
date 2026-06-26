@@ -7,10 +7,22 @@ type AppSegmentedCardProps = {
 
 type AppSegmentedCardSectionProps = {
   children: ReactNode
+  accessibilityLabel?: string
 }
 
-export function AppSegmentedCardSection({ children }: AppSegmentedCardSectionProps) {
-  return <div className="app-segmented-card__section">{children}</div>
+export function AppSegmentedCardSection({
+  children,
+  accessibilityLabel,
+}: AppSegmentedCardSectionProps) {
+  return (
+    <div
+      className="app-segmented-card__section"
+      role={accessibilityLabel ? 'group' : undefined}
+      aria-label={accessibilityLabel}
+    >
+      {children}
+    </div>
+  )
 }
 
 export default function AppSegmentedCard({ children }: AppSegmentedCardProps) {

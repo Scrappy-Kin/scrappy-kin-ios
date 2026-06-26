@@ -45,6 +45,7 @@ import {
   type UserProfileField,
 } from '../services/userProfile'
 import AppButton from '../ui/primitives/AppButton'
+import AppForm from '../ui/primitives/AppForm'
 import AppHeading from '../ui/primitives/AppHeading'
 import AppInput from '../ui/primitives/AppInput'
 import AppList from '../ui/primitives/AppList'
@@ -607,58 +608,65 @@ export default function Settings() {
           Edit the details used to match your records in the opt-out emails.
         </AppText>
         <AppText intent="supporting">{profileSaved ? 'Saved.' : 'Not saved yet.'}</AppText>
-        <AppInput
-          label="Full name"
-          fieldId="fullName"
-          required
-          value={profileDraft.fullName}
-          onChange={(value) => updateProfile({ fullName: value })}
-          onBlur={() => validateProfileField('fullName')}
-          error={profileErrors.fullName}
-        />
-        <AppInput
-          label="Email"
-          fieldId="email"
-          required
-          value={profileDraft.email}
-          onChange={(value) => updateProfile({ email: value })}
-          type="email"
-          inputMode="email"
-          autoCapitalize="none"
-          autoCorrect="off"
-          autoComplete="email"
-          spellCheck={false}
-          onBlur={() => validateProfileField('email')}
-          error={profileErrors.email}
-        />
-        <AppInput
-          label="City"
-          fieldId="city"
-          required
-          value={profileDraft.city}
-          onChange={(value) => updateProfile({ city: value })}
-          onBlur={() => validateProfileField('city')}
-          error={profileErrors.city}
-        />
-        <AppInput
-          label="State"
-          fieldId="state"
-          value={profileDraft.state}
-          onChange={(value) => updateProfile({ state: value })}
-          placeholder="CA"
-        />
-        <AppInput
-          label="Zip Code (first 4 digits)"
-          fieldId="partialZip"
-          value={profileDraft.partialZip}
-          onChange={(value) => updateProfile({ partialZip: normalizeZipInput(value) })}
-          inputMode="numeric"
-          maxLength={4}
-          placeholder="1234"
-        />
-        <AppButton onClick={handleSaveProfile}>
-          {returnTo ? 'Save and continue' : 'Save profile'}
-        </AppButton>
+        <AppForm className="app-section-shell app-section-shell--compact">
+          <AppInput
+            label="Full name"
+            fieldId="fullName"
+            required
+            value={profileDraft.fullName}
+            onChange={(value) => updateProfile({ fullName: value })}
+            onBlur={() => validateProfileField('fullName')}
+            error={profileErrors.fullName}
+            enterKeyHint="next"
+          />
+          <AppInput
+            label="Email"
+            fieldId="email"
+            required
+            value={profileDraft.email}
+            onChange={(value) => updateProfile({ email: value })}
+            type="email"
+            inputMode="email"
+            autoCapitalize="none"
+            autoCorrect="off"
+            autoComplete="email"
+            spellCheck={false}
+            onBlur={() => validateProfileField('email')}
+            error={profileErrors.email}
+            enterKeyHint="next"
+          />
+          <AppInput
+            label="City"
+            fieldId="city"
+            required
+            value={profileDraft.city}
+            onChange={(value) => updateProfile({ city: value })}
+            onBlur={() => validateProfileField('city')}
+            error={profileErrors.city}
+            enterKeyHint="next"
+          />
+          <AppInput
+            label="State"
+            fieldId="state"
+            value={profileDraft.state}
+            onChange={(value) => updateProfile({ state: value })}
+            placeholder="CA"
+            enterKeyHint="next"
+          />
+          <AppInput
+            label="Zip Code (first 4 digits)"
+            fieldId="partialZip"
+            value={profileDraft.partialZip}
+            onChange={(value) => updateProfile({ partialZip: normalizeZipInput(value) })}
+            inputMode="numeric"
+            maxLength={4}
+            placeholder="1234"
+            enterKeyHint="done"
+          />
+          <AppButton onClick={handleSaveProfile}>
+            {returnTo ? 'Save and continue' : 'Save profile'}
+          </AppButton>
+        </AppForm>
       </section>
     )
   }

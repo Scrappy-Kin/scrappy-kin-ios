@@ -2,7 +2,7 @@
   display: grid;
   gap: var(--space-2);
   width: 100%;
-  scroll-margin-top: calc(var(--page-padding-top) + 72px);
+  scroll-margin-top: var(--safe-focus-top);
 }
 
 .app-form-stack {

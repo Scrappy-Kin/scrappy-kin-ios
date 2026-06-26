@@ -9,11 +9,24 @@ ion-app {
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  scroll-padding-top: var(--safe-focus-top);
 }
 
 body {
   margin: 0;
   background: var(--app-background);
+}
+
+.app-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .page-content {
@@ -26,6 +39,7 @@ body {
 
 .page-content::part(scroll) {
   overflow-x: hidden;
+  scroll-padding-top: var(--safe-focus-top);
 }
 
 .offline-shell {

@@ -21,6 +21,7 @@ type AppInputProps = {
   autoCorrect?: string
   autoComplete?: string
   spellCheck?: boolean
+  enterKeyHint?: InputHTMLAttributes<HTMLInputElement>['enterKeyHint']
 }
 
 export default function AppInput({
@@ -41,6 +42,7 @@ export default function AppInput({
   autoCorrect,
   autoComplete,
   spellCheck,
+  enterKeyHint,
 }: AppInputProps) {
   const generatedId = useId()
   const wrapperRef = useRef<HTMLDivElement | null>(null)
@@ -50,6 +52,8 @@ export default function AppInput({
     : helpText
       ? `${baseId}-help`
       : undefined
+  const labelNoteId = labelNote ? `${baseId}-note` : undefined
+  const describedBy = [labelNoteId, descriptionId].filter(Boolean).join(' ') || undefined
   const visibleLabel = required ? `${label} (Required)` : label
 
   function handleFocus() {
@@ -77,9 +81,15 @@ export default function AppInput({
           ) : null}
         </span>
       </label>
+      {labelNote ? (
+        <span className="app-sr-only" id={labelNoteId}>
+          {labelNote}
+        </span>
+      ) : null}
       <input
         id={baseId}
         className="app-input__control"
+        data-app-form-field-control="true"
         type={type}
         value={value}
         placeholder={placeholder}
@@ -89,13 +99,14 @@ export default function AppInput({
         autoCorrect={autoCorrect}
         autoComplete={autoComplete}
         spellCheck={spellCheck}
+        enterKeyHint={enterKeyHint}
         onChange={(event) => onChange(event.target.value)}
         onBlur={onBlur}
         onFocus={handleFocus}
         required={required}
-        aria-label={labelNote ? `${visibleLabel}. ${labelNote}` : visibleLabel}
+        aria-label={visibleLabel}
         aria-invalid={Boolean(error)}
-        aria-describedby={descriptionId}
+        aria-describedby={describedBy}
         aria-errormessage={error ? descriptionId : undefined}
       />
       {error ? (
