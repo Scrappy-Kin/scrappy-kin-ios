@@ -21,8 +21,7 @@ export default function OnboardingIntroStep() {
       <img
         className="flow-onboarding-intro__illustration flow-onboarding-intro__illustration--purse"
         src={ghoulPurseIllustration}
-        alt=""
-        aria-hidden="true"
+        alt="Illustration: a data ghoul searching for personal information in someone else's bag. Caption: Zoink."
       />
 
       <AppText intent="body">
@@ -53,8 +52,7 @@ export default function OnboardingIntroStep() {
       <img
         className="flow-onboarding-intro__illustration flow-onboarding-intro__illustration--bye"
         src={ghoulByeIllustration}
-        alt=""
-        aria-hidden="true"
+        alt="Illustration: a data ghoul running away with a big sack. Caption: Byeeee!"
       />
 
       <AppText intent="body">
@@ -73,20 +71,12 @@ export default function OnboardingIntroStep() {
           We send the same email the app would send, then tag the response. Four outcomes:
         </AppText>
         <ul className="flow-onboarding-intro__disclosure-list">
+          <li>Brokers that claim email support.</li>
+          <li>Brokers where email actually resulted in deletion.</li>
           <li>
-            <AppText intent="body">Brokers that claim email support.</AppText>
+            Brokers that push back into portals, ID checks, or other hurdles.
           </li>
-          <li>
-            <AppText intent="body">Brokers where email actually resulted in deletion.</AppText>
-          </li>
-          <li>
-            <AppText intent="body">
-              Brokers that push back into portals, ID checks, or other hurdles.
-            </AppText>
-          </li>
-          <li>
-            <AppText intent="body">Brokers that ignore the request entirely.</AppText>
-          </li>
+          <li>Brokers that ignore the request entirely.</li>
         </ul>
         <AppText intent="body">
           Only the second group makes it onto the list.
@@ -104,8 +94,7 @@ export default function OnboardingIntroStep() {
       <img
         className="flow-onboarding-intro__illustration flow-onboarding-intro__illustration--rescue"
         src={dataRescueIllustration}
-        alt=""
-        aria-hidden="true"
+        alt="Illustration: a pigeon takes their personal information back from the data ghoul. Caption: No way. That info is mine!"
       />
 
       <AppText intent="body">
@@ -149,25 +138,19 @@ export default function OnboardingIntroStep() {
         <AppText intent="body">Further reading:</AppText>
         <ul className="flow-onboarding-intro__disclosure-list">
           <li>
-            <AppText intent="body">
-              <a className="app-link" href={GOOGLE_APP_ACCESS_URL} target="_blank" rel="noreferrer">
-                How third-party apps access your Google Account data
-              </a>
-            </AppText>
+            <a className="app-link" href={GOOGLE_APP_ACCESS_URL} target="_blank" rel="noreferrer">
+              How third-party apps access your Google Account data
+            </a>
           </li>
           <li>
-            <AppText intent="body">
-              <a className="app-link" href={APP_STORE_PRIVACY_URL} target="_blank" rel="noreferrer">
-                App Store &amp; Privacy (Apple)
-              </a>
-            </AppText>
+            <a className="app-link" href={APP_STORE_PRIVACY_URL} target="_blank" rel="noreferrer">
+              App Store &amp; Privacy (Apple)
+            </a>
           </li>
           <li>
-            <AppText intent="body">
-              <a className="app-link" href={SCRAPPY_KIN_SOURCE_URL} target="_blank" rel="noreferrer">
-                Scrappy Kin source code
-              </a>
-            </AppText>
+            <a className="app-link" href={SCRAPPY_KIN_SOURCE_URL} target="_blank" rel="noreferrer">
+              Scrappy Kin source code
+            </a>
           </li>
         </ul>
         <AppText intent="caption">

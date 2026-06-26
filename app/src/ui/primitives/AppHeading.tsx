@@ -31,9 +31,13 @@ const AppHeading = forwardRef<HTMLHeadingElement, AppHeadingProps>(function AppH
       className={`app-heading ${classes}`}
       ref={ref}
       tabIndex={tabIndex}
-      aria-label={accessibilityLabel}
     >
-      {children}
+      {accessibilityLabel ? (
+        <span className="app-heading__sr-only">{accessibilityLabel}</span>
+      ) : null}
+      <span aria-hidden={accessibilityLabel ? 'true' : undefined}>
+        {children}
+      </span>
     </Tag>
   )
 })
