@@ -11,6 +11,7 @@ import {
 } from '../services/templateStore'
 import { getActiveUserProfile, type UserProfile } from '../services/userProfile'
 import AppButton from '../ui/primitives/AppButton'
+import AppForm from '../ui/primitives/AppForm'
 import AppHeading from '../ui/primitives/AppHeading'
 import AppText from '../ui/primitives/AppText'
 import AppTextarea from '../ui/primitives/AppTextarea'
@@ -101,50 +102,58 @@ export default function TemplateEditor() {
             <AppText intent="supporting">Custom wording is active.</AppText>
           ) : null}
 
-          <div className="template-editor__block">
-            <AppTextarea
-              label="Opening paragraph"
-              value={intro}
-              onChange={(value) => {
-                setSaveMessage('')
-                setIntro(value)
-              }}
-              rows={3}
-            />
-          </div>
+          <AppForm className="template-editor__form">
+            <div className="template-editor__block">
+              <AppTextarea
+                label="Opening paragraph"
+                fieldId="templateOpening"
+                value={intro}
+                onChange={(value) => {
+                  setSaveMessage('')
+                  setIntro(value)
+                }}
+                rows={3}
+                enterKeyHint="next"
+              />
+            </div>
 
-          <div className="template-editor__block">
-            <AppTextarea
-              label="What I’m Requesting"
-              value={requestBlock}
-              onChange={(value) => {
-                setSaveMessage('')
-                setRequestBlock(value)
-              }}
-              rows={5}
-            />
-          </div>
+            <div className="template-editor__block">
+              <AppTextarea
+                label="What I’m Requesting"
+                fieldId="templateRequest"
+                value={requestBlock}
+                onChange={(value) => {
+                  setSaveMessage('')
+                  setRequestBlock(value)
+                }}
+                rows={5}
+                enterKeyHint="next"
+              />
+            </div>
 
-          <div className="template-editor__block">
-            <AppTextarea
-              label="Sign-off"
-              value={signOff}
-              onChange={(value) => {
-                setSaveMessage('')
-                setSignOff(value)
-              }}
-              rows={2}
-            />
-          </div>
+            <div className="template-editor__block">
+              <AppTextarea
+                label="Sign-off"
+                fieldId="templateSignOff"
+                value={signOff}
+                onChange={(value) => {
+                  setSaveMessage('')
+                  setSignOff(value)
+                }}
+                rows={2}
+                enterKeyHint="done"
+              />
+            </div>
 
-          <AppButton
-            variant="secondary"
-            onClick={restoreDefaults}
-            disabled={!canRestoreDefaults}
-          >
-            Restore default wording
-          </AppButton>
-          <AppButton onClick={handleSave}>Save wording</AppButton>
+            <AppButton
+              variant="secondary"
+              onClick={restoreDefaults}
+              disabled={!canRestoreDefaults}
+            >
+              Restore default wording
+            </AppButton>
+            <AppButton onClick={handleSave}>Save wording</AppButton>
+          </AppForm>
         </section>
       </IonContent>
     </IonPage>

@@ -1,4 +1,4 @@
-import { useId, useLayoutEffect, useRef } from 'react'
+import { useId, useLayoutEffect, useRef, type TextareaHTMLAttributes } from 'react'
 import AppText from './AppText'
 import { scrollFieldIntoKeyboardSafeView } from './scrollFieldIntoKeyboardSafeView'
 import './input.css'
@@ -9,8 +9,10 @@ type AppTextareaProps = {
   onChange: (value: string) => void
   placeholder?: string
   rows?: number
+  fieldId?: string
   error?: string
   helpText?: string
+  enterKeyHint?: TextareaHTMLAttributes<HTMLTextAreaElement>['enterKeyHint']
 }
 
 export default function AppTextarea({
@@ -19,16 +21,19 @@ export default function AppTextarea({
   onChange,
   placeholder,
   rows,
+  fieldId,
   error,
   helpText,
+  enterKeyHint,
 }: AppTextareaProps) {
   const generatedId = useId()
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const baseId = fieldId ?? generatedId
   const descriptionId = error
-    ? `${generatedId}-error`
+    ? `${baseId}-error`
     : helpText
-      ? `${generatedId}-help`
+      ? `${baseId}-help`
       : undefined
 
   useLayoutEffect(() => {
@@ -49,17 +54,19 @@ export default function AppTextarea({
   }
 
   return (
-    <div className={`app-input${error ? ' app-input--error' : ''}`} ref={wrapperRef}>
-      <label className="app-input__label" htmlFor={generatedId} aria-hidden="true">
+    <div className={`app-input${error ? ' app-input--error' : ''}`} data-field-id={fieldId} ref={wrapperRef}>
+      <label className="app-input__label" htmlFor={baseId} aria-hidden="true">
         <AppText intent="label">{label}</AppText>
       </label>
       <textarea
         ref={textareaRef}
-        id={generatedId}
+        id={baseId}
         className="app-input__control"
+        data-app-form-field-control="true"
         value={value}
         placeholder={placeholder}
         rows={rows}
+        enterKeyHint={enterKeyHint}
         style={{
           minHeight: rows
             ? `calc(${rows} * var(--line-height-control) + (2 * var(--space-3)))`

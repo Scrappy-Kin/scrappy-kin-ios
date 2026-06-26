@@ -7,3 +7,7 @@
   display: grid;
   gap: var(--space-2);
 }
+
+.template-editor__form {
+  gap: var(--stack-gap-default);
+}

@@ -1,0 +1,44 @@
+.app-form {
+  display: grid;
+  gap: inherit;
+}
+
+.app-form-editing-bar {
+  position: fixed;
+  left: calc(var(--space-3) + var(--ion-safe-area-left, 0px));
+  right: calc(var(--space-3) + var(--ion-safe-area-right, 0px));
+  bottom: calc(var(--space-2) + var(--ion-safe-area-bottom, 0px));
+  z-index: 9998;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.35fr);
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--neutral-900-12);
+  border-radius: var(--radius-2);
+  background: var(--neutral-50);
+  box-shadow: 0 10px 24px rgba(32, 24, 24, 0.18);
+}
+
+.app-form-editing-bar__button {
+  min-height: 44px;
+  padding: var(--space-2);
+  color: var(--primary);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  line-height: var(--line-height-sm);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-round);
+  background: var(--neutral-50);
+}
+
+.app-form-editing-bar__button--primary {
+  color: var(--neutral-50);
+  background: var(--primary);
+}
+
+.app-form-editing-bar__button:disabled {
+  color: var(--neutral-700);
+  border-color: var(--neutral-900-12);
+  opacity: 0.55;
+}

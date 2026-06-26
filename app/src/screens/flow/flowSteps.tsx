@@ -14,6 +14,7 @@ import {
 } from '../../services/subscription'
 import type { UserProfile, UserProfileErrors, UserProfileField } from '../../services/userProfile'
 import AppButton from '../../ui/primitives/AppButton'
+import AppForm from '../../ui/primitives/AppForm'
 import AppIcon from '../../ui/primitives/AppIcon'
 import AppInput from '../../ui/primitives/AppInput'
 import AppNotice from '../../ui/primitives/AppNotice'
@@ -155,8 +156,11 @@ export function buildFlowSteps({
       render: () => (
         <section className="app-section-shell">
           <AppSegmentedCard>
-            <AppSegmentedCardSection>
+            <AppSegmentedCardSection accessibilityLabel="Included in this round">
               <div className="app-stack">
+                <AppText intent="label" accessibilityHidden>
+                  Included in this round
+                </AppText>
                 {starterBrokers.map((broker) => (
                   <div className="flow-access-row" key={broker.id}>
                     <AppIcon icon={checkmarkCircle} size="sm" tone="primary" />
@@ -229,7 +233,7 @@ export function buildFlowSteps({
                       </AppText>
                     </div>
                   </div>
-                  <div className="form-stack">
+                  <AppForm className="form-stack">
                     <AppInput
                       label="Full name"
                       fieldId="fullName"
@@ -238,6 +242,7 @@ export function buildFlowSteps({
                       onChange={(value) => updateProfile({ fullName: value })}
                       onBlur={() => validateProfileField('fullName')}
                       error={profileErrors.fullName}
+                      enterKeyHint="next"
                     />
                     <AppInput
                       label="Email"
@@ -253,6 +258,7 @@ export function buildFlowSteps({
                       spellCheck={false}
                       onBlur={() => validateProfileField('email')}
                       error={profileErrors.email}
+                      enterKeyHint="next"
                     />
                     <AppInput
                       label="City"
@@ -262,6 +268,7 @@ export function buildFlowSteps({
                       onChange={(value) => updateProfile({ city: value })}
                       onBlur={() => validateProfileField('city')}
                       error={profileErrors.city}
+                      enterKeyHint="next"
                     />
                     <AppInput
                       label="State"
@@ -270,6 +277,7 @@ export function buildFlowSteps({
                       onChange={(value) => updateProfile({ state: value.toUpperCase() })}
                       autoCapitalize="characters"
                       placeholder="CA"
+                      enterKeyHint="next"
                     />
                     <AppInput
                       label="Zip Code (first 4 digits)"
@@ -280,8 +288,9 @@ export function buildFlowSteps({
                       inputMode="numeric"
                       maxLength={4}
                       placeholder="1234"
+                      enterKeyHint="done"
                     />
-                  </div>
+                  </AppForm>
                   <pre className="flow-email-plaintext">{previewBodyBottomText}</pre>
                 </div>
               </AppSegmentedCardSection>
