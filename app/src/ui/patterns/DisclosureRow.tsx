@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import disclosureQuestionIcon from '../../assets/ui/disclosure-question.svg'
 import disclosureToggleIcon from '../../assets/ui/disclosure-toggle.svg'
 import AppText from '../primitives/AppText'
@@ -15,18 +15,11 @@ export default function DisclosureRow({
   children,
   defaultOpen = false,
 }: DisclosureRowProps) {
-  const generatedId = useId()
-  const [open, setOpen] = useState(defaultOpen)
-  const contentId = `${generatedId}-content`
-
   return (
-    <div className={`disclosure-row${open ? ' disclosure-row--open' : ''}`}>
-      <button
-        type="button"
+    <details className="disclosure-row" open={defaultOpen}>
+      <summary
         className="disclosure-row__summary"
-        aria-expanded={open}
-        aria-controls={contentId}
-        onClick={() => setOpen((current) => !current)}
+        aria-label={label}
       >
         <img
           className="disclosure-row__icon"
@@ -34,7 +27,7 @@ export default function DisclosureRow({
           alt=""
           aria-hidden="true"
         />
-        <span className="disclosure-row__label">
+        <span className="disclosure-row__label" aria-hidden="true">
           <AppText intent="body">{label}</AppText>
         </span>
         <img
@@ -43,10 +36,10 @@ export default function DisclosureRow({
           alt=""
           aria-hidden="true"
         />
-      </button>
-      <div id={contentId} className="disclosure-row__content" hidden={!open}>
+      </summary>
+      <div className="disclosure-row__content">
         {children}
       </div>
-    </div>
+    </details>
   )
 }
