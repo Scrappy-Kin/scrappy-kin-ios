@@ -1,7 +1,9 @@
-import { useId, useRef, type InputHTMLAttributes } from 'react'
+import { useId, useRef, type InputHTMLAttributes, type KeyboardEvent } from 'react'
 import AppText from './AppText'
 import { scrollFieldIntoKeyboardSafeView } from './scrollFieldIntoKeyboardSafeView'
 import './input.css'
+
+const FORM_FIELD_SELECTOR = '[data-app-form-field-control="true"]'
 
 type AppInputProps = {
   label: string
@@ -17,11 +19,29 @@ type AppInputProps = {
   error?: string
   helpText?: string
   onBlur?: () => void
+  onDone?: () => void
   autoCapitalize?: InputHTMLAttributes<HTMLInputElement>['autoCapitalize']
   autoCorrect?: string
   autoComplete?: string
   spellCheck?: boolean
   enterKeyHint?: InputHTMLAttributes<HTMLInputElement>['enterKeyHint']
+}
+
+function getUsableFormFields(currentField: HTMLElement) {
+  const root = currentField.closest('form') ?? document
+  return Array.from(root.querySelectorAll<HTMLElement>(FORM_FIELD_SELECTOR)).filter((field) => {
+    if (field.hasAttribute('disabled')) return false
+    if (field.getAttribute('aria-disabled') === 'true') return false
+    return true
+  })
+}
+
+function focusField(field: HTMLElement) {
+  field.focus({ preventScroll: true })
+  const wrapper = field.closest<HTMLElement>('.app-input')
+  requestAnimationFrame(() => {
+    void scrollFieldIntoKeyboardSafeView(wrapper ?? field)
+  })
 }
 
 export default function AppInput({
@@ -38,6 +58,7 @@ export default function AppInput({
   error,
   helpText,
   onBlur,
+  onDone,
   autoCapitalize,
   autoCorrect,
   autoComplete,
@@ -47,6 +68,7 @@ export default function AppInput({
   const generatedId = useId()
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const baseId = fieldId ?? generatedId
+  const labelId = `${baseId}-label`
   const descriptionId = error
     ? `${baseId}-error`
     : helpText
@@ -54,7 +76,6 @@ export default function AppInput({
       : undefined
   const labelNoteId = labelNote ? `${baseId}-note` : undefined
   const describedBy = [labelNoteId, descriptionId].filter(Boolean).join(' ') || undefined
-  const visibleLabel = required ? `${label} (Required)` : label
 
   function handleFocus() {
     requestAnimationFrame(() => {
@@ -65,17 +86,42 @@ export default function AppInput({
     }, 350)
   }
 
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== 'Enter') return
+    if (enterKeyHint === 'done') {
+      event.preventDefault()
+      event.currentTarget.blur()
+      onDone?.()
+      return
+    }
+    if (enterKeyHint !== 'next') return
+
+    const fields = getUsableFormFields(event.currentTarget)
+    const currentIndex = fields.indexOf(event.currentTarget)
+    const nextField = fields[currentIndex + 1]
+    if (!nextField) return
+
+    event.preventDefault()
+    focusField(nextField)
+  }
+
   return (
     <div
       className={`app-input${error ? ' app-input--error' : ''}`}
       data-field-id={fieldId}
       ref={wrapperRef}
     >
+      <span className="app-sr-only" id={labelId}>
+        {label}
+      </span>
       <label className="app-input__label" htmlFor={baseId} aria-hidden="true">
         <span className="app-input__label-row">
-          <AppText intent="label">{visibleLabel}</AppText>
+          <AppText intent="label">
+            {label}
+            {required ? <span aria-hidden="true"> (Required)</span> : null}
+          </AppText>
           {labelNote ? (
-            <span className="app-input__label-note">
+            <span className="app-input__label-note" aria-hidden="true">
               <AppText intent="caption">{labelNote}</AppText>
             </span>
           ) : null}
@@ -103,8 +149,9 @@ export default function AppInput({
         onChange={(event) => onChange(event.target.value)}
         onBlur={onBlur}
         onFocus={handleFocus}
+        onKeyDown={handleKeyDown}
         required={required}
-        aria-label={visibleLabel}
+        aria-labelledby={labelId}
         aria-invalid={Boolean(error)}
         aria-describedby={describedBy}
         aria-errormessage={error ? descriptionId : undefined}

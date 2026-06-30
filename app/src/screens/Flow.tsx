@@ -238,10 +238,6 @@ export default function Flow({ stepId }: FlowProps) {
     })
   }
 
-  function normalizeZipInput(value: string) {
-    return value.replace(/\D/g, '').slice(0, 4)
-  }
-
   function validateProfile(profile: UserProfile) {
     const errors = getUserProfileValidationErrors(profile)
     setProfileErrors(errors)
@@ -443,7 +439,6 @@ export default function Flow({ stepId }: FlowProps) {
     subscriptionBusy,
     subscribeButtonLabel,
     updateProfile,
-    normalizeZipInput,
     validateProfileField,
     onEditTemplate: () => ionRouter.push(buildTemplateHref(currentRoute), 'forward', 'push'),
     onManageGmail: () => ionRouter.push(buildSettingsHref('gmail', currentRoute), 'forward', 'push'),

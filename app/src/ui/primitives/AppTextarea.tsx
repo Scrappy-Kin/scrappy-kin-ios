@@ -30,6 +30,7 @@ export default function AppTextarea({
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const baseId = fieldId ?? generatedId
+  const labelId = `${baseId}-label`
   const descriptionId = error
     ? `${baseId}-error`
     : helpText
@@ -55,6 +56,9 @@ export default function AppTextarea({
 
   return (
     <div className={`app-input${error ? ' app-input--error' : ''}`} data-field-id={fieldId} ref={wrapperRef}>
+      <span className="app-sr-only" id={labelId}>
+        {label}
+      </span>
       <label className="app-input__label" htmlFor={baseId} aria-hidden="true">
         <AppText intent="label">{label}</AppText>
       </label>
@@ -74,7 +78,7 @@ export default function AppTextarea({
         }}
         onChange={(event) => onChange(event.target.value)}
         onFocus={handleFocus}
-        aria-label={label}
+        aria-labelledby={labelId}
         aria-invalid={Boolean(error)}
         aria-describedby={descriptionId}
         aria-errormessage={error ? descriptionId : undefined}

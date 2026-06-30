@@ -16,12 +16,12 @@ import type { UserProfile, UserProfileErrors, UserProfileField } from '../../ser
 import AppButton from '../../ui/primitives/AppButton'
 import AppForm from '../../ui/primitives/AppForm'
 import AppIcon from '../../ui/primitives/AppIcon'
-import AppInput from '../../ui/primitives/AppInput'
 import AppNotice from '../../ui/primitives/AppNotice'
 import AppSegmentedCard, { AppSegmentedCardSection } from '../../ui/primitives/AppSegmentedCard'
 import AppText from '../../ui/primitives/AppText'
 import GmailAccessExplainer, { GMAIL_CONNECTED_DESCRIPTION } from '../../ui/patterns/GmailAccessExplainer'
 import GmailConnectionStatusCard from '../../ui/patterns/GmailConnectionStatusCard'
+import ProfileFields from '../../ui/patterns/ProfileFields'
 import RoundReviewSummary, { ReviewEditIconButton } from '../../ui/patterns/RoundReviewSummary'
 import SendFailureNotice from '../../ui/patterns/SendFailureNotice'
 import ServerBoundaryClaim from '../../ui/patterns/ServerBoundaryClaim'
@@ -71,7 +71,6 @@ type BuildFlowStepsInput = {
   subscriptionBusy: 'purchase' | 'restore' | null
   subscribeButtonLabel: string | null
   updateProfile: (next: Partial<UserProfile>) => void
-  normalizeZipInput: (value: string) => string
   validateProfileField: (field: UserProfileField) => void
   onEditTemplate: () => void
   onManageGmail: () => void
@@ -93,6 +92,27 @@ function renderStepContext(summary: string) {
   )
 }
 
+function focusRequestReviewClosingText() {
+  const closingText = document.querySelector<HTMLElement>('[data-flow-request-closing-text="true"]')
+  if (!closingText) return
+
+  closingText.focus({ preventScroll: true })
+  window.requestAnimationFrame(() => {
+    closingText.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  })
+}
+
+function getRequestReviewClosingChunks(text: string) {
+  const responseMarker = '\n\nRESPONSE:'
+  const responseIndex = text.indexOf(responseMarker)
+  if (responseIndex < 0) return [text]
+
+  return [
+    text.slice(0, responseIndex).trimEnd(),
+    text.slice(responseIndex + 2).trimStart(),
+  ].filter(Boolean)
+}
+
 export function buildFlowSteps({
   starterBrokers,
   profileDraft,
@@ -112,7 +132,6 @@ export function buildFlowSteps({
   subscriptionBusy,
   subscribeButtonLabel,
   updateProfile,
-  normalizeZipInput,
   validateProfileField,
   onEditTemplate,
   onManageGmail,
@@ -187,14 +206,11 @@ export function buildFlowSteps({
       render: () => (
         <section className="app-section-shell">
           <AppText intent="supporting">
-            <>
-              These are the details we recommend based on legal research and broker testing. They
-              usually give brokers enough to find the right record while keeping what you share
-              limited.
-              <br />
-              Fill in your info below.
-            </>
+            These are the details we recommend based on legal research and broker testing. They
+            usually give brokers enough to find the right record while keeping what you share
+            limited.
           </AppText>
+          <AppText intent="supporting">Fill in your info below.</AppText>
           <div className="flow-request-preview">
             <AppSegmentedCard>
               <AppSegmentedCardSection>
@@ -219,79 +235,29 @@ export function buildFlowSteps({
                       <pre className="flow-email-plaintext">{previewBodyTopText}</pre>
                     </div>
                   </div>
-                  <div
-                    className="flow-stack--tight"
-                    role="text"
-                    aria-label="Identity for lookup. These details help brokers find the right record."
-                  >
-                    <div aria-hidden="true">
-                      <AppText intent="body" emphasis>
-                        Identity for lookup
-                      </AppText>
-                      <AppText intent="caption">
-                        These details help brokers find the right record.
-                      </AppText>
-                    </div>
-                  </div>
                   <AppForm className="form-stack">
-                    <AppInput
-                      label="Full name"
-                      fieldId="fullName"
-                      required
-                      value={profileDraft.fullName}
-                      onChange={(value) => updateProfile({ fullName: value })}
-                      onBlur={() => validateProfileField('fullName')}
-                      error={profileErrors.fullName}
-                      enterKeyHint="next"
-                    />
-                    <AppInput
-                      label="Email"
-                      fieldId="email"
-                      required
-                      value={profileDraft.email}
-                      onChange={(value) => updateProfile({ email: value })}
-                      type="email"
-                      inputMode="email"
-                      autoCapitalize="none"
-                      autoCorrect="off"
-                      autoComplete="email"
-                      spellCheck={false}
-                      onBlur={() => validateProfileField('email')}
-                      error={profileErrors.email}
-                      enterKeyHint="next"
-                    />
-                    <AppInput
-                      label="City"
-                      fieldId="city"
-                      required
-                      value={profileDraft.city}
-                      onChange={(value) => updateProfile({ city: value })}
-                      onBlur={() => validateProfileField('city')}
-                      error={profileErrors.city}
-                      enterKeyHint="next"
-                    />
-                    <AppInput
-                      label="State"
-                      fieldId="state"
-                      value={profileDraft.state}
-                      onChange={(value) => updateProfile({ state: value.toUpperCase() })}
-                      autoCapitalize="characters"
-                      placeholder="CA"
-                      enterKeyHint="next"
-                    />
-                    <AppInput
-                      label="Zip Code (first 4 digits)"
-                      labelNote="Enough for brokers to find you without revealing your exact block"
-                      fieldId="partialZip"
-                      value={profileDraft.partialZip}
-                      onChange={(value) => updateProfile({ partialZip: normalizeZipInput(value) })}
-                      inputMode="numeric"
-                      maxLength={4}
-                      placeholder="1234"
-                      enterKeyHint="done"
+                    <ProfileFields
+                      profile={profileDraft}
+                      errors={profileErrors}
+                      onChange={updateProfile}
+                      onBlurField={validateProfileField}
+                      onComplete={focusRequestReviewClosingText}
                     />
                   </AppForm>
-                  <pre className="flow-email-plaintext">{previewBodyBottomText}</pre>
+                  {getRequestReviewClosingChunks(previewBodyBottomText).map((chunk, index) => (
+                    <div
+                      className="flow-stack--tight"
+                      role="text"
+                      tabIndex={0}
+                      aria-label={chunk}
+                      data-flow-request-closing-text={index === 0 ? 'true' : undefined}
+                      key={chunk}
+                    >
+                      <div aria-hidden="true">
+                        <pre className="flow-email-plaintext">{chunk}</pre>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </AppSegmentedCardSection>
             </AppSegmentedCard>

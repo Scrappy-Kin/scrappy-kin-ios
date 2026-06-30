@@ -34,6 +34,14 @@ export function ReviewEditIconButton({
   )
 }
 
+function buildBrokerListAccessibilityLabel(brokerCount: number, brokerNames: string[]) {
+  if (brokerNames.length <= 8) return brokerNames.join(', ')
+
+  const previewNames = brokerNames.slice(0, 5).join(', ')
+  const remainingCount = Math.max(0, brokerCount - 5)
+  return `${brokerCount} brokers selected. Includes ${previewNames}${remainingCount > 0 ? `, and ${remainingCount} more` : ''}.`
+}
+
 export default function RoundReviewSummary({
   brokerCount,
   brokerNames,
@@ -44,6 +52,8 @@ export default function RoundReviewSummary({
   sendSafetyMode = 'live',
 }: RoundReviewSummaryProps) {
   const sendSafetyNotice = SEND_SAFETY_NOTICES[sendSafetyMode]
+  const brokerListText = brokerNames.join(', ')
+  const brokerListAccessibilityLabel = buildBrokerListAccessibilityLabel(brokerCount, brokerNames)
 
   return (
     <>
@@ -61,8 +71,8 @@ export default function RoundReviewSummary({
           icon={checkmarkCircle}
           action={brokersAction}
         >
-        <AppText intent="body">
-          {brokerNames.join(', ')}
+        <AppText intent="body" accessibilityLabel={brokerListAccessibilityLabel}>
+          {brokerListText}
         </AppText>
         {sendSafetyNotice ? (
           <div

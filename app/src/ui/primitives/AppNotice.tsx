@@ -1,5 +1,5 @@
 import { IonIcon } from '@ionic/react'
-import { isValidElement, useId, type ReactNode } from 'react'
+import { useId, type ReactNode } from 'react'
 import { alertCircle, checkmarkCircle, informationCircle, warning } from 'ionicons/icons'
 import AppText from './AppText'
 import './notice.css'
@@ -28,46 +28,6 @@ const variantIcon: Record<NoticeVariant, string> = {
   success: checkmarkCircle,
 }
 
-type AccessibleElementProps = {
-  'aria-label'?: string
-  children?: ReactNode
-}
-
-function normalizeText(text: string) {
-  return text.replace(/\s+/g, ' ').trim()
-}
-
-function extractAccessibleText(node: ReactNode): string[] {
-  if (typeof node === 'string' || typeof node === 'number') {
-    const text = normalizeText(String(node))
-    return text ? [text] : []
-  }
-
-  if (Array.isArray(node)) {
-    return node.flatMap(extractAccessibleText)
-  }
-
-  if (isValidElement<AccessibleElementProps>(node)) {
-    const ariaLabel = node.props['aria-label']
-    if (ariaLabel) {
-      return [normalizeText(ariaLabel)]
-    }
-
-    return extractAccessibleText(node.props.children)
-  }
-
-  return []
-}
-
-function buildNoticeAccessibilityLabel(title: string | undefined, children: ReactNode) {
-  const parts = [
-    title ? normalizeText(title) : '',
-    ...extractAccessibleText(children),
-  ].filter(Boolean)
-
-  return parts.length > 0 ? parts.join('. ') : undefined
-}
-
 export default function AppNotice({
   variant,
   title,
@@ -78,33 +38,31 @@ export default function AppNotice({
   const tone = variantTone[variant]
   const icon = variantIcon[variant]
   const role = variant === 'error' ? 'alert' : 'status'
-  const announcementId = useId()
-  const noticeAccessibilityLabel =
-    accessibilityLabel ?? buildNoticeAccessibilityLabel(title, children)
+  const generatedId = useId()
+  const bodyId = `${generatedId}-body`
+  const noticeLabel = accessibilityLabel ?? title
 
   return (
     <section
       className={`app-notice app-notice--${variant}`}
       role={role}
       aria-live={role === 'alert' ? 'assertive' : 'polite'}
-      aria-labelledby={noticeAccessibilityLabel ? announcementId : undefined}
+      aria-label={noticeLabel}
+      aria-describedby={bodyId}
     >
-      {noticeAccessibilityLabel ? (
-        <span id={announcementId} className="app-notice__sr-only">
-          {noticeAccessibilityLabel}
-        </span>
-      ) : null}
       {title ? (
-        <div className="app-notice__title">
+        <div className="app-notice__title" aria-hidden="true">
           <IonIcon aria-hidden="true" className={`app-notice__icon app-notice__icon--${variant}`} icon={icon} />
           <AppText intent="label" tone={tone} accessibilityHidden>
             {title}
           </AppText>
         </div>
       ) : null}
-      <AppText intent="body" tone={tone} accessibilityHidden={Boolean(noticeAccessibilityLabel)}>
-        {children}
-      </AppText>
+      <div id={bodyId}>
+        <AppText intent="body" tone={tone}>
+          {children}
+        </AppText>
+      </div>
       {actions ? <div className="app-notice__actions">{actions}</div> : null}
     </section>
   )

@@ -8,6 +8,7 @@ type ButtonSize = 'xs' | 'sm' | 'md' | 'lg'
 type AppButtonProps = {
   variant?: ButtonVariant
   size?: ButtonSize
+  type?: 'button' | 'submit' | 'reset'
   disabled?: boolean
   softDisabled?: boolean
   loading?: boolean
@@ -30,6 +31,7 @@ const variantStyles: Record<ButtonVariant, { color: 'primary' | 'danger'; fill: 
 export default function AppButton({
   variant = 'primary',
   size = 'md',
+  type = 'button',
   disabled = false,
   softDisabled = false,
   loading = false,
@@ -58,6 +60,7 @@ export default function AppButton({
       fill={fill}
       expand={fullWidth ? 'block' : undefined}
       disabled={disabled || loading}
+      type={type}
       onClick={onClick}
       aria-busy={loading}
       aria-disabled={softDisabled || disabled || loading}
