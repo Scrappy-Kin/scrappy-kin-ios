@@ -6,13 +6,11 @@ export type SettingsNotice =
   | 'profile-saved'
   | 'wording-saved'
   | 'round-size-saved'
-  | 'gmail-connected'
 
 const settingsNoticeSet = new Set<SettingsNotice>([
   'profile-saved',
   'wording-saved',
   'round-size-saved',
-  'gmail-connected',
 ])
 
 export function getCurrentRoute(location: Pick<Location, 'pathname' | 'search'>) {

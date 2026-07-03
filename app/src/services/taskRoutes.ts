@@ -81,6 +81,10 @@ export function getTaskEditBehavior(intent: TaskIntent) {
   return TASK_ROUTES[intent].editBehavior ?? null
 }
 
+export function shouldCompleteGmailRepairInPlace(returnTo: string, successTo?: string | null) {
+  return returnTo.startsWith('/settings') && (!successTo || successTo === returnTo)
+}
+
 export function deriveNextBatchTaskTarget(
   input: TaskRouteStateInput,
   returnTo: string | null = '/home',

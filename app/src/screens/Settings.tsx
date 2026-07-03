@@ -124,10 +124,6 @@ const settingsNoticeCopy = {
     title: 'Saved',
     body: 'Round size updated.',
   },
-  'gmail-connected': {
-    title: 'Saved',
-    body: 'Gmail connected.',
-  },
 } as const
 const DevDiagnosticsPanel = DEV_BUNDLE_ENABLED
   ? lazy(() => import('../dev/DevDiagnosticsPanel'))

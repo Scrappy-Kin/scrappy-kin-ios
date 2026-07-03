@@ -6,11 +6,9 @@ import {
   getCurrentRoute,
   readReturnTo,
   readSuccessTo,
-  withSettingsNotice,
 } from '../services/navigation'
-import { getTaskSuccessHref } from '../services/taskRoutes'
+import { getTaskSuccessHref, shouldCompleteGmailRepairInPlace } from '../services/taskRoutes'
 import AppButton from '../ui/primitives/AppButton'
-import AppActionNotice from '../ui/primitives/AppActionNotice'
 import AppHeading from '../ui/primitives/AppHeading'
 import AppNotice from '../ui/primitives/AppNotice'
 import AppText from '../ui/primitives/AppText'
@@ -32,10 +30,12 @@ export default function Gmail() {
   const headingRef = useRef<HTMLHeadingElement | null>(null)
   const [gmailConnected, setGmailConnected] = useState(false)
   const [oauthError, setOauthError] = useState<string | null>(null)
-  const [gmailNotice, setGmailNotice] = useState<string | null>(null)
+  const [gmailStatusMessage, setGmailStatusMessage] = useState('')
   const [oauthInFlight, setOauthInFlight] = useState(false)
+  const shouldStayOnSettingsGmailPage = shouldCompleteGmailRepairInPlace(returnTo, successTo)
 
   useIonViewWillEnter(() => {
+    setGmailStatusMessage('')
     void getGmailStatus().then((status) => {
       setGmailConnected(status.connected)
     })
@@ -43,23 +43,32 @@ export default function Gmail() {
 
   useRouteFocus(currentRoute, true, headingRef)
 
+  function focusHeading() {
+    requestAnimationFrame(() => {
+      headingRef.current?.focus({ preventScroll: true })
+    })
+  }
+
   async function handleConnectGmail() {
     try {
       setOauthError(null)
-      setGmailNotice(null)
+      setGmailStatusMessage('')
       setOauthInFlight(true)
       await connectGmail()
       const status = await getGmailStatus()
       setGmailConnected(status.connected)
       if (status.connected) {
+        if (shouldStayOnSettingsGmailPage) {
+          setGmailStatusMessage('Gmail successfully connected.')
+          focusHeading()
+          return
+        }
+
         history.replace(
-          withSettingsNotice(
-            getTaskSuccessHref('repair_gmail', {
-              returnTo,
-              successTo,
-            }),
-            'gmail-connected',
-          ),
+          getTaskSuccessHref('repair_gmail', {
+            returnTo,
+            successTo,
+          }),
         )
       }
     } catch (error) {
@@ -73,7 +82,8 @@ export default function Gmail() {
   async function handleDisconnect() {
     await disconnectGmail()
     setGmailConnected(false)
-    setGmailNotice('Gmail disconnected.')
+    setGmailStatusMessage('Gmail successfully disconnected.')
+    focusHeading()
   }
 
   return (
@@ -83,17 +93,15 @@ export default function Gmail() {
           <AppTopNav backHref={returnTo} />
           <div className="app-screen-shell">
             <AppHeading intent="section" level={1} ref={headingRef} tabIndex={-1}>
-              Gmail
+              Gmail connection
             </AppHeading>
             <section className="app-section-shell">
+              <div className="app-sr-only" role="status" aria-live="polite" aria-atomic="true">
+                {gmailStatusMessage}
+              </div>
               <AppText intent="supporting">
                 Connect or manage the Gmail account used to send the opt-out emails you approve.
               </AppText>
-              {gmailNotice ? (
-                <AppActionNotice variant="success" title="Saved">
-                  {gmailNotice}
-                </AppActionNotice>
-              ) : null}
               {gmailConnected ? (
                 <GmailConnectionStatusCard
                   connected
@@ -117,7 +125,7 @@ export default function Gmail() {
                     connectedDescription=""
                     disconnectedDescription={GMAIL_DISCONNECTED_DESCRIPTION}
                   />
-                  <GmailAccessExplainer showGooglePermissionHint />
+                  <GmailAccessExplainer showGooglePermissionHint showAccountBoundaryCopy={false} />
                   {oauthError ? (
                     <AppNotice variant="error" title="Gmail connection didn’t finish">
                       {oauthError}

@@ -11,17 +11,21 @@ export const GMAIL_DISCONNECTED_DESCRIPTION =
 
 type GmailAccessExplainerProps = {
   showGooglePermissionHint?: boolean
+  showAccountBoundaryCopy?: boolean
 }
 
 export default function GmailAccessExplainer({
   showGooglePermissionHint = false,
+  showAccountBoundaryCopy = true,
 }: GmailAccessExplainerProps) {
   return (
     <section className="app-section-shell">
-      <AppText intent="body">
-        Opt-out emails go from your Gmail account, not ours. You approve each round, and your
-        data doesn&apos;t pass through Scrappy Kin servers.
-      </AppText>
+      {showAccountBoundaryCopy ? (
+        <AppText intent="body">
+          Opt-out emails go from your Gmail account, not ours. You approve each round, and your
+          data doesn&apos;t pass through Scrappy Kin servers.
+        </AppText>
+      ) : null}
       <AppSectionLabel>What Gmail access does</AppSectionLabel>
       <AppSegmentedCard>
         <AppSegmentedCardSection>

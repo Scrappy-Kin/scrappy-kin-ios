@@ -13,4 +13,5 @@ HQ remains the product canon for accessibility decisions.
 
 - Settings-originated saves should return to Settings home with a short saved notice when the edit is complete.
 - Task-required edits may continue to the task route when the user must get back to review or send readiness.
+- Settings status/action pages, such as Gmail connection, should stay on the child page after connect/disconnect. Use the status card as the visible source of truth, a short VoiceOver-only success message when needed, and H1 focus after completion.
 - Same-screen saved notices should use the shared action-notice pattern. Avoid duplicate live announcements when the focused control already changes to the completed state.
