@@ -1,5 +1,5 @@
 import { IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
 import {
   DEFAULT_ROUND_SIZE,
@@ -10,13 +10,14 @@ import {
   setSelectedRoundSize,
   type Broker,
 } from '../services/brokerStore'
-import { readReturnTo } from '../services/navigation'
+import { getCurrentRoute, readReturnTo, withSettingsNotice } from '../services/navigation'
 import { computeBrokerEligibility, getEligibleBrokerIds } from '../services/roundState'
 import { getMergedSentLog } from '../services/sentLog'
 import AppButton from '../ui/primitives/AppButton'
 import AppHeading from '../ui/primitives/AppHeading'
 import AppText from '../ui/primitives/AppText'
 import AppTopNav from '../ui/patterns/AppTopNav'
+import { useRouteFocus } from '../ui/patterns/useRouteFocus'
 import './batch-size.css'
 
 type RoundSizeOptionId = 'quiet' | 'steady' | 'fast' | 'all'
@@ -35,6 +36,11 @@ function getGroupCount(remainingCount: number, groupSize: number) {
 
 function formatGroupCount(count: number) {
   return `${count} ${count === 1 ? 'group' : 'groups'}`
+}
+
+function buildOptionAccessibilityLabel(option: RoundSizeOption, selected: boolean) {
+  if (selected) return `${option.label}. ${option.description}`
+  return `Choose ${option.label.toLowerCase()}. ${option.description}`
 }
 
 function buildOptions(remainingCount: number): RoundSizeOption[] {
@@ -94,6 +100,7 @@ function RoundSizeOptionButton({
       className={`batch-size-option ${selected ? 'batch-size-option--selected' : ''}`}
       role="radio"
       aria-checked={selected}
+      aria-label={buildOptionAccessibilityLabel(option, selected)}
       onClick={onSelect}
     >
       <AppText intent="body" className="batch-size-option__label">
@@ -109,7 +116,9 @@ function RoundSizeOptionButton({
 export default function BatchSize() {
   const history = useHistory()
   const location = useLocation()
+  const currentRoute = getCurrentRoute(location)
   const returnTo = readReturnTo(location.search) ?? '/review-batch'
+  const headingRef = useRef<HTMLHeadingElement | null>(null)
   const [isReady, setIsReady] = useState(false)
   const [sentCount, setSentCount] = useState(0)
   const [remainingBrokers, setRemainingBrokers] = useState<Broker[]>([])
@@ -146,6 +155,8 @@ export default function BatchSize() {
     void refreshState()
   })
 
+  useRouteFocus(currentRoute, isReady, headingRef)
+
   const remainingCount = remainingBrokers.length
   const options = buildOptions(remainingCount)
   const selectedOption = options.find((option) => option.id === selectedOptionId) ?? options[1]
@@ -158,7 +169,7 @@ export default function BatchSize() {
       setSelectedBrokerIds(nextSelectedIds),
       setSelectedRoundSize(selectedOption.size),
     ])
-    history.replace(returnTo)
+    history.replace(withSettingsNotice(returnTo, 'round-size-saved'))
   }
 
   return (
@@ -166,7 +177,7 @@ export default function BatchSize() {
       <IonContent className="page-content">
         <div className="app-screen-shell">
           <AppTopNav backHref={returnTo} />
-          <AppHeading intent="section" level={1}>
+          <AppHeading intent="section" level={1} ref={headingRef} tabIndex={-1}>
             Choose how many emails to send in each group
           </AppHeading>
           {isReady ? (
@@ -174,7 +185,7 @@ export default function BatchSize() {
               <div
                 className="batch-size-counts"
                 role="text"
-                aria-label={`${sentCount} sent, ${remainingCount} remaining`}
+                aria-label={`${sentCount} emails sent, ${remainingCount} remaining`}
               >
                 <div className="batch-size-counts__numbers" aria-hidden="true">
                   <strong>{sentCount}</strong>

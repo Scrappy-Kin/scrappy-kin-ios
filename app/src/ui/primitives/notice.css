@@ -26,37 +26,7 @@
 }
 
 .app-notice__title {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: 44px;
-}
-
-.app-notice__icon {
-  font-size: 18px;
-}
-
-.app-notice__title .app-text,
-.app-notice__title .app-text__content {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-}
-
-.app-notice__icon--info {
-  color: var(--primary);
-}
-
-.app-notice__icon--warning {
   color: var(--secondary);
-}
-
-.app-notice__icon--error {
-  color: var(--danger);
-}
-
-.app-notice__icon--success {
-  color: var(--primary);
 }
 
 .app-notice__actions {

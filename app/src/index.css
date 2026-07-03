@@ -42,6 +42,15 @@ body {
   scroll-padding-top: var(--safe-focus-top);
 }
 
+.app-heading,
+.app-text,
+.app-card,
+.app-segmented-card,
+.app-notice,
+.app-label-row {
+  scroll-margin-top: var(--safe-focus-top);
+}
+
 .offline-shell {
   padding: var(--space-6);
   text-align: left;

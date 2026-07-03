@@ -1,6 +1,7 @@
 import { closeCircle } from 'ionicons/icons'
 import AppBulletRow from '../primitives/AppBulletRow'
 import AppSegmentedCard, { AppSegmentedCardSection } from '../primitives/AppSegmentedCard'
+import AppSectionLabel from '../primitives/AppSectionLabel'
 import AppText from '../primitives/AppText'
 
 export const GMAIL_CONNECTED_DESCRIPTION =
@@ -21,9 +22,7 @@ export default function GmailAccessExplainer({
         Opt-out emails go from your Gmail account, not ours. You approve each round, and your
         data doesn&apos;t pass through Scrappy Kin servers.
       </AppText>
-      <AppText intent="label" accessibilityHidden>
-        What Gmail access does
-      </AppText>
+      <AppSectionLabel>What Gmail access does</AppSectionLabel>
       <AppSegmentedCard>
         <AppSegmentedCardSection>
           <AppBulletRow

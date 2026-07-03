@@ -328,27 +328,6 @@ function AppShell() {
   return (
     <>
       <A11yTextScaleProbe enabled={showCaptureRoutes} />
-      {showQaBadge ? (
-        <button
-          type="button"
-          className={[
-            'execution-lane-badge',
-            showQaDeviceUi ? 'execution-lane-badge--qa' : 'execution-lane-badge--dev',
-          ].join(' ')}
-          aria-label="Open QA dashboard presets"
-          onClick={() => setQaSheetOpen(true)}
-        >
-          <span className="execution-lane-badge__dot" />
-          <span className="execution-lane-badge__label">
-            {showQaDeviceUi ? 'QA' : 'DEV'}
-          </span>
-        </button>
-      ) : null}
-      {showQaBadge && QaDashboardSheet ? (
-        <Suspense fallback={null}>
-          <QaDashboardSheet open={qaSheetOpen} onDismiss={() => setQaSheetOpen(false)} />
-        </Suspense>
-      ) : null}
       {showCaptureRoutes ? renderLazyDevComponent(DevAppUrlBridge) : null}
       <div
         aria-hidden={oauthBrowserOpen || undefined}
@@ -368,7 +347,28 @@ function AppShell() {
           {captureRoutes}
           <Route component={FallbackRedirect} />
         </IonRouterOutlet>
+        {showQaBadge ? (
+          <button
+            type="button"
+            className={[
+              'execution-lane-badge',
+              showQaDeviceUi ? 'execution-lane-badge--qa' : 'execution-lane-badge--dev',
+            ].join(' ')}
+            aria-label="Open QA dashboard presets"
+            onClick={() => setQaSheetOpen(true)}
+          >
+            <span className="execution-lane-badge__dot" />
+            <span className="execution-lane-badge__label">
+              {showQaDeviceUi ? 'QA' : 'DEV'}
+            </span>
+          </button>
+        ) : null}
       </div>
+      {showQaBadge && QaDashboardSheet ? (
+        <Suspense fallback={null}>
+          <QaDashboardSheet open={qaSheetOpen} onDismiss={() => setQaSheetOpen(false)} />
+        </Suspense>
+      ) : null}
     </>
   )
 }

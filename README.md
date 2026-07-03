@@ -49,6 +49,7 @@ npm run audit:manifest
 - `docs/build-oauth.md` - build-time OAuth and environment contract
 - `docs/browser-qa.md` - web-harness and browser automation QA lanes
 - `docs/qa-policy.md` - explicit QA surface policy and release-boundary rules
+- `docs/accessibility-patterns.md` - repo-local notes for repeated VoiceOver implementation patterns
 
 ## Agent Notes
 

@@ -289,7 +289,7 @@ export default function Flow({ stepId }: FlowProps) {
         ionRouter.push(buildOnboardingHref('final-review'), 'forward', 'push')
       }
     } catch (error) {
-      const message = (error as Error).message ?? 'Sign-in didn’t finish. Please try again.'
+      const message = (error as Error).message ?? 'Gmail connection didn’t finish. Please try again.'
       setOauthError(message)
     } finally {
       setOauthInFlight(false)

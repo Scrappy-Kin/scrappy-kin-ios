@@ -135,6 +135,21 @@ export function buildSubscriptionButtonLabel(snapshot: SubscriptionSnapshot | nu
   return snapshot.product.buttonPriceLabel
 }
 
+export function buildSubscriptionAccessibilityPriceLabel(label: string | null | undefined) {
+  if (!label) {
+    return null
+  }
+
+  return label.replace(/\s*\/\s*/g, ' per ').replace(/\s+/g, ' ').trim()
+}
+
+export function buildSubscriptionButtonAccessibilityLabel(snapshot: SubscriptionSnapshot | null) {
+  const priceLabel = buildSubscriptionButtonLabel(snapshot)
+  const spokenPriceLabel = buildSubscriptionAccessibilityPriceLabel(priceLabel)
+
+  return spokenPriceLabel ? `Subscribe, ${spokenPriceLabel}` : 'Loading subscription'
+}
+
 const DEV_SUBSCRIPTION_ACTIVE_KEY = 'dev_subscription_active'
 const NATIVE_SUBSCRIPTION_TIMEOUT_MS = 4000
 const SubscriptionNative = registerPlugin<SubscriptionPlugin>('Subscription')

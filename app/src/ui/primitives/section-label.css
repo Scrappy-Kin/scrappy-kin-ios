@@ -1,0 +1,5 @@
+.app-section-label {
+  min-height: var(--touch-target-nav);
+  display: flex;
+  align-items: center;
+}

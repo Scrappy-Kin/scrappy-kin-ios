@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import AppText from './AppText'
+import AppLabelRow from './AppLabelRow'
 import './surface.css'
 
 type AppCardProps = {
@@ -12,13 +12,11 @@ export default function AppCard({ title, actions, children }: AppCardProps) {
   const hasHeader = Boolean(title || actions)
 
   return (
-    <section className="app-card" aria-label={title || undefined}>
+    <section className="app-card">
       {hasHeader && (
         <header className="app-card__header">
           {title ? (
-            <span aria-hidden="true">
-              <AppText intent="label">{title}</AppText>
-            </span>
+            <AppLabelRow className="app-card__title">{title}</AppLabelRow>
           ) : (
             <span />
           )}

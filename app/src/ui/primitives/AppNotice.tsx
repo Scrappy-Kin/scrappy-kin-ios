@@ -1,6 +1,6 @@
-import { IonIcon } from '@ionic/react'
 import { useId, type ReactNode } from 'react'
 import { alertCircle, checkmarkCircle, informationCircle, warning } from 'ionicons/icons'
+import AppLabelRow from './AppLabelRow'
 import AppText from './AppText'
 import './notice.css'
 
@@ -12,6 +12,7 @@ type AppNoticeProps = {
   children: ReactNode
   actions?: ReactNode
   accessibilityLabel?: string
+  live?: 'polite' | 'assertive' | false
 }
 
 const variantTone: Record<NoticeVariant, 'default' | 'danger'> = {
@@ -28,35 +29,49 @@ const variantIcon: Record<NoticeVariant, string> = {
   success: checkmarkCircle,
 }
 
+const variantIconTone: Record<NoticeVariant, 'neutral' | 'primary' | 'danger'> = {
+  info: 'primary',
+  warning: 'neutral',
+  error: 'danger',
+  success: 'primary',
+}
+
 export default function AppNotice({
   variant,
   title,
   children,
   actions,
   accessibilityLabel,
+  live,
 }: AppNoticeProps) {
   const tone = variantTone[variant]
   const icon = variantIcon[variant]
-  const role = variant === 'error' ? 'alert' : 'status'
+  const liveSetting = live ?? (variant === 'error' ? 'assertive' : false)
+  const role = variant === 'error' ? 'alert' : liveSetting ? 'status' : undefined
   const generatedId = useId()
+  const titleId = title ? `${generatedId}-title` : undefined
   const bodyId = `${generatedId}-body`
-  const noticeLabel = accessibilityLabel ?? title
 
   return (
     <section
       className={`app-notice app-notice--${variant}`}
       role={role}
-      aria-live={role === 'alert' ? 'assertive' : 'polite'}
-      aria-label={noticeLabel}
+      aria-live={liveSetting || undefined}
+      aria-label={accessibilityLabel}
+      aria-labelledby={accessibilityLabel ? undefined : titleId}
       aria-describedby={bodyId}
     >
       {title ? (
-        <div className="app-notice__title" aria-hidden="true">
-          <IonIcon aria-hidden="true" className={`app-notice__icon app-notice__icon--${variant}`} icon={icon} />
-          <AppText intent="label" tone={tone} accessibilityHidden>
-            {title}
-          </AppText>
-        </div>
+        <AppLabelRow
+          id={titleId}
+          className="app-notice__title"
+          icon={icon}
+          iconTone={variantIconTone[variant]}
+          tone={tone}
+          touchTarget
+        >
+          {title}
+        </AppLabelRow>
       ) : null}
       <div id={bodyId}>
         <AppText intent="body" tone={tone}>

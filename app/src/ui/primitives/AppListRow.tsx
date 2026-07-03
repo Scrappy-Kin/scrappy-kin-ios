@@ -13,6 +13,7 @@ type AppListRowProps = {
   tone?: 'neutral' | 'primary' | 'danger'
   disabled?: boolean
   emphasis?: boolean
+  accessibilityLabel?: string
   accessibilityHint?: string
 }
 
@@ -31,6 +32,7 @@ export default function AppListRow({
   tone = 'neutral',
   disabled = false,
   emphasis = true,
+  accessibilityLabel,
   accessibilityHint,
 }: AppListRowProps) {
   const hintId = useId()
@@ -75,6 +77,7 @@ export default function AppListRow({
         type="button"
         onClick={disabled ? undefined : onClick}
         disabled={disabled}
+        aria-label={accessibilityLabel}
         aria-describedby={accessibilityHint ? hintId : undefined}
       >
         {content}

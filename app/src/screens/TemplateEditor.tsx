@@ -1,7 +1,12 @@
 import { IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
 import { useMemo, useRef, useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
-import { buildSettingsHref, getCurrentRoute, readReturnTo } from '../services/navigation'
+import {
+  buildSettingsHref,
+  getCurrentRoute,
+  readReturnTo,
+  withSettingsNotice,
+} from '../services/navigation'
 import {
   getDefaultDeletionTemplate,
   getDeletionTemplateDraft,
@@ -11,8 +16,10 @@ import {
 } from '../services/templateStore'
 import { getActiveUserProfile, type UserProfile } from '../services/userProfile'
 import AppButton from '../ui/primitives/AppButton'
+import AppActionNotice from '../ui/primitives/AppActionNotice'
 import AppForm from '../ui/primitives/AppForm'
 import AppHeading from '../ui/primitives/AppHeading'
+import AppNotice from '../ui/primitives/AppNotice'
 import AppText from '../ui/primitives/AppText'
 import AppTextarea from '../ui/primitives/AppTextarea'
 import AppTopNav from '../ui/patterns/AppTopNav'
@@ -39,7 +46,12 @@ export default function TemplateEditor() {
   const [intro, setIntro] = useState('')
   const [requestBlock, setRequestBlock] = useState('')
   const [signOff, setSignOff] = useState('')
-  const [saveMessage, setSaveMessage] = useState('')
+  const [statusNotice, setStatusNotice] = useState<{
+    kind: 'saved' | 'restored'
+    variant: 'info' | 'success'
+    title: string
+    body: string
+  } | null>(null)
 
   const defaults = useMemo(() => getDefaultDeletionTemplate(profile), [profile])
 
@@ -52,7 +64,7 @@ export default function TemplateEditor() {
     setIntro(resolved.intro)
     setRequestBlock(resolved.requestBlock)
     setSignOff(resolved.signOff)
-    setSaveMessage('')
+    setStatusNotice(null)
   }
 
   useIonViewWillEnter(() => {
@@ -70,17 +82,27 @@ export default function TemplateEditor() {
     const nextDraft = await getDeletionTemplateDraft()
     setDraft(nextDraft)
     if (returnTo) {
-      history.replace(fallbackHref)
+      history.replace(withSettingsNotice(fallbackHref, 'wording-saved'))
       return
     }
-    setSaveMessage('Saved locally.')
+    setStatusNotice({
+      kind: 'saved',
+      variant: 'success',
+      title: 'Wording saved',
+      body: 'This wording is saved on this device.',
+    })
   }
 
   function restoreDefaults() {
-    setSaveMessage('')
     setIntro(defaults.intro)
     setRequestBlock(defaults.requestBlock)
     setSignOff(defaults.signOff)
+    setStatusNotice({
+      kind: 'restored',
+      variant: 'info',
+      title: 'Default wording restored',
+      body: 'Save wording to keep it.',
+    })
   }
 
   const hasCustomWording = Boolean(draft?.intro || draft?.requestBlock || draft?.signOff)
@@ -97,8 +119,22 @@ export default function TemplateEditor() {
           <AppHeading intent="section" level={1} ref={headingRef} tabIndex={-1}>
             Edit email wording
           </AppHeading>
-          {saveMessage ? <AppText intent="supporting">{saveMessage}</AppText> : null}
-          {hasCustomWording ? (
+          {statusNotice ? (
+            statusNotice.kind === 'saved' ? (
+              <AppActionNotice variant={statusNotice.variant} title={statusNotice.title}>
+                {statusNotice.body}
+              </AppActionNotice>
+            ) : (
+              <AppNotice
+                variant={statusNotice.variant}
+                title={statusNotice.title}
+                live={false}
+              >
+                {statusNotice.body}
+              </AppNotice>
+            )
+          ) : null}
+          {hasCustomWording && !statusNotice ? (
             <AppText intent="supporting">Custom wording is active.</AppText>
           ) : null}
 
@@ -109,7 +145,7 @@ export default function TemplateEditor() {
                 fieldId="templateOpening"
                 value={intro}
                 onChange={(value) => {
-                  setSaveMessage('')
+                  setStatusNotice(null)
                   setIntro(value)
                 }}
                 rows={3}
@@ -123,7 +159,7 @@ export default function TemplateEditor() {
                 fieldId="templateRequest"
                 value={requestBlock}
                 onChange={(value) => {
-                  setSaveMessage('')
+                  setStatusNotice(null)
                   setRequestBlock(value)
                 }}
                 rows={5}
@@ -137,7 +173,7 @@ export default function TemplateEditor() {
                 fieldId="templateSignOff"
                 value={signOff}
                 onChange={(value) => {
-                  setSaveMessage('')
+                  setStatusNotice(null)
                   setSignOff(value)
                 }}
                 rows={2}
@@ -150,7 +186,9 @@ export default function TemplateEditor() {
               onClick={restoreDefaults}
               disabled={!canRestoreDefaults}
             >
-              Restore default wording
+              {statusNotice?.kind === 'restored' && !canRestoreDefaults
+                ? 'Default wording restored'
+                : 'Restore default wording'}
             </AppButton>
             <AppButton onClick={handleSave}>Save wording</AppButton>
           </AppForm>

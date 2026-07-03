@@ -22,7 +22,7 @@ export default function AppFieldset({
   return (
     <fieldset className={classes} aria-describedby={descriptionId}>
       <legend className="app-fieldset__legend">
-        <AppText intent="body" emphasis>
+        <AppText intent="label">
           {legend}
         </AppText>
       </legend>

@@ -1,6 +1,5 @@
-import { IonIcon } from '@ionic/react'
 import type { ReactNode } from 'react'
-import AppText from '../primitives/AppText'
+import AppLabelRow from '../primitives/AppLabelRow'
 import './review-asset-card.css'
 
 type ReviewAssetCardProps = {
@@ -17,12 +16,11 @@ export default function ReviewAssetCard({
   children,
 }: ReviewAssetCardProps) {
   return (
-    <section className="review-asset-card" role="group" aria-label={title}>
+    <section className="review-asset-card">
       <header className="review-asset-card__header">
-        <div className="review-asset-card__title">
-          {icon ? <IonIcon aria-hidden="true" className="review-asset-card__icon" icon={icon} /> : null}
-          <AppText intent="label" accessibilityHidden>{title}</AppText>
-        </div>
+        <AppLabelRow className="review-asset-card__title" icon={icon}>
+          {title}
+        </AppLabelRow>
         {action ? <div className="review-asset-card__action">{action}</div> : null}
       </header>
       <div className="review-asset-card__body">{children}</div>

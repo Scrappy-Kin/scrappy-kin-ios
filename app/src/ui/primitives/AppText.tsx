@@ -6,6 +6,7 @@ type TextIntent = 'body' | 'supporting' | 'caption' | 'label' | 'intro'
 type TextTone = 'default' | 'danger'
 
 type AppTextProps = {
+  id?: string
   intent?: TextIntent
   emphasis?: boolean
   tone?: TextTone
@@ -25,6 +26,7 @@ const intentClassMap: Record<TextIntent, string> = {
 }
 
 export default function AppText({
+  id,
   intent = 'body',
   emphasis = false,
   tone = 'default',
@@ -34,6 +36,7 @@ export default function AppText({
   className,
   children,
 }: AppTextProps) {
+  const hasAccessibilityLabel = accessibilityLabel != null && accessibilityLabel.trim() !== ''
   const classes = [
     'app-text',
     intentClassMap[intent],
@@ -46,8 +49,14 @@ export default function AppText({
     .join(' ')
 
   return (
-    <IonText className={classes} aria-label={accessibilityLabel} aria-hidden={accessibilityHidden}>
-      <span className="app-text__content" aria-hidden={accessibilityHidden}>
+    <IonText
+      id={id}
+      className={classes}
+      aria-label={hasAccessibilityLabel ? accessibilityLabel : undefined}
+      aria-hidden={accessibilityHidden}
+      role={hasAccessibilityLabel ? 'text' : undefined}
+    >
+      <span className="app-text__content" aria-hidden={accessibilityHidden || hasAccessibilityLabel}>
         {children}
       </span>
     </IonText>

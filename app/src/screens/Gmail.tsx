@@ -2,9 +2,15 @@ import { IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
 import { useRef, useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
 import { connectGmail, disconnectGmail, getGmailStatus } from '../services/googleAuth'
-import { getCurrentRoute, readReturnTo, readSuccessTo } from '../services/navigation'
+import {
+  getCurrentRoute,
+  readReturnTo,
+  readSuccessTo,
+  withSettingsNotice,
+} from '../services/navigation'
 import { getTaskSuccessHref } from '../services/taskRoutes'
 import AppButton from '../ui/primitives/AppButton'
+import AppActionNotice from '../ui/primitives/AppActionNotice'
 import AppHeading from '../ui/primitives/AppHeading'
 import AppNotice from '../ui/primitives/AppNotice'
 import AppText from '../ui/primitives/AppText'
@@ -14,7 +20,6 @@ import GmailAccessExplainer, {
 } from '../ui/patterns/GmailAccessExplainer'
 import GmailConnectionStatusCard from '../ui/patterns/GmailConnectionStatusCard'
 import AppTopNav from '../ui/patterns/AppTopNav'
-import SettingsShortcut from '../ui/patterns/SettingsShortcut'
 import { useRouteFocus } from '../ui/patterns/useRouteFocus'
 
 export default function Gmail() {
@@ -27,6 +32,7 @@ export default function Gmail() {
   const headingRef = useRef<HTMLHeadingElement | null>(null)
   const [gmailConnected, setGmailConnected] = useState(false)
   const [oauthError, setOauthError] = useState<string | null>(null)
+  const [gmailNotice, setGmailNotice] = useState<string | null>(null)
   const [oauthInFlight, setOauthInFlight] = useState(false)
 
   useIonViewWillEnter(() => {
@@ -40,20 +46,24 @@ export default function Gmail() {
   async function handleConnectGmail() {
     try {
       setOauthError(null)
+      setGmailNotice(null)
       setOauthInFlight(true)
       await connectGmail()
       const status = await getGmailStatus()
       setGmailConnected(status.connected)
       if (status.connected) {
         history.replace(
-          getTaskSuccessHref('repair_gmail', {
-            returnTo,
-            successTo,
-          }),
+          withSettingsNotice(
+            getTaskSuccessHref('repair_gmail', {
+              returnTo,
+              successTo,
+            }),
+            'gmail-connected',
+          ),
         )
       }
     } catch (error) {
-      const message = (error as Error).message ?? 'Sign-in didn’t finish. Please try again.'
+      const message = (error as Error).message ?? 'Gmail connection didn’t finish. Please try again.'
       setOauthError(message)
     } finally {
       setOauthInFlight(false)
@@ -63,13 +73,14 @@ export default function Gmail() {
   async function handleDisconnect() {
     await disconnectGmail()
     setGmailConnected(false)
+    setGmailNotice('Gmail disconnected.')
   }
 
   return (
     <IonPage>
       <IonContent className="page-content">
         <div className="app-screen-shell">
-          <AppTopNav backHref={returnTo} action={<SettingsShortcut />} />
+          <AppTopNav backHref={returnTo} />
           <div className="app-screen-shell">
             <AppHeading intent="section" level={1} ref={headingRef} tabIndex={-1}>
               Gmail
@@ -78,6 +89,11 @@ export default function Gmail() {
               <AppText intent="supporting">
                 Connect or manage the Gmail account used to send the opt-out emails you approve.
               </AppText>
+              {gmailNotice ? (
+                <AppActionNotice variant="success" title="Saved">
+                  {gmailNotice}
+                </AppActionNotice>
+              ) : null}
               {gmailConnected ? (
                 <GmailConnectionStatusCard
                   connected
@@ -103,7 +119,7 @@ export default function Gmail() {
                   />
                   <GmailAccessExplainer showGooglePermissionHint />
                   {oauthError ? (
-                    <AppNotice variant="error" title="Sign-in didn’t finish">
+                    <AppNotice variant="error" title="Gmail connection didn’t finish">
                       {oauthError}
                     </AppNotice>
                   ) : null}

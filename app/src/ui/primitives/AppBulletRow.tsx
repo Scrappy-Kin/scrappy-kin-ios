@@ -21,7 +21,7 @@ export default function AppBulletRow({
   const spokenLabel = accessibilityLabel ?? (subtext ? `${label}. ${subtext}` : label)
 
   return (
-    <div className="app-bullet-row" aria-label={spokenLabel}>
+    <div className="app-bullet-row" role="text" aria-label={spokenLabel}>
       <AppIcon icon={icon} size="sm" tone={tone} />
       <div className="app-bullet-row__copy" aria-hidden="true">
         <AppText intent="body" emphasis>

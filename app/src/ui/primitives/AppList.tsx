@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import AppText from './AppText'
+import AppSectionLabel from './AppSectionLabel'
 import './list.css'
 
 type AppListProps = {
@@ -9,13 +9,13 @@ type AppListProps = {
 
 export default function AppList({ header, children }: AppListProps) {
   return (
-    <section className="app-list" aria-label={header || undefined}>
+    <div className="app-list">
       {header ? (
-        <div className="app-list__header" aria-hidden="true">
-          <AppText intent="label">{header}</AppText>
+        <div className="app-list__header">
+          <AppSectionLabel>{header}</AppSectionLabel>
         </div>
       ) : null}
       <div className="app-list__items">{children}</div>
-    </section>
+    </div>
   )
 }

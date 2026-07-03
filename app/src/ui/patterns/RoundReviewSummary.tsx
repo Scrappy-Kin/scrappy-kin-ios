@@ -1,6 +1,7 @@
 import { checkmarkCircle, createOutline, informationCircle } from 'ionicons/icons'
 import type { ReactNode } from 'react'
 import AppIcon from '../primitives/AppIcon'
+import AppLabelRow from '../primitives/AppLabelRow'
 import AppText from '../primitives/AppText'
 import ReviewAssetCard from './ReviewAssetCard'
 import { SEND_SAFETY_NOTICES, type SendSafetyMode } from '../../services/sendSafety'
@@ -65,29 +66,24 @@ export default function RoundReviewSummary({
         <AppText intent="body">
           Opt-out requests are sent from your Gmail. Scrappy Kin cannot read your inbox.
         </AppText>
-        </ReviewAssetCard>
-        <ReviewAssetCard
-          title={brokerTitle ?? `${brokerCount} brokers selected`}
-          icon={checkmarkCircle}
-          action={brokersAction}
-        >
+      </ReviewAssetCard>
+      <ReviewAssetCard
+        title={brokerTitle ?? `${brokerCount} brokers selected`}
+        icon={checkmarkCircle}
+        action={brokersAction}
+      >
         <AppText intent="body" accessibilityLabel={brokerListAccessibilityLabel}>
           {brokerListText}
         </AppText>
         {sendSafetyNotice ? (
-          <div
-            className="review-asset-card__send-safety-notice"
-            role="group"
-            aria-label={sendSafetyNotice.title}
-          >
-            <div className="review-asset-card__send-safety-title">
-              <span aria-hidden="true">
-                <AppIcon icon={informationCircle} size="sm" />
-              </span>
-              <AppText intent="label" tone="danger" accessibilityHidden>
-                {sendSafetyNotice.title}
-              </AppText>
-            </div>
+          <div className="review-asset-card__send-safety-notice">
+            <AppLabelRow
+              className="review-asset-card__send-safety-title"
+              icon={informationCircle}
+              tone="danger"
+            >
+              {sendSafetyNotice.title}
+            </AppLabelRow>
             {sendSafetyNotice.body.map((line) => (
               <AppText key={line} intent="body">
                 {line}

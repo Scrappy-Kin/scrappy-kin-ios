@@ -1,4 +1,5 @@
-import { useEffect, type RefObject } from 'react'
+import { useIonViewDidEnter } from '@ionic/react'
+import { useCallback, useEffect, type RefObject } from 'react'
 
 type RouteFocusRef = RefObject<HTMLElement | null>
 
@@ -8,8 +9,8 @@ export function useRouteFocus(
   primaryRef: RouteFocusRef,
   fallbackRef?: RouteFocusRef,
 ) {
-  useEffect(() => {
-    if (!enabled) return
+  const scheduleRouteFocus = useCallback(() => {
+    if (!enabled) return undefined
 
     const frame = requestAnimationFrame(() => {
       const target = primaryRef.current ?? fallbackRef?.current
@@ -17,5 +18,11 @@ export function useRouteFocus(
     })
 
     return () => cancelAnimationFrame(frame)
-  }, [enabled, fallbackRef, focusKey, primaryRef])
+  }, [enabled, fallbackRef, primaryRef])
+
+  useEffect(() => scheduleRouteFocus(), [focusKey, scheduleRouteFocus])
+
+  useIonViewDidEnter(() => {
+    scheduleRouteFocus()
+  })
 }

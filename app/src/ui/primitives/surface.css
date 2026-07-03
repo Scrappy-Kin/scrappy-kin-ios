@@ -32,6 +32,10 @@
   gap: var(--space-3);
 }
 
+.app-card__title {
+  min-width: 0;
+}
+
 .app-card__actions {
   display: inline-flex;
   align-items: center;

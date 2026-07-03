@@ -9,6 +9,7 @@ import type { Broker } from '../../services/brokerStore'
 import type { FlowStepId } from '../../services/flowProgress'
 import { deriveSendSafetyMode, isSendBlockedBySafetyMode } from '../../services/sendSafety'
 import {
+  buildSubscriptionButtonAccessibilityLabel,
   isSubscriptionPurchaseReady,
   type SubscriptionSnapshot,
 } from '../../services/subscription'
@@ -149,6 +150,9 @@ export function buildFlowSteps({
     profileEmail: profileDraft.email,
   })
   const sendBlockedBySafetyMode = isSendBlockedBySafetyMode(sendSafetyMode)
+  const onboardingSentBrokerLabel = `${onboardingSentCount} ${
+    onboardingSentCount === 1 ? 'broker' : 'brokers'
+  }`
 
   return {
     intro: {
@@ -320,7 +324,7 @@ export function buildFlowSteps({
           <section className="app-section-shell">
             <GmailAccessExplainer showGooglePermissionHint />
             {oauthError ? (
-              <AppNotice variant="error" title="Sign-in didn’t finish">
+              <AppNotice variant="error" title="Gmail connection didn’t finish">
                 {oauthError}
               </AppNotice>
             ) : null}
@@ -384,7 +388,10 @@ export function buildFlowSteps({
       ),
       render: () => (
         <section className="app-section-shell app-stack--loose">
-          <AppText intent="body">
+          <AppText
+            intent="body"
+            accessibilityLabel={`You just exercised your right to tell ${onboardingSentBrokerLabel} that you don't want your personal data in their databases. How's it feel?`}
+          >
             You just exercised your right to tell {onboardingSentCount} brokers that you don't want
             your personal data in their databases. How's it feel?
           </AppText>
@@ -429,6 +436,7 @@ export function buildFlowSteps({
               onClick={onSubscribe}
               loading={subscriptionBusy === 'purchase'}
               disabled={subscriptionBusy !== null || !isSubscriptionPurchaseReady(subscriptionSnapshot)}
+              accessibilityLabel={buildSubscriptionButtonAccessibilityLabel(subscriptionSnapshot)}
             >
               {subscribeButtonLabel ? `Subscribe — ${subscribeButtonLabel}` : 'Loading subscription'}
             </AppButton>

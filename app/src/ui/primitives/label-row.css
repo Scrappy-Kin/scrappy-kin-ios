@@ -1,0 +1,15 @@
+.app-label-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  color: var(--secondary);
+}
+
+.app-label-row--danger {
+  color: var(--danger);
+}
+
+.app-label-row--touch-target {
+  min-height: var(--touch-target-nav);
+}

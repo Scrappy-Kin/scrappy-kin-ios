@@ -1,5 +1,8 @@
 import { SUBSCRIPTION_PRICE_SUBTEXT } from '../../config/subscription'
-import type { SubscriptionProduct } from '../../services/subscription'
+import {
+  buildSubscriptionAccessibilityPriceLabel,
+  type SubscriptionProduct,
+} from '../../services/subscription'
 import AppBulletRow from '../primitives/AppBulletRow'
 import AppSegmentedCard, { AppSegmentedCardSection } from '../primitives/AppSegmentedCard'
 import AppText from '../primitives/AppText'
@@ -16,6 +19,7 @@ export default function SubscriptionOfferCard({ product, loading = false }: Subs
   const priceAmount = priceMatch?.[1] ?? displayPrice
   const pricePeriod = priceMatch?.[2] ?? ''
   const priceStatus = loading ? 'Loading price from App Store...' : 'Price unavailable'
+  const spokenPrice = buildSubscriptionAccessibilityPriceLabel(displayPrice)
 
   return (
     <AppSegmentedCard>
@@ -25,7 +29,7 @@ export default function SubscriptionOfferCard({ product, loading = false }: Subs
           <AppText
             intent="body"
             className="subscription-offer-card__price"
-            accessibilityLabel={displayPrice}
+            accessibilityLabel={spokenPrice ?? undefined}
           >
             <span className="subscription-offer-card__price-amount" aria-hidden="true">{priceAmount}</span>
             {pricePeriod ? (

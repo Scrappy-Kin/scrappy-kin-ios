@@ -21,7 +21,9 @@
   position: fixed;
   top: var(--ion-safe-area-top, 0px);
   right: calc(var(--ion-safe-area-right, 0px) + var(--page-padding));
+  left: auto;
   z-index: 20;
+  width: max-content;
   margin: 0;
   padding: 0;
   background: transparent;

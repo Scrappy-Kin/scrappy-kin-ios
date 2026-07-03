@@ -9,28 +9,19 @@
 
 .review-asset-card__header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
 }
 
 .review-asset-card__title {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
   min-width: 0;
-}
-
-.review-asset-card__icon {
-  font-size: 18px;
-  color: var(--secondary);
 }
 
 .review-asset-card__action {
   display: inline-flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-2);
-  margin-top: -10px;
   margin-right: -10px;
   flex-shrink: 0;
 }
@@ -49,14 +40,7 @@
 }
 
 .review-asset-card__send-safety-title {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
   color: var(--danger);
-}
-
-.review-asset-card__send-safety-title .app-icon {
-  color: currentColor;
 }
 
 .review-asset-card__icon-action {

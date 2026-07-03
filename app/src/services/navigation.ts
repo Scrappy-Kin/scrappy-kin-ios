@@ -2,6 +2,18 @@ import type { Location } from 'history'
 import type { FlowStepId } from './flowProgress'
 
 export type SettingsView = 'profile' | 'gmail' | 'subscription' | 'privacy' | 'diagnostics' | 'support'
+export type SettingsNotice =
+  | 'profile-saved'
+  | 'wording-saved'
+  | 'round-size-saved'
+  | 'gmail-connected'
+
+const settingsNoticeSet = new Set<SettingsNotice>([
+  'profile-saved',
+  'wording-saved',
+  'round-size-saved',
+  'gmail-connected',
+])
 
 export function getCurrentRoute(location: Pick<Location, 'pathname' | 'search'>) {
   return `${location.pathname}${location.search}`
@@ -10,6 +22,11 @@ export function getCurrentRoute(location: Pick<Location, 'pathname' | 'search'>)
 export function readReturnTo(search: string) {
   const value = new URLSearchParams(search).get('returnTo')
   return value || null
+}
+
+export function readSettingsNotice(search: string) {
+  const value = new URLSearchParams(search).get('notice')
+  return settingsNoticeSet.has(value as SettingsNotice) ? (value as SettingsNotice) : null
 }
 
 export function readSuccessTo(search: string) {
@@ -50,8 +67,17 @@ export function buildReviewBatchHref(returnTo?: string | null) {
 export function buildSettingsHref(
   view?: SettingsView,
   returnTo?: string | null,
+  notice?: SettingsNotice | null,
 ) {
-  return withParams('/settings', { view, returnTo })
+  return withParams('/settings', { view, returnTo, notice })
+}
+
+export function withSettingsNotice(href: string, notice: SettingsNotice) {
+  const [pathname, search = ''] = href.split('?')
+  if (pathname !== '/settings') return href
+  const params = new URLSearchParams(search)
+  params.set('notice', notice)
+  return `${pathname}?${params.toString()}`
 }
 
 export function buildTemplateHref(returnTo?: string | null) {

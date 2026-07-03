@@ -67,7 +67,7 @@ async function waitForOAuthRedirect(state: string, redirectUri: string) {
   return new Promise<string>((resolve, reject) => {
     const timeout = setTimeout(() => {
       Browser.close().catch(() => undefined)
-      reject(new Error('OAuth timed out. Please try again.'))
+      reject(new Error('The Gmail connection timed out. Please try again.'))
     }, OAUTH_TIMEOUT_MS)
 
     let resolved = false
@@ -112,21 +112,21 @@ async function waitForOAuthRedirect(state: string, redirectUri: string) {
         }
         const oauthError = url.searchParams.get('error')
         if (oauthError) {
-          fail(new Error('OAuth failed. Please try again.'))
+          fail(new Error('Google sign-in didn’t finish. Please try again.'))
           return
         }
         const code = url.searchParams.get('code')
         const returnedState = url.searchParams.get('state')
         if (!code || !returnedState) return
         if (returnedState !== state) {
-          fail(new Error('OAuth state mismatch. Please try again.'))
+          fail(new Error('Google sign-in could not be verified. Please try again.'))
           return
         }
         Browser.close().catch(() => undefined)
         succeed(code)
       })
       browserHandler = await Browser.addListener('browserFinished', () => {
-        fail(new Error('Sign-in was canceled. Please try again.'))
+        fail(new Error('Google sign-in closed before Scrappy Kin received approval. Please try again.'))
       })
     }
 

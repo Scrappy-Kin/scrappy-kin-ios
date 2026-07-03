@@ -299,6 +299,10 @@ function includesMatcher(text, matcher) {
     : text.toLocaleLowerCase().includes(matcher.toLocaleLowerCase())
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 async function assertVisibleText(page, matcher) {
   const text = await bodyText(page)
   if (!includesMatcher(text, matcher)) {
@@ -435,7 +439,12 @@ const checks = [
 
       for (const option of options) {
         await openScenario(page, 'batch-size')
-        await clickButtonByName(page, new RegExp(`^${option.name}\\b`))
+        await page
+          .getByRole('radio', {
+            name: new RegExp(`^(?:Choose\\s+)?${escapeRegExp(option.name)}\\b`, 'i'),
+          })
+          .first()
+          .click()
         await clickButtonByName(page, 'Save')
         await assertNoCrashOrForbiddenCopy(page)
         await assertVisibleText(page, `${option.count} brokers selected`)

@@ -12,8 +12,8 @@ import {
   buildTemplateHref,
   buildOnboardingHref,
   readReturnTo,
+  readSettingsNotice,
 } from '../services/navigation'
-import { DEFAULT_ROUND_SIZE, getSelectedRoundSize } from '../services/brokerStore'
 import { buildTaskHref } from '../services/taskRoutes'
 import {
   exportLogsAsText,
@@ -27,6 +27,7 @@ import { disconnectGmail, getGmailStatus } from '../services/googleAuth'
 import { wipeAllLocalData } from '../services/secureStore'
 import {
   buildRestoreSubscriptionNotice,
+  buildSubscriptionButtonAccessibilityLabel,
   buildSubscriptionButtonLabel,
   getSubscriptionSnapshot,
   isSubscriptionPurchaseReady,
@@ -45,6 +46,7 @@ import {
   type UserProfileField,
 } from '../services/userProfile'
 import AppButton from '../ui/primitives/AppButton'
+import AppActionNotice from '../ui/primitives/AppActionNotice'
 import AppForm from '../ui/primitives/AppForm'
 import AppHeading from '../ui/primitives/AppHeading'
 import AppList from '../ui/primitives/AppList'
@@ -109,6 +111,24 @@ const SETTINGS_DESTINATIONS = {
   SettingsDestinationView,
   { title: string; rowTitle: string; rowDescription: string }
 >
+const settingsNoticeCopy = {
+  'profile-saved': {
+    title: 'Saved',
+    body: 'Profile updated.',
+  },
+  'wording-saved': {
+    title: 'Saved',
+    body: 'Email wording updated.',
+  },
+  'round-size-saved': {
+    title: 'Saved',
+    body: 'Round size updated.',
+  },
+  'gmail-connected': {
+    title: 'Saved',
+    body: 'Gmail connected.',
+  },
+} as const
 const DevDiagnosticsPanel = DEV_BUNDLE_ENABLED
   ? lazy(() => import('../dev/DevDiagnosticsPanel'))
   : null
@@ -130,9 +150,11 @@ export default function Settings() {
   const location = useLocation()
   const view = getSettingsView(location.search)
   const returnTo = readReturnTo(location.search)
+  const settingsNotice = readSettingsNotice(location.search)
   const settingsHomeHref = buildSettingsHref(undefined, returnTo)
   const settingsExitHref = returnTo ?? '/home'
   const headingRef = useRef<HTMLHeadingElement | null>(null)
+  const contentRef = useRef<HTMLIonContentElement | null>(null)
   const [logOptIn, setOptIn] = useState(false)
   const [logOptInExpiresAt, setLogOptInExpiresAt] = useState('')
   const [nowTs, setNowTs] = useState(() => Date.now())
@@ -140,8 +162,6 @@ export default function Settings() {
   const [showInternalTools, setShowInternalTools] = useState(false)
   const [gmailConnected, setGmailConnected] = useState(false)
   const [profileDraft, setProfileDraft] = useState<UserProfile>(emptyProfile)
-  const [selectedRoundSize, setSelectedRoundSizeState] = useState(DEFAULT_ROUND_SIZE)
-  const [profileSaved, setProfileSaved] = useState(false)
   const [profileErrors, setProfileErrors] = useState<UserProfileErrors>({})
   const [subscriptionSnapshot, setSubscriptionSnapshot] = useState<SubscriptionSnapshot | null>(null)
   const [subscriptionBusy, setSubscriptionBusy] = useState<'purchase' | 'restore' | 'manage' | null>(null)
@@ -150,7 +170,13 @@ export default function Settings() {
     title: string
     body: string
   } | null>(null)
+  const [diagnosticsNotice, setDiagnosticsNotice] = useState<{
+    variant: 'error' | 'success' | 'info'
+    title: string
+    body: string
+  } | null>(null)
   const [localDataDeleted, setLocalDataDeleted] = useState(false)
+  const shouldContinueAfterProfileSave = returnTo?.startsWith('/review-batch') ?? false
   const subscribeButtonLabel =
     buildSubscriptionButtonLabel(subscriptionSnapshot)
 
@@ -186,13 +212,10 @@ export default function Settings() {
     const profile = await getUserProfile()
     if (profile) {
       setProfileDraft(profile)
-      setProfileSaved(true)
     } else {
       setProfileDraft(emptyProfile)
-      setProfileSaved(false)
     }
     setProfileErrors({})
-    setSelectedRoundSizeState(await getSelectedRoundSize())
     const nextSubscriptionSnapshot = await getSubscriptionSnapshot()
     setSubscriptionSnapshot(nextSubscriptionSnapshot)
   }
@@ -200,6 +223,10 @@ export default function Settings() {
   useIonViewWillEnter(() => {
     void refreshState()
   })
+
+  useEffect(() => {
+    void contentRef.current?.scrollToTop(0)
+  }, [view])
 
   useEffect(() => {
     if (!logOptIn || !logOptInExpiresAt) return
@@ -213,6 +240,19 @@ export default function Settings() {
   async function handleToggleLogs(enabled: boolean) {
     await setLogOptIn(enabled)
     await refreshLogOptIn()
+    setDiagnosticsNotice(
+      enabled
+        ? {
+            variant: 'success',
+            title: 'Saved',
+            body: 'Diagnostics capture enabled for this device.',
+          }
+        : {
+            variant: 'info',
+            title: 'Saved',
+            body: 'Diagnostics capture disabled.',
+          },
+    )
   }
 
   async function handleToggleDevLogs(enabled: boolean) {
@@ -241,7 +281,6 @@ export default function Settings() {
       })
       return updated
     })
-    setProfileSaved(false)
   }
 
   function validateProfile(profile: UserProfile) {
@@ -283,10 +322,11 @@ export default function Settings() {
     }
     await setUserProfile(profileDraft)
     await clearUserProfileDraft()
-    setProfileSaved(true)
-    if (returnTo) {
+    if (shouldContinueAfterProfileSave && returnTo) {
       history.replace(returnTo)
+      return
     }
+    history.replace(buildSettingsHref(undefined, returnTo, 'profile-saved'))
   }
 
   const logOptInRemaining = useMemo(() => {
@@ -300,18 +340,30 @@ export default function Settings() {
   async function handleExportLogs() {
     const text = await exportLogsAsText()
     if (!text) {
-      alert('No logs to export.')
+      setDiagnosticsNotice({
+        variant: 'info',
+        title: 'No diagnostics to export',
+        body: 'Enable diagnostics first, then try again after logs have been captured.',
+      })
       return
     }
 
     await navigator.clipboard.writeText(text)
-    alert('Diagnostics copied to clipboard. Paste into a plain text file to share.')
+    setDiagnosticsNotice({
+      variant: 'success',
+      title: 'Diagnostics copied',
+      body: 'Paste them into a plain text file if you want to share them.',
+    })
   }
 
   async function handleDownloadLogs() {
     const text = await exportLogsAsText()
     if (!text) {
-      alert('No logs to export.')
+      setDiagnosticsNotice({
+        variant: 'info',
+        title: 'No diagnostics to download',
+        body: 'Enable diagnostics first, then try again after logs have been captured.',
+      })
       return
     }
 
@@ -333,7 +385,11 @@ export default function Settings() {
 
   async function handleWipeLogs() {
     await wipeLogs()
-    alert('Logs wiped locally.')
+    setDiagnosticsNotice({
+      variant: 'success',
+      title: 'Diagnostics wiped',
+      body: 'Local diagnostic logs were deleted from this device.',
+    })
   }
 
   async function handleWipeAll() {
@@ -343,7 +399,6 @@ export default function Settings() {
     await wipeAllLocalData()
     setGmailConnected(false)
     setProfileDraft(emptyProfile)
-    setProfileSaved(false)
     setLocalDataDeleted(true)
     history.replace(buildSettingsHref('privacy', buildOnboardingHref('intro')))
   }
@@ -428,22 +483,32 @@ export default function Settings() {
         <AppText intent="supporting">
           Adjust your opt-out email details, Gmail connection, privacy controls, and support tools.
         </AppText>
+        {settingsNotice ? (
+          <AppActionNotice
+            variant="success"
+            title={settingsNoticeCopy[settingsNotice].title}
+          >
+            {settingsNoticeCopy[settingsNotice].body}
+          </AppActionNotice>
+        ) : null}
 
         <AppList header="Your opt-out request">
           <AppListRow
             title={SETTINGS_DESTINATIONS.profile.rowTitle}
             description={SETTINGS_DESTINATIONS.profile.rowDescription}
+            accessibilityLabel={`Edit profile. ${SETTINGS_DESTINATIONS.profile.rowDescription}`}
             onClick={() => openView('profile')}
           />
           <AppListRow
             title="Email wording"
             description="Review the message you send to brokers."
+            accessibilityLabel="Review email wording. Review the message you send to brokers."
             onClick={() => history.push(buildTemplateHref(settingsHomeHref))}
           />
           <AppListRow
-            title="Emails at a time"
+            title="Round size"
             description="Choose how many opt-out emails Scrappy Kin sends in each round."
-            right={<AppText intent="caption">{selectedRoundSize}</AppText>}
+            accessibilityLabel="Choose round size. Choose how many opt-out emails Scrappy Kin sends in each round."
             onClick={() => history.push(buildBatchSizeHref(settingsHomeHref))}
           />
         </AppList>
@@ -455,6 +520,11 @@ export default function Settings() {
               gmailConnected
                 ? 'Connected with send-only access.'
                 : 'Connect the Gmail account Scrappy Kin uses to send emails.'
+            }
+            accessibilityLabel={
+              gmailConnected
+                ? 'Manage Gmail connection. Connected with send-only access.'
+                : 'Connect Gmail. Connect the Gmail account Scrappy Kin uses to send emails.'
             }
             onClick={() =>
               history.push(
@@ -471,11 +541,13 @@ export default function Settings() {
           <AppListRow
             title={SETTINGS_DESTINATIONS.support.rowTitle}
             description={SETTINGS_DESTINATIONS.support.rowDescription}
+            accessibilityLabel={`Open support and policies. ${SETTINGS_DESTINATIONS.support.rowDescription}`}
             onClick={() => openView('support')}
           />
           <AppListRow
             title={SETTINGS_DESTINATIONS.diagnostics.rowTitle}
             description={SETTINGS_DESTINATIONS.diagnostics.rowDescription}
+            accessibilityLabel={`Open diagnostics and build info. ${SETTINGS_DESTINATIONS.diagnostics.rowDescription}`}
             onClick={() => openView('diagnostics')}
           />
         </AppList>
@@ -488,6 +560,11 @@ export default function Settings() {
                 ? 'Active on this device. Apple handles billing and renewals.'
                 : SETTINGS_DESTINATIONS.subscription.rowDescription
             }
+            accessibilityLabel={
+              subscriptionSnapshot?.active
+                ? 'Manage subscription. Active on this device. Apple handles billing and renewals.'
+                : `Manage subscription. ${SETTINGS_DESTINATIONS.subscription.rowDescription}`
+            }
             onClick={() => openView('subscription')}
           />
         </AppList>
@@ -496,6 +573,7 @@ export default function Settings() {
           <AppListRow
             title={SETTINGS_DESTINATIONS.privacy.rowTitle}
             description={SETTINGS_DESTINATIONS.privacy.rowDescription}
+            accessibilityLabel={`Review on-device data and deletion. ${SETTINGS_DESTINATIONS.privacy.rowDescription}`}
             onClick={() => openView('privacy')}
           />
         </AppList>
@@ -539,9 +617,9 @@ export default function Settings() {
         ) : null}
 
         {subscriptionNotice ? (
-          <AppNotice variant={subscriptionNotice.variant} title={subscriptionNotice.title}>
+          <AppActionNotice variant={subscriptionNotice.variant} title={subscriptionNotice.title}>
             {subscriptionNotice.body}
-          </AppNotice>
+          </AppActionNotice>
         ) : null}
 
         <div className="app-action-stack">
@@ -555,6 +633,7 @@ export default function Settings() {
               onClick={() => void handlePurchaseSubscription()}
               loading={subscriptionBusy === 'purchase'}
               disabled={subscriptionBusy !== null || !isSubscriptionPurchaseReady(subscriptionSnapshot)}
+              accessibilityLabel={buildSubscriptionButtonAccessibilityLabel(subscriptionSnapshot)}
             >
               {subscribeButtonLabel ? `Subscribe — ${subscribeButtonLabel}` : 'Loading subscription'}
             </AppButton>
@@ -603,7 +682,6 @@ export default function Settings() {
         <AppText intent="supporting">
           Edit the details used to match your records in the opt-out emails.
         </AppText>
-        <AppText intent="supporting">{profileSaved ? 'Saved.' : 'Not saved yet.'}</AppText>
         <AppForm className="app-section-shell app-section-shell--compact" onSubmit={handleSaveProfile}>
           <ProfileFields
             profile={profileDraft}
@@ -612,7 +690,7 @@ export default function Settings() {
             onBlurField={validateProfileField}
           />
           <AppButton onClick={handleSaveProfile}>
-            {returnTo ? 'Save and continue' : 'Save profile'}
+            {shouldContinueAfterProfileSave ? 'Save and continue' : 'Save profile'}
           </AppButton>
         </AppForm>
       </section>
@@ -626,7 +704,7 @@ export default function Settings() {
           Your profile, Gmail connection, send queue, and diagnostics stay on this device.
         </AppText>
         {localDataDeleted ? (
-          <AppNotice
+          <AppActionNotice
             variant="success"
             title="Local data deleted"
             actions={
@@ -640,7 +718,7 @@ export default function Settings() {
             }
           >
             This device is reset. Scrappy Kin will start fresh the next time you begin setup.
-          </AppNotice>
+          </AppActionNotice>
         ) : null}
         <AppList header="Local data controls">
           <AppListRow
@@ -672,6 +750,12 @@ export default function Settings() {
             <AppText intent="supporting">Diagnostics capture: {logOptInRemaining}.</AppText>
           ) : null}
         </section>
+
+        {diagnosticsNotice ? (
+          <AppActionNotice variant={diagnosticsNotice.variant} title={diagnosticsNotice.title}>
+            {diagnosticsNotice.body}
+          </AppActionNotice>
+        ) : null}
 
         <AppList header="Diagnostics">
           <AppListRow title="Export diagnostics (plain text)" onClick={handleExportLogs} />
@@ -764,7 +848,7 @@ export default function Settings() {
 
   return (
     <IonPage>
-      <IonContent className="page-content">
+      <IonContent ref={contentRef} className="page-content">
         <div className="app-screen-shell">
           <AppTopNav
             backHref={view === 'home' ? settingsExitHref : settingsHomeHref}

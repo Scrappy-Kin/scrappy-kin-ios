@@ -18,6 +18,7 @@ import { getQaOverride, subscribeQaOverride } from '../services/qaOverrideStore'
 import { isQaDeviceLane, IS_DEV_BUILD } from '../config/buildInfo'
 import { buildTaskHref, deriveNextBatchTaskTarget } from '../services/taskRoutes'
 import {
+  buildSubscriptionButtonAccessibilityLabel,
   buildSubscriptionButtonLabel,
   getSubscriptionSnapshot,
   isSubscriptionPurchaseReady,
@@ -162,10 +163,13 @@ export default function Home() {
         <div className="app-screen-shell">
           <AppTopNav action={<SettingsShortcut />} />
           <section className="home-hero">
-            <AppHeading intent="hero">
+            <AppHeading
+              intent="hero"
+              accessibilityLabel={copy != null ? `${copy.metricValue} ${copy.metricLabel}` : undefined}
+            >
               {copy != null ? copy.metricValue : '\u00A0'}
             </AppHeading>
-            <AppText intent="body" emphasis>
+            <AppText intent="body" emphasis accessibilityHidden={copy != null}>
               {copy != null ? copy.metricLabel : '\u00A0'}
             </AppText>
           </section>
@@ -209,6 +213,7 @@ export default function Home() {
                       Boolean(subscriptionUnavailable) ||
                       !isSubscriptionPurchaseReady(subscriptionSnapshot)
                     }
+                    accessibilityLabel={buildSubscriptionButtonAccessibilityLabel(subscriptionSnapshot)}
                   >
                     {subscribeButtonLabel ? `Subscribe — ${subscribeButtonLabel}` : 'Loading subscription'}
                   </AppButton>

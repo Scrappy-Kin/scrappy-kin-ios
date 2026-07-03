@@ -53,6 +53,11 @@ export default function AppTopNav({
     }
 
     const resolvedFallbackHref = backHref ?? '/home'
+    if (backHref) {
+      history.replace(resolvedFallbackHref)
+      return
+    }
+
     const ionicBackTarget = navContext.routeInfo?.pushedByRoute ?? null
 
     if (navContext.hasIonicRouter() && ionicBackTarget) {
