@@ -5,6 +5,7 @@ import { getEncrypted, removeEncrypted, setEncrypted } from './secureStore'
 import { OAUTH_TIMEOUT_MS } from '../config/constants'
 import { generateCodeChallenge, generateCodeVerifier, generateState } from './pkce'
 import { getGoogleOAuthConfig } from '../config/oauth'
+import { logEvent } from './logStore'
 
 const TOKEN_URL = 'https://oauth2.googleapis.com/token'
 const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
@@ -53,6 +54,18 @@ type PendingOAuthPayload = {
 
 async function storeTokens(payload: TokenPayload) {
   await setEncrypted<TokenPayload>(TOKEN_KEY, payload)
+}
+
+function classifyOAuthFailure(error: unknown) {
+  const message = error instanceof Error ? error.message.toLowerCase() : ''
+  if (message.includes('native ios app')) return 'native_unavailable'
+  if (message.includes('already in progress')) return 'in_progress'
+  if (message.includes('timed out')) return 'timeout'
+  if (message.includes('closed before')) return 'cancelled'
+  if (message.includes('verified')) return 'state_mismatch'
+  if (message.includes('token exchange')) return 'token_exchange'
+  if (error instanceof TypeError) return 'network'
+  return 'unknown'
 }
 
 export async function clearStaleOAuthState() {
@@ -136,9 +149,15 @@ async function waitForOAuthRedirect(state: string, redirectUri: string) {
 
 export async function connectGmail() {
   if (!Capacitor.isNativePlatform()) {
+    await logEvent('gmail_connect_failed', {
+      metadata: { failureCategory: 'native_unavailable' },
+    })
     throw new Error('Gmail connection requires the native iOS app.')
   }
   if (oauthInFlight) {
+    await logEvent('gmail_connect_failed', {
+      metadata: { failureCategory: 'in_progress' },
+    })
     throw new Error('Sign-in already in progress.')
   }
 
@@ -150,6 +169,7 @@ export async function connectGmail() {
   const attemptId = generateState()
 
   try {
+    await logEvent('gmail_connect_started')
     await clearStaleOAuthState()
     await setEncrypted<PendingOAuthPayload>(OAUTH_PENDING_KEY, {
       verifier,
@@ -207,6 +227,12 @@ export async function connectGmail() {
       refreshToken: payload.refresh_token,
       expiresAt,
     })
+    await logEvent('gmail_connect_success')
+  } catch (error) {
+    await logEvent('gmail_connect_failed', {
+      metadata: { failureCategory: classifyOAuthFailure(error) },
+    })
+    throw error
   } finally {
     oauthInFlight = false
     setOAuthBrowserOpen(false)
@@ -227,6 +253,7 @@ export async function disconnectGmail() {
     }
   } finally {
     await removeEncrypted(TOKEN_KEY)
+    await logEvent('gmail_disconnected')
   }
 }
 

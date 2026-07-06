@@ -15,6 +15,8 @@ const launchBrokers = Array.isArray(launchCatalog) ? launchCatalog : launchCatal
 const launchBrokerCount = launchBrokers.length
 const launchStarterCount = launchBrokers.filter((broker) => typeof broker.starterOrder === 'number').length
 const paidBrokerCount = launchBrokerCount - launchStarterCount
+const defaultRoundSize = 5
+const paidBrokerRoundCount = Math.ceil(paidBrokerCount / defaultRoundSize)
 
 const browserEngines = {
   chromium,
@@ -369,8 +371,8 @@ const checks = [
       assertDashboardState(page, 'home-subscribed', [
         'Your next round is ready',
         `${launchStarterCount} opt-out emails sent`,
-        new RegExp(`${paidBrokerCount} (?:more )?brokers are available with your subscription`, 'i'),
-        'Start next round',
+        new RegExp(`${paidBrokerCount} (?:more )?brokers remain across ${paidBrokerRoundCount} rounds? at your current round size`, 'i'),
+        'Send next round',
         'View previous sends',
       ]),
   },
@@ -385,7 +387,7 @@ const checks = [
           `${launchBrokerCount} opt-out emails sent`,
           'Your next round opens on',
         ],
-        [/Subscribe/i, /Start next round/i],
+        [/Subscribe/i, /Send next round/i],
       ),
   },
   {

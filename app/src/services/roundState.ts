@@ -1,5 +1,5 @@
 import { ROUND_COOLDOWN_DAYS, addDays, formatNextRoundDate } from '../config/rounds'
-import type { Broker } from './brokerStore'
+import { DEFAULT_ROUND_SIZE, type Broker } from './brokerStore'
 import type { SentLogEntry } from './sentLog'
 
 // ---------------------------------------------------------------------------
@@ -68,6 +68,7 @@ export type RoundStateInput = {
   subscriptionActive: boolean
   gmailConnected: boolean
   totalSentCount: number
+  selectedRoundSize?: number
   now?: Date
   qaOverride?: DashboardStateId | null
 }
@@ -178,7 +179,12 @@ export function deriveRoundState(input: RoundStateInput): DashboardCopy {
       metricLabel: hasAnySent
         ? formatSentMetricLabel(sentCount)
         : formatBrokerMetricLabel(eligibleBrokerIds.length),
-      bodyText: buildNextRoundBodyText(hasAnySent, hasEligibleUnsentBrokers, eligibleBrokerIds.length),
+      bodyText: buildNextRoundBodyText(
+        hasAnySent,
+        hasEligibleUnsentBrokers,
+        eligibleBrokerIds.length,
+        input.selectedRoundSize,
+      ),
       primaryActionKind: 'start_round',
       secondaryActionKind: hasAnySent ? 'view_sent' : 'none',
       nextRoundOpensLabel: null,
@@ -213,17 +219,30 @@ function formatBrokerAvailability(count: number): string {
   return `${count} ${count === 1 ? 'broker is' : 'brokers are'} available`
 }
 
+function getRemainingRoundCount(count: number, selectedRoundSize?: number): number {
+  const roundSize = Math.max(1, selectedRoundSize ?? DEFAULT_ROUND_SIZE)
+  return Math.max(1, Math.ceil(count / roundSize))
+}
+
+function formatBrokerRemainingAcrossRounds(count: number, selectedRoundSize?: number): string {
+  const brokerPhrase = `${count} ${count === 1 ? 'broker remains' : 'brokers remain'}`
+  const roundCount = getRemainingRoundCount(count, selectedRoundSize)
+  const roundPhrase = `${roundCount} ${roundCount === 1 ? 'round' : 'rounds'}`
+  return `${brokerPhrase} across ${roundPhrase} at your current round size`
+}
+
 function buildNextRoundBodyText(
   hasAnySent: boolean,
   hasEligibleUnsentBrokers: boolean,
   eligibleBrokerCount: number,
+  selectedRoundSize?: number,
 ) {
   if (!hasAnySent) {
     return null
   }
 
   if (hasEligibleUnsentBrokers) {
-    return `${formatBrokerAvailability(eligibleBrokerCount)} with your subscription.`
+    return `${formatBrokerRemainingAcrossRounds(eligibleBrokerCount, selectedRoundSize)}.`
   }
 
   return 'Brokers can re-add people over time. Send a fresh round of opt-outs to the current audited list.'
@@ -312,7 +331,7 @@ function buildQaOverrideState(
         hero: 'Your next round is ready',
         metricValue: sentCount,
         metricLabel: formatSentMetricLabel(sentCount),
-        bodyText: `${formatBrokerAvailability(input.brokers.length)} with your subscription.`,
+        bodyText: `${formatBrokerRemainingAcrossRounds(input.brokers.length, input.selectedRoundSize)}.`,
         primaryActionKind: 'start_round',
         secondaryActionKind: 'view_sent',
         nextRoundOpensLabel: null,

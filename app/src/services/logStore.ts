@@ -1,5 +1,5 @@
 import { LOG_LIMIT } from '../config/constants'
-import { isVerboseDevLane } from '../config/buildInfo'
+import { BUILD_MODE, getExecutionLane, isVerboseDevLane } from '../config/buildInfo'
 import { getEncrypted, setEncrypted } from './secureStore'
 import { sanitizeLogEvent } from './logSchema'
 
@@ -13,7 +13,7 @@ export type LogEvent = {
   event: string
   status?: string
   brokerHash?: string
-  metadata?: Record<string, string>
+  metadata?: Record<string, string | undefined>
 }
 
 export async function getLogOptIn() {
@@ -71,30 +71,38 @@ export async function setDevLogOptIn(enabled: boolean) {
 }
 
 export async function logEvent(event: string, details: Partial<LogEvent> = {}) {
-  const optInStatus = await getLogOptInStatus()
-  const optIn = optInStatus.enabled
-  const devOptIn = await getDevLogOptIn()
-  if (!optIn && !devOptIn) return
-  const sanitized = sanitizeLogEvent(event, {
-    status: details.status,
-    brokerHash: details.brokerHash,
-    metadata: details.metadata,
-  })
-  if (!sanitized) return
+  try {
+    const optInStatus = await getLogOptInStatus()
+    const optIn = optInStatus.enabled
+    const devOptIn = await getDevLogOptIn()
+    if (!optIn && !devOptIn) return
+    const sanitized = sanitizeLogEvent(event, {
+      status: details.status,
+      brokerHash: details.brokerHash,
+      metadata: {
+        buildMode: BUILD_MODE,
+        executionLane: getExecutionLane(),
+        ...details.metadata,
+      },
+    })
+    if (!sanitized) return
 
-  const existing = (await getEncrypted<LogEvent[]>(LOGS_KEY)) ?? []
-  const next: LogEvent[] = [
-    {
-      timestamp: new Date().toISOString(),
-      event: sanitized.event,
-      status: sanitized.status,
-      brokerHash: sanitized.brokerHash,
-      metadata: sanitized.metadata,
-    },
-    ...existing,
-  ].slice(0, LOG_LIMIT)
+    const existing = (await getEncrypted<LogEvent[]>(LOGS_KEY)) ?? []
+    const next: LogEvent[] = [
+      {
+        timestamp: new Date().toISOString(),
+        event: sanitized.event,
+        status: sanitized.status,
+        brokerHash: sanitized.brokerHash,
+        metadata: sanitized.metadata,
+      },
+      ...existing,
+    ].slice(0, LOG_LIMIT)
 
-  await setEncrypted(LOGS_KEY, next)
+    await setEncrypted(LOGS_KEY, next)
+  } catch {
+    // Diagnostics are best-effort and must never interrupt app flows.
+  }
 }
 
 export async function exportLogsAsText() {

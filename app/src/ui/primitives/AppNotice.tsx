@@ -51,6 +51,14 @@ export default function AppNotice({
   const generatedId = useId()
   const titleId = title ? `${generatedId}-title` : undefined
   const bodyId = `${generatedId}-body`
+  const body =
+    typeof children === 'string' ? (
+      <AppText intent="body" tone={tone}>
+        {children}
+      </AppText>
+    ) : (
+      <div className={`app-notice__body app-notice__body--${tone}`}>{children}</div>
+    )
 
   return (
     <section
@@ -73,11 +81,7 @@ export default function AppNotice({
           {title}
         </AppLabelRow>
       ) : null}
-      <div id={bodyId}>
-        <AppText intent="body" tone={tone}>
-          {children}
-        </AppText>
-      </div>
+      <div id={bodyId}>{body}</div>
       {actions ? <div className="app-notice__actions">{actions}</div> : null}
     </section>
   )

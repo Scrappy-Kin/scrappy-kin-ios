@@ -1,10 +1,13 @@
-import { IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
-import { Browser } from '@capacitor/browser'
+import { IonAlert, IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Redirect, useHistory, useLocation } from 'react-router-dom'
-import { BUILD_MODE, BUILD_SHA, BUILD_TIME, isDevAppLane } from '../config/buildInfo'
+import { BUILD_SHA, BUILD_TIME, getExecutionLane, isDevAppLane } from '../config/buildInfo'
+import {
+  SETTINGS_DESTINATIONS,
+  SETTINGS_HOME_ROWS,
+} from '../content/settingsCopy'
 import {
   buildSettingsHref,
   type SettingsView as SettingsRouteView,
@@ -15,6 +18,8 @@ import {
   readSettingsNotice,
 } from '../services/navigation'
 import { buildTaskHref } from '../services/taskRoutes'
+import { openExternalUrl } from '../services/externalBrowser'
+import { formatExecutionLane, formatVersionCreatedAt } from '../services/buildDisplay'
 import {
   exportLogsAsText,
   getDevLogOptIn,
@@ -23,6 +28,7 @@ import {
   setLogOptIn,
   wipeLogs,
 } from '../services/logStore'
+import { getDiagnosticCaptureDescriptions } from '../services/logSchema'
 import { disconnectGmail, getGmailStatus } from '../services/googleAuth'
 import { wipeAllLocalData } from '../services/secureStore'
 import {
@@ -47,15 +53,16 @@ import {
 } from '../services/userProfile'
 import AppButton from '../ui/primitives/AppButton'
 import AppActionNotice from '../ui/primitives/AppActionNotice'
+import AppBulletRow from '../ui/primitives/AppBulletRow'
 import AppForm from '../ui/primitives/AppForm'
 import AppHeading from '../ui/primitives/AppHeading'
 import AppList from '../ui/primitives/AppList'
 import AppListRow from '../ui/primitives/AppListRow'
 import AppNotice from '../ui/primitives/AppNotice'
+import AppSectionLabel from '../ui/primitives/AppSectionLabel'
 import AppText from '../ui/primitives/AppText'
 import AppToggle from '../ui/primitives/AppToggle'
 import AppTopNav from '../ui/patterns/AppTopNav'
-import SubscriptionBillingClaim from '../ui/patterns/SubscriptionBillingClaim'
 import SubscriptionDiagnosticsNotice from '../ui/patterns/SubscriptionDiagnosticsNotice'
 import SubscriptionOfferCard from '../ui/patterns/SubscriptionOfferCard'
 import ProfileFields from '../ui/patterns/ProfileFields'
@@ -80,37 +87,8 @@ const PRIVACY_POLICY_URL = 'https://scrappykin.com/privacy.html'
 const TERMS_URL = 'https://scrappykin.com/tos.html'
 const SUPPORT_EMAIL = 'support@scrappykin.com'
 const SUPPORT_EMAIL_URL = `mailto:${SUPPORT_EMAIL}`
+const DIAGNOSTIC_CAPTURE_DESCRIPTIONS = getDiagnosticCaptureDescriptions()
 const DEV_BUNDLE_ENABLED = import.meta.env.DEV
-const SETTINGS_DESTINATIONS = {
-  profile: {
-    title: 'Profile',
-    rowTitle: 'Profile',
-    rowDescription: 'Your name and location used in opt-out emails.',
-  },
-  subscription: {
-    title: 'Subscription',
-    rowTitle: 'Subscription',
-    rowDescription: 'Manage your subscription or restore purchases. Apple handles billing.',
-  },
-  privacy: {
-    title: 'Privacy & local data',
-    rowTitle: 'On-device data and deletion',
-    rowDescription: 'See what stays on this device and delete it.',
-  },
-  diagnostics: {
-    title: 'Diagnostics & build info',
-    rowTitle: 'Diagnostics & build info',
-    rowDescription: 'Export local diagnostics and check the build you are running.',
-  },
-  support: {
-    title: 'Support & policies',
-    rowTitle: 'Support & policies',
-    rowDescription: 'Help, support email, privacy policy, and terms.',
-  },
-} as const satisfies Record<
-  SettingsDestinationView,
-  { title: string; rowTitle: string; rowDescription: string }
->
 const settingsNoticeCopy = {
   'profile-saved': {
     title: 'Saved',
@@ -172,12 +150,16 @@ export default function Settings() {
     body: string
   } | null>(null)
   const [localDataDeleted, setLocalDataDeleted] = useState(false)
+  const [showDeleteAllAlert, setShowDeleteAllAlert] = useState(false)
   const shouldContinueAfterProfileSave = returnTo?.startsWith('/review-batch') ?? false
   const subscribeButtonLabel =
     buildSubscriptionButtonLabel(subscriptionSnapshot)
+  const versionCreatedAt = formatVersionCreatedAt(BUILD_TIME)
+  const appLaneLabel = formatExecutionLane(getExecutionLane())
 
   async function refreshLogOptIn() {
     const status = await getLogOptInStatus()
+    setNowTs(Date.now())
     setOptIn(status.enabled)
     setLogOptInExpiresAt(status.expiresAt)
   }
@@ -238,14 +220,10 @@ export default function Settings() {
     await refreshLogOptIn()
     setDiagnosticsNotice(
       enabled
-        ? {
-            variant: 'success',
-            title: 'Saved',
-            body: 'Diagnostics capture enabled for this device.',
-          }
+        ? null
         : {
             variant: 'info',
-            title: 'Saved',
+            title: 'Diagnostics off',
             body: 'Diagnostics capture disabled.',
           },
     )
@@ -257,6 +235,9 @@ export default function Settings() {
   }
 
   function openView(nextView: Exclude<SettingsView, 'home'>) {
+    if (nextView === 'diagnostics') {
+      void refreshLogOptIn()
+    }
     history.push(buildSettingsHref(nextView, returnTo))
   }
 
@@ -333,13 +314,17 @@ export default function Settings() {
     return `${minutes} min remaining`
   }, [logOptIn, logOptInExpiresAt, nowTs])
 
+  const emptyDiagnosticsExportCopy = logOptIn
+    ? 'No diagnostic events have been captured yet. Try again after using Gmail connection, subscription, or send flows.'
+    : 'Turn on diagnostics first, then try again after logs have been captured.'
+
   async function handleExportLogs() {
     const text = await exportLogsAsText()
     if (!text) {
       setDiagnosticsNotice({
         variant: 'info',
         title: 'No diagnostics to export',
-        body: 'Enable diagnostics first, then try again after logs have been captured.',
+        body: emptyDiagnosticsExportCopy,
       })
       return
     }
@@ -358,7 +343,7 @@ export default function Settings() {
       setDiagnosticsNotice({
         variant: 'info',
         title: 'No diagnostics to download',
-        body: 'Enable diagnostics first, then try again after logs have been captured.',
+        body: emptyDiagnosticsExportCopy,
       })
       return
     }
@@ -389,8 +374,6 @@ export default function Settings() {
   }
 
   async function handleWipeAll() {
-    const confirmed = confirm('Delete all local data? This cannot be undone.')
-    if (!confirmed) return
     await disconnectGmail()
     await wipeAllLocalData()
     setGmailConnected(false)
@@ -409,7 +392,7 @@ export default function Settings() {
   }
 
   function openUrl(url: string) {
-    return Browser.open({ url })
+    return openExternalUrl(url)
   }
 
   function openSupportEmail() {
@@ -474,6 +457,13 @@ export default function Settings() {
   }
 
   function renderHome() {
+    const gmailRow = gmailConnected
+      ? SETTINGS_HOME_ROWS.gmailConnected
+      : SETTINGS_HOME_ROWS.gmailDisconnected
+    const subscriptionDescription = subscriptionSnapshot?.active
+      ? 'Active on this device. Apple handles billing and renewals.'
+      : SETTINGS_DESTINATIONS.subscription.description
+
     return (
       <section className="app-section-shell settings-home">
         <AppText intent="supporting">
@@ -490,38 +480,26 @@ export default function Settings() {
 
         <AppList header="Your opt-out request">
           <AppListRow
-            title={SETTINGS_DESTINATIONS.profile.rowTitle}
-            description={SETTINGS_DESTINATIONS.profile.rowDescription}
-            accessibilityLabel={`Edit profile. ${SETTINGS_DESTINATIONS.profile.rowDescription}`}
+            title={SETTINGS_DESTINATIONS.profile.title}
+            description={SETTINGS_DESTINATIONS.profile.description}
             onClick={() => openView('profile')}
           />
           <AppListRow
-            title="Email wording"
-            description="Review the message you send to brokers."
-            accessibilityLabel="Review email wording. Review the message you send to brokers."
+            title={SETTINGS_HOME_ROWS.emailWording.title}
+            description={SETTINGS_HOME_ROWS.emailWording.description}
             onClick={() => history.push(buildTemplateHref(settingsHomeHref))}
           />
           <AppListRow
-            title="Round size"
-            description="Choose how many opt-out emails Scrappy Kin sends in each round."
-            accessibilityLabel="Choose round size. Choose how many opt-out emails Scrappy Kin sends in each round."
+            title={SETTINGS_HOME_ROWS.roundSize.title}
+            description={SETTINGS_HOME_ROWS.roundSize.description}
             onClick={() => history.push(buildBatchSizeHref(settingsHomeHref))}
           />
         </AppList>
 
         <AppList header="Gmail">
           <AppListRow
-            title="Gmail connection"
-            description={
-              gmailConnected
-                ? 'Connected with send-only access.'
-                : 'Connect the Gmail account Scrappy Kin uses to send emails.'
-            }
-            accessibilityLabel={
-              gmailConnected
-                ? 'Manage Gmail connection. Connected with send-only access.'
-                : 'Connect Gmail. Connect the Gmail account Scrappy Kin uses to send emails.'
-            }
+            title={gmailRow.title}
+            description={gmailRow.description}
             onClick={() =>
               history.push(
                 buildTaskHref('repair_gmail', {
@@ -535,41 +513,29 @@ export default function Settings() {
 
         <AppList header="Support">
           <AppListRow
-            title={SETTINGS_DESTINATIONS.support.rowTitle}
-            description={SETTINGS_DESTINATIONS.support.rowDescription}
-            accessibilityLabel={`Open support and policies. ${SETTINGS_DESTINATIONS.support.rowDescription}`}
+            title={SETTINGS_DESTINATIONS.support.title}
+            description={SETTINGS_DESTINATIONS.support.description}
             onClick={() => openView('support')}
           />
           <AppListRow
-            title={SETTINGS_DESTINATIONS.diagnostics.rowTitle}
-            description={SETTINGS_DESTINATIONS.diagnostics.rowDescription}
-            accessibilityLabel={`Open diagnostics and build info. ${SETTINGS_DESTINATIONS.diagnostics.rowDescription}`}
+            title={SETTINGS_DESTINATIONS.diagnostics.title}
+            description={SETTINGS_DESTINATIONS.diagnostics.description}
             onClick={() => openView('diagnostics')}
           />
         </AppList>
 
         <AppList header="Subscription">
           <AppListRow
-            title={SETTINGS_DESTINATIONS.subscription.rowTitle}
-            description={
-              subscriptionSnapshot?.active
-                ? 'Active on this device. Apple handles billing and renewals.'
-                : SETTINGS_DESTINATIONS.subscription.rowDescription
-            }
-            accessibilityLabel={
-              subscriptionSnapshot?.active
-                ? 'Manage subscription. Active on this device. Apple handles billing and renewals.'
-                : `Manage subscription. ${SETTINGS_DESTINATIONS.subscription.rowDescription}`
-            }
+            title={SETTINGS_DESTINATIONS.subscription.title}
+            description={subscriptionDescription}
             onClick={() => openView('subscription')}
           />
         </AppList>
 
         <AppList header="Privacy & local data">
           <AppListRow
-            title={SETTINGS_DESTINATIONS.privacy.rowTitle}
-            description={SETTINGS_DESTINATIONS.privacy.rowDescription}
-            accessibilityLabel={`Review on-device data and deletion. ${SETTINGS_DESTINATIONS.privacy.rowDescription}`}
+            title={SETTINGS_DESTINATIONS.privacy.title}
+            description={SETTINGS_DESTINATIONS.privacy.description}
             onClick={() => openView('privacy')}
           />
         </AppList>
@@ -580,8 +546,6 @@ export default function Settings() {
   function renderSubscription() {
     return (
       <section className="app-section-shell">
-        <SubscriptionBillingClaim />
-
         <AppList header="Status">
           <AppListRow
             title="Subscription access"
@@ -600,6 +564,8 @@ export default function Settings() {
             emphasis={false}
           />
         </AppList>
+
+        <AppSectionLabel>Included with your subscription</AppSectionLabel>
 
         <SubscriptionOfferCard
           product={subscriptionSnapshot?.product}
@@ -657,12 +623,12 @@ export default function Settings() {
         <AppList header="Policies">
           <AppListRow
             title="Privacy Policy"
-            accessibilityHint="Opens web page."
+            accessibilityLabel="Open Privacy Policy"
             onClick={() => void openUrl(PRIVACY_POLICY_URL)}
           />
           <AppListRow
             title="Terms of Service"
-            accessibilityHint="Opens web page."
+            accessibilityLabel="Open Terms of Service"
             onClick={() => void openUrl(TERMS_URL)}
           />
         </AppList>
@@ -699,6 +665,9 @@ export default function Settings() {
         <AppText intent="supporting">
           Your profile, Gmail connection, send queue, and diagnostics stay on this device.
         </AppText>
+        <AppText intent="supporting">
+          Deleting local data also removes your sent history. If you start again, Scrappy Kin will not know which brokers you already contacted.
+        </AppText>
         {localDataDeleted ? (
           <AppActionNotice
             variant="success"
@@ -719,11 +688,30 @@ export default function Settings() {
         <AppList header="Local data controls">
           <AppListRow
             title="Delete all local data"
-            description="Delete your saved profile, Gmail connection, diagnostics, and send queue from this device."
-            onClick={handleWipeAll}
+            description="Delete saved app data and sent history from this device."
+            onClick={() => setShowDeleteAllAlert(true)}
             tone="danger"
           />
         </AppList>
+        <IonAlert
+          isOpen={showDeleteAllAlert}
+          header="Confirm deletion"
+          message="Delete your saved profile, Gmail connection, diagnostics, send queue, and sent history from this device. If you start again, Scrappy Kin will not know which brokers you already contacted."
+          buttons={[
+            {
+              text: 'Cancel',
+              role: 'cancel',
+            },
+            {
+              text: 'Confirm',
+              role: 'destructive',
+              handler: () => {
+                void handleWipeAll()
+              },
+            },
+          ]}
+          onDidDismiss={() => setShowDeleteAllAlert(false)}
+        />
       </section>
     )
   }
@@ -732,20 +720,34 @@ export default function Settings() {
     return (
       <section className="app-section-shell">
         <AppText intent="supporting">
-          Diagnostics stay on this device unless you choose to export them.
+          Diagnostics stay on this device. If you turn them on, Scrappy Kin captures a small local troubleshooting log for 15 minutes. Even then, nothing is sent to us automatically. You must export it and email it to <a href={SUPPORT_EMAIL_URL}>{SUPPORT_EMAIL}</a>. The logs do not collect personally identifiable information.
         </AppText>
+
+        <AppSectionLabel>Diagnostics</AppSectionLabel>
 
         <section className="app-section-shell app-section-shell--compact">
           <AppToggle
-            label="Enable diagnostics"
-            description="Capture local logs for 15 minutes."
+            label="Temporary diagnostics"
             checked={logOptIn}
             onChange={handleToggleLogs}
           />
-          {logOptIn && logOptInRemaining ? (
-            <AppText intent="supporting">Diagnostics capture: {logOptInRemaining}.</AppText>
-          ) : null}
         </section>
+
+        {logOptIn && logOptInRemaining ? (
+          <AppActionNotice variant="success" title="Temporary diagnostics enabled">
+            <div className="diagnostics-capture-summary">
+              <AppText intent="body">Capturing local logs for:</AppText>
+              <div className="diagnostics-capture-list">
+                {DIAGNOSTIC_CAPTURE_DESCRIPTIONS.map((description) => (
+                  <AppBulletRow key={description} label={description} />
+                ))}
+              </div>
+              <AppText intent="body">
+                {logOptInRemaining}. Diagnostics turn off automatically.
+              </AppText>
+            </div>
+          </AppActionNotice>
+        ) : null}
 
         {diagnosticsNotice ? (
           <AppActionNotice variant={diagnosticsNotice.variant} title={diagnosticsNotice.title}>
@@ -753,27 +755,23 @@ export default function Settings() {
           </AppActionNotice>
         ) : null}
 
-        <AppList header="Diagnostics">
+        <AppList>
           <AppListRow title="Export diagnostics (plain text)" onClick={handleExportLogs} />
           <AppListRow title="Download diagnostics file" onClick={handleDownloadLogs} />
           <AppListRow title="Wipe diagnostics" onClick={handleWipeLogs} tone="danger" />
         </AppList>
 
-        <AppList header="Build">
-          <AppListRow title="Build ID" right={<AppText intent="caption">{BUILD_SHA}</AppText>} />
+        <AppList header="Version">
+          <AppListRow title="Version ID" right={<AppText intent="caption">{BUILD_SHA}</AppText>} />
           <AppListRow
-            title="Build time (UTC)"
-            right={<AppText intent="caption">{BUILD_TIME}</AppText>}
+            title="Created"
+            right={<AppText intent="caption">{versionCreatedAt}</AppText>}
           />
           <AppListRow
-            title="Build mode"
-            right={<AppText intent="caption">{BUILD_MODE}</AppText>}
+            title="App lane"
+            right={<AppText intent="caption">{appLaneLabel}</AppText>}
           />
         </AppList>
-
-        <AppText intent="supporting">
-          These notes never send automatically. Share them only if you want troubleshooting help.
-        </AppText>
 
         {showInternalTools ? renderDevDiagnosticsPanel() : null}
       </section>
@@ -786,18 +784,18 @@ export default function Settings() {
         <AppList header="Support">
           <AppListRow
             title="Support email"
-            accessibilityHint="Opens Mail."
+            accessibilityLabel={`Contact ${SUPPORT_EMAIL} for help`}
             right={<AppText intent="caption">{SUPPORT_EMAIL}</AppText>}
             onClick={openSupportEmail}
           />
           <AppListRow
             title="Help"
-            accessibilityHint="Opens web page."
+            accessibilityLabel="Open Help"
             onClick={() => void openUrl(SUPPORT_HELP_URL)}
           />
           <AppListRow
             title="How Scrappy Kin uses Gmail permission"
-            accessibilityHint="Opens web page."
+            accessibilityLabel="Open Gmail permission help"
             onClick={() => void openUrl(GMAIL_PERMISSION_HELP_URL)}
           />
         </AppList>
@@ -805,12 +803,12 @@ export default function Settings() {
         <AppList header="Policies">
           <AppListRow
             title="Privacy Policy"
-            accessibilityHint="Opens web page."
+            accessibilityLabel="Open Privacy Policy"
             onClick={() => void openUrl(PRIVACY_POLICY_URL)}
           />
           <AppListRow
             title="Terms of Service"
-            accessibilityHint="Opens web page."
+            accessibilityLabel="Open Terms of Service"
             onClick={() => void openUrl(TERMS_URL)}
           />
         </AppList>
@@ -833,11 +831,11 @@ export default function Settings() {
 
   const viewMap: Record<SettingsContentView, { title: string; body: ReactNode }> = {
     home: { title: 'Settings', body: renderHome() },
-    profile: { title: SETTINGS_DESTINATIONS.profile.title, body: renderProfile() },
-    subscription: { title: SETTINGS_DESTINATIONS.subscription.title, body: renderSubscription() },
-    privacy: { title: SETTINGS_DESTINATIONS.privacy.title, body: renderPrivacy() },
-    diagnostics: { title: SETTINGS_DESTINATIONS.diagnostics.title, body: renderDiagnostics() },
-    support: { title: SETTINGS_DESTINATIONS.support.title, body: renderSupport() },
+    profile: { title: SETTINGS_DESTINATIONS.profile.screenTitle, body: renderProfile() },
+    subscription: { title: SETTINGS_DESTINATIONS.subscription.screenTitle, body: renderSubscription() },
+    privacy: { title: SETTINGS_DESTINATIONS.privacy.screenTitle, body: renderPrivacy() },
+    diagnostics: { title: SETTINGS_DESTINATIONS.diagnostics.screenTitle, body: renderDiagnostics() },
+    support: { title: SETTINGS_DESTINATIONS.support.screenTitle, body: renderSupport() },
   }
 
   const screen = viewMap[view as SettingsContentView]

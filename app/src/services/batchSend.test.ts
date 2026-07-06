@@ -28,6 +28,10 @@ vi.mock('./sentLog', () => ({
   getMergedSentLog: vi.fn(() => []),
 }))
 
+vi.mock('./logStore', () => ({
+  logEvent: vi.fn(),
+}))
+
 vi.mock('./userProfile', () => ({
   clearUserProfileDraft: vi.fn(),
   setUserProfile: vi.fn(),
@@ -42,6 +46,7 @@ import { getSelectedBrokerIds, loadBrokers, setSelectedBrokerIds } from './broke
 import { sendAll } from './sendQueue'
 import { executeBatchSend } from './batchSend'
 import { QA_DEVICE_BLOCKED_SEND_MESSAGE } from './sendSafety'
+import { logEvent } from './logStore'
 import type { UserProfile } from './userProfile'
 
 const mockGetExecutionLane = vi.mocked(getExecutionLane)
@@ -49,6 +54,7 @@ const mockGetSelectedBrokerIds = vi.mocked(getSelectedBrokerIds)
 const mockLoadBrokers = vi.mocked(loadBrokers)
 const mockSendAll = vi.mocked(sendAll)
 const mockSetSelectedBrokerIds = vi.mocked(setSelectedBrokerIds)
+const mockLogEvent = vi.mocked(logEvent)
 
 const PROFILE: UserProfile = {
   fullName: 'Test User',
@@ -106,6 +112,18 @@ describe('executeBatchSend empty-selection guard', () => {
 
     expect(mockSendAll).toHaveBeenCalledOnce()
     expect(mockSendAll).toHaveBeenCalledWith(BROKERS, ['b1'])
+    expect(mockLogEvent).toHaveBeenCalledWith('send_batch_started', {
+      metadata: {
+        count: '1',
+        sendSafetyMode: 'live',
+      },
+    })
+    expect(mockLogEvent).toHaveBeenCalledWith('send_batch_success', {
+      metadata: {
+        count: '1',
+        sendSafetyMode: 'live',
+      },
+    })
     expect(mockSetSelectedBrokerIds).toHaveBeenCalled()
   })
 
@@ -127,6 +145,13 @@ describe('executeBatchSend empty-selection guard', () => {
     expect(result).toEqual({
       sentCount: 0,
       failureMessage: QA_DEVICE_BLOCKED_SEND_MESSAGE,
+    })
+    expect(mockLogEvent).toHaveBeenCalledWith('send_batch_failed', {
+      metadata: {
+        count: '1',
+        sendSafetyMode: 'qa_blocked',
+        failureCategory: 'qa_blocked',
+      },
     })
     expect(mockLoadBrokers).not.toHaveBeenCalled()
     expect(mockSendAll).not.toHaveBeenCalled()

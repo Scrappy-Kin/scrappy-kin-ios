@@ -2,6 +2,16 @@
   padding-bottom: var(--space-4);
 }
 
+.diagnostics-capture-summary {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.diagnostics-capture-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
 .internal-tools-panel {
   display: grid;
   gap: var(--stack-gap-tight);

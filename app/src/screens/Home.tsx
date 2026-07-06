@@ -1,5 +1,5 @@
 import { IonContent, IonPage, useIonViewWillEnter } from '@ionic/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
 import AppButton from '../ui/primitives/AppButton'
 import AppCard from '../ui/primitives/AppCard'
@@ -8,7 +8,7 @@ import AppNotice from '../ui/primitives/AppNotice'
 import AppText from '../ui/primitives/AppText'
 import { getCurrentRoute } from '../services/navigation'
 import { getGmailStatus } from '../services/googleAuth'
-import { loadBrokers } from '../services/brokerStore'
+import { getSelectedRoundSize, loadBrokers } from '../services/brokerStore'
 import { getOnboardingSentCount, getSavedFlowStep, hasStartedFlow } from '../services/flowProgress'
 import { deriveEntryTarget } from '../services/homeState'
 import { getTotalSentCount } from '../services/metricsStore'
@@ -30,6 +30,7 @@ import AppTopNav from '../ui/patterns/AppTopNav'
 import SettingsShortcut from '../ui/patterns/SettingsShortcut'
 import SubscriptionBillingClaim from '../ui/patterns/SubscriptionBillingClaim'
 import SubscriptionDiagnosticsNotice from '../ui/patterns/SubscriptionDiagnosticsNotice'
+import { useRouteFocus } from '../ui/patterns/useRouteFocus'
 
 const IS_QA_LANE = isQaDeviceLane() || IS_DEV_BUILD
 
@@ -43,6 +44,8 @@ export default function Home() {
   const [subscriptionError, setSubscriptionError] = useState<string | null>(null)
   const [subscriptionUnavailable, setSubscriptionUnavailable] = useState<string | null>(null)
   const [subscriptionSnapshot, setSubscriptionSnapshot] = useState<SubscriptionSnapshot | null>(null)
+  const [homeFocusRevision, setHomeFocusRevision] = useState(0)
+  const heroHeadingRef = useRef<HTMLHeadingElement | null>(null)
 
   async function refreshHome() {
     try {
@@ -55,6 +58,7 @@ export default function Home() {
         onboardingSentCount,
         totalSentCount,
         sentLog,
+        selectedRoundSize,
         subscriptionSnapshotResult,
       ] = await Promise.all([
         getGmailStatus(),
@@ -64,6 +68,7 @@ export default function Home() {
         getOnboardingSentCount(),
         getTotalSentCount(),
         getMergedSentLog(brokers),
+        getSelectedRoundSize(),
         getSubscriptionSnapshot(),
       ])
 
@@ -94,6 +99,7 @@ export default function Home() {
         subscriptionActive: subscriptionSnapshotResult.active,
         gmailConnected: gmailStatus.connected,
         totalSentCount,
+        selectedRoundSize,
         qaOverride,
       })
 
@@ -109,6 +115,7 @@ export default function Home() {
           '/home',
         ),
       )
+      setHomeFocusRevision((revision) => revision + 1)
     } catch (error) {
       console.error('Failed to refresh home state', error)
       setDashboardCopy(null)
@@ -119,6 +126,7 @@ export default function Home() {
   }
 
   useIonViewWillEnter(() => {
+    setDashboardCopy(null)
     void refreshHome()
   })
 
@@ -156,6 +164,9 @@ export default function Home() {
     buildSubscriptionButtonLabel(subscriptionSnapshot)
 
   const copy = dashboardCopy
+  const heroAccessibilityLabel = copy != null ? `${copy.metricValue} ${copy.metricLabel}` : undefined
+  const heroFocusKey = heroAccessibilityLabel ?? 'home-hero-loading'
+  useRouteFocus(`${currentRoute}:${homeFocusRevision}:${heroFocusKey}`, copy != null, heroHeadingRef)
 
   return (
     <IonPage>
@@ -164,8 +175,11 @@ export default function Home() {
           <AppTopNav action={<SettingsShortcut />} />
           <section className="home-hero">
             <AppHeading
+              key={heroFocusKey}
               intent="hero"
-              accessibilityLabel={copy != null ? `${copy.metricValue} ${copy.metricLabel}` : undefined}
+              ref={heroHeadingRef}
+              tabIndex={-1}
+              accessibilityLabel={heroAccessibilityLabel}
             >
               {copy != null ? copy.metricValue : '\u00A0'}
             </AppHeading>
@@ -201,7 +215,7 @@ export default function Home() {
               <div className="app-stack">
                 {copy.primaryActionKind === 'start_round' ? (
                   <AppButton fullWidth onClick={() => history.push(nextBatchHref)}>
-                    {copy.stateId === 'active_no_local_history' ? 'Set up a round' : 'Start next round'}
+                    {copy.stateId === 'active_no_local_history' ? 'Set up a round' : 'Send next round'}
                   </AppButton>
                 ) : copy.primaryActionKind === 'subscribe' ? (
                   <AppButton

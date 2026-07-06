@@ -118,13 +118,14 @@ describe('deriveRoundState', () => {
       subscriptionActive: true,
       gmailConnected: true,
       totalSentCount: 1,
+      selectedRoundSize: 1,
       now: NOW,
     })
 
     expect(result.stateId).toBe('next_round_ready')
     expect(result.metricValue).toBe(1)
     expect(result.metricLabel).toBe('opt-out email sent')
-    expect(result.bodyText).toBe('2 brokers are available with your subscription.')
+    expect(result.bodyText).toBe('2 brokers remain across 2 rounds at your current round size.')
     expect(result.primaryActionKind).toBe('start_round')
     expect(result.eligibleBrokerIds).toEqual(['b', 'c'])
   })

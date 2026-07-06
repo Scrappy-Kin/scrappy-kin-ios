@@ -23,6 +23,10 @@ import {
   getOAuthBrowserOpenSnapshot,
   subscribeOAuthBrowserOpen,
 } from './services/googleAuth'
+import {
+  getExternalBrowserOpenSnapshot,
+  subscribeExternalBrowserOpen,
+} from './services/externalBrowser'
 import { isDevAppLane, isQaDeviceLane } from './config/buildInfo'
 import {
   getOnboardingSentCount,
@@ -268,6 +272,12 @@ function AppShell() {
     getOAuthBrowserOpenSnapshot,
     getOAuthBrowserOpenSnapshot,
   )
+  const externalBrowserOpen = useSyncExternalStore(
+    subscribeExternalBrowserOpen,
+    getExternalBrowserOpenSnapshot,
+    getExternalBrowserOpenSnapshot,
+  )
+  const nativeBrowserOpen = oauthBrowserOpen || externalBrowserOpen
   const showDevTools = DEV_SURFACES_ENABLED && showDevLaneUi
   const showQaDeviceUi = isQaDeviceLane()
   const showQaBadge = showDevTools || showQaDeviceUi
@@ -330,8 +340,8 @@ function AppShell() {
       <A11yTextScaleProbe enabled={showCaptureRoutes} />
       {showCaptureRoutes ? renderLazyDevComponent(DevAppUrlBridge) : null}
       <div
-        aria-hidden={oauthBrowserOpen || undefined}
-        inert={oauthBrowserOpen || undefined}
+        aria-hidden={nativeBrowserOpen || undefined}
+        inert={nativeBrowserOpen || undefined}
       >
         <IonRouterOutlet>
           <Route exact path="/" component={EntryGate} />

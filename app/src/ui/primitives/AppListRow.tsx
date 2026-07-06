@@ -2,6 +2,7 @@ import { IonIcon } from '@ionic/react'
 import { useId, type ReactNode } from 'react'
 import { chevronForward } from 'ionicons/icons'
 import AppText from './AppText'
+import { buildAppListRowAccessibilityLabel } from './listRowAccessibility'
 import './list.css'
 
 type AppListRowProps = {
@@ -36,6 +37,11 @@ export default function AppListRow({
   accessibilityHint,
 }: AppListRowProps) {
   const hintId = useId()
+  const resolvedAccessibilityLabel = buildAppListRowAccessibilityLabel(
+    title,
+    description,
+    accessibilityLabel,
+  )
   const classes = [
     'app-list__row',
     onClick ? 'app-list__row--interactive' : null,
@@ -77,7 +83,7 @@ export default function AppListRow({
         type="button"
         onClick={disabled ? undefined : onClick}
         disabled={disabled}
-        aria-label={accessibilityLabel}
+        aria-label={resolvedAccessibilityLabel}
         aria-describedby={accessibilityHint ? hintId : undefined}
       >
         {content}

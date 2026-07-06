@@ -6,6 +6,7 @@ import {
   isSubscriptionProductConfigured,
 } from '../config/subscription'
 import { isDevAppLane, isQaDeviceLane } from '../config/buildInfo'
+import { logEvent } from './logStore'
 
 type NativeSubscriptionProduct = {
   id: string
@@ -258,6 +259,21 @@ function buildSubscriptionLoadError(error: unknown) {
   return `${message} If this keeps happening, email support@scrappykin.com. You do not need to tell us who you are to get help.`
 }
 
+function classifySubscriptionFailure(error: unknown) {
+  const message = error instanceof Error ? error.message.toLowerCase() : ''
+  if (message.includes('timed out')) return 'timeout'
+  if (message.includes('cancel')) return 'cancelled'
+  if (error instanceof TypeError) return 'network'
+  return 'unknown'
+}
+
+function getStoreKitStatusCategory(snapshot: SubscriptionSnapshot) {
+  if (snapshot.active) return 'active'
+  if (snapshot.isAvailable) return 'available'
+  if (!snapshot.isConfigured) return 'not_configured'
+  return 'unavailable'
+}
+
 function withNativeSubscriptionTimeout<T>(promise: Promise<T>): Promise<T> {
   return new Promise((resolve, reject) => {
     const timeout = window.setTimeout(() => {
@@ -327,20 +343,40 @@ async function readNativeSnapshot(): Promise<SubscriptionSnapshot> {
         }
       : null
 
-    return normalizeSnapshot({
+    const snapshot = normalizeSnapshot({
       active,
       product,
       isAvailable: Boolean(product),
       loadError: product ? null : PRICE_LOAD_FAILED_MESSAGE,
       diagnostics,
     })
+    if (product) {
+      await logEvent('subscription_product_loaded', {
+        metadata: { storekitStatusCategory: getStoreKitStatusCategory(snapshot) },
+      })
+    } else {
+      await logEvent('subscription_product_failed', {
+        metadata: {
+          storekitStatusCategory: getStoreKitStatusCategory(snapshot),
+          failureCategory: 'not_returned',
+        },
+      })
+    }
+    return snapshot
   } catch (error) {
-    return normalizeSnapshot({
+    const snapshot = normalizeSnapshot({
       active: false,
       isAvailable: false,
       loadError: buildSubscriptionLoadError(error),
       diagnostics: await readSubscriptionDiagnostics(),
     })
+    await logEvent('subscription_product_failed', {
+      metadata: {
+        storekitStatusCategory: getStoreKitStatusCategory(snapshot),
+        failureCategory: classifySubscriptionFailure(error),
+      },
+    })
+    return snapshot
   }
 }
 
@@ -353,16 +389,27 @@ export async function getSubscriptionSnapshot() {
 }
 
 export async function purchaseSubscription(): Promise<SubscriptionPurchaseResult> {
+  await logEvent('subscription_purchase_started')
   if (await shouldUseDevMock()) {
     await Preferences.set({ key: DEV_SUBSCRIPTION_ACTIVE_KEY, value: 'true' })
+    const snapshot = await getDevSnapshot()
+    await logEvent('subscription_purchase_success', {
+      metadata: { storekitStatusCategory: getStoreKitStatusCategory(snapshot) },
+    })
     return {
       status: 'purchased',
-      snapshot: await getDevSnapshot(),
+      snapshot,
     }
   }
 
   const snapshot = await getSubscriptionSnapshot()
   if (!snapshot.isAvailable) {
+    await logEvent('subscription_purchase_failed', {
+      metadata: {
+        storekitStatusCategory: getStoreKitStatusCategory(snapshot),
+        failureCategory: 'unavailable',
+      },
+    })
     return {
       status: 'error',
       snapshot,
@@ -386,6 +433,9 @@ export async function purchaseSubscription(): Promise<SubscriptionPurchaseResult
     }
 
     if (result.status === 'cancelled') {
+      await logEvent('subscription_purchase_cancelled', {
+        metadata: { storekitStatusCategory: getStoreKitStatusCategory(purchaseSnapshot) },
+      })
       return {
         status: 'cancelled',
         snapshot: purchaseSnapshot,
@@ -394,6 +444,12 @@ export async function purchaseSubscription(): Promise<SubscriptionPurchaseResult
     }
 
     if (result.status === 'pending') {
+      await logEvent('subscription_purchase_failed', {
+        metadata: {
+          storekitStatusCategory: getStoreKitStatusCategory(purchaseSnapshot),
+          failureCategory: 'pending',
+        },
+      })
       return {
         status: 'error',
         snapshot: purchaseSnapshot,
@@ -402,6 +458,12 @@ export async function purchaseSubscription(): Promise<SubscriptionPurchaseResult
     }
 
     if (!nextSnapshot.active) {
+      await logEvent('subscription_purchase_failed', {
+        metadata: {
+          storekitStatusCategory: getStoreKitStatusCategory(purchaseSnapshot),
+          failureCategory: 'not_active',
+        },
+      })
       return {
         status: 'error',
         snapshot: purchaseSnapshot,
@@ -409,6 +471,9 @@ export async function purchaseSubscription(): Promise<SubscriptionPurchaseResult
       }
     }
 
+    await logEvent('subscription_purchase_success', {
+      metadata: { storekitStatusCategory: getStoreKitStatusCategory(purchaseSnapshot) },
+    })
     return {
       status: 'purchased',
       snapshot: purchaseSnapshot,
@@ -416,6 +481,12 @@ export async function purchaseSubscription(): Promise<SubscriptionPurchaseResult
   } catch (error) {
     const snapshot = await getSubscriptionSnapshot()
     const message = extractMessage(error, 'Purchase did not complete.')
+    await logEvent('subscription_purchase_failed', {
+      metadata: {
+        storekitStatusCategory: getStoreKitStatusCategory(snapshot),
+        failureCategory: classifySubscriptionFailure(error),
+      },
+    })
     return {
       status: 'error',
       snapshot: {
@@ -434,9 +505,13 @@ export async function purchaseSubscription(): Promise<SubscriptionPurchaseResult
 }
 
 export async function restoreSubscriptionPurchases(): Promise<SubscriptionRestoreResult> {
+  await logEvent('subscription_restore_started')
   if (await shouldUseDevMock()) {
     const snapshot = await getDevSnapshot()
     if (snapshot.active) {
+      await logEvent('subscription_restore_success', {
+        metadata: { storekitStatusCategory: getStoreKitStatusCategory(snapshot) },
+      })
       return {
         status: 'restored',
         snapshot,
@@ -444,6 +519,9 @@ export async function restoreSubscriptionPurchases(): Promise<SubscriptionRestor
       }
     }
 
+    await logEvent('subscription_restore_none', {
+      metadata: { storekitStatusCategory: getStoreKitStatusCategory(snapshot) },
+    })
     return {
       status: 'error',
       reason: 'none_found',
@@ -457,6 +535,9 @@ export async function restoreSubscriptionPurchases(): Promise<SubscriptionRestor
     const snapshot = await getSubscriptionSnapshot()
 
     if (snapshot.active) {
+      await logEvent('subscription_restore_success', {
+        metadata: { storekitStatusCategory: getStoreKitStatusCategory(snapshot) },
+      })
       return {
         status: 'restored',
         snapshot,
@@ -464,6 +545,9 @@ export async function restoreSubscriptionPurchases(): Promise<SubscriptionRestor
       }
     }
 
+    await logEvent('subscription_restore_none', {
+      metadata: { storekitStatusCategory: getStoreKitStatusCategory(snapshot) },
+    })
     return {
       status: 'error',
       reason: 'none_found',
@@ -471,10 +555,17 @@ export async function restoreSubscriptionPurchases(): Promise<SubscriptionRestor
       message: RESTORE_NONE_FOUND_MESSAGE,
     }
   } catch {
+    const snapshot = await getSubscriptionSnapshot()
+    await logEvent('subscription_restore_failed', {
+      metadata: {
+        storekitStatusCategory: getStoreKitStatusCategory(snapshot),
+        failureCategory: 'check_failed',
+      },
+    })
     return {
       status: 'error',
       reason: 'check_failed',
-      snapshot: await getSubscriptionSnapshot(),
+      snapshot,
       message: RESTORE_CHECK_FAILED_MESSAGE,
     }
   }
