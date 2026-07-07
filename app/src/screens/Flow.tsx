@@ -18,8 +18,9 @@ import {
 } from '../services/flowProgress'
 import { connectGmail, getGmailStatus } from '../services/googleAuth'
 import { deriveOnboardingRedirect } from '../services/homeState'
-import { buildOnboardingHref, buildSettingsHref, buildTemplateHref, getCurrentRoute, readSuccessTo } from '../services/navigation'
+import { buildOnboardingHref, buildTemplateHref, getCurrentRoute, readSuccessTo } from '../services/navigation'
 import { getQueue } from '../services/queueStore'
+import { buildTaskHref } from '../services/taskRoutes'
 import {
   buildRestoreSubscriptionNotice,
   buildSubscriptionButtonLabel,
@@ -446,7 +447,15 @@ export default function Flow({ stepId }: FlowProps) {
     updateProfile,
     validateProfileField,
     onEditTemplate: () => ionRouter.push(buildTemplateHref(currentRoute), 'forward', 'push'),
-    onManageGmail: () => ionRouter.push(buildSettingsHref('gmail', currentRoute), 'forward', 'push'),
+    onManageGmail: () =>
+      ionRouter.push(
+        buildTaskHref('repair_gmail', {
+          returnTo: currentRoute,
+          successTo: currentRoute,
+        }),
+        'forward',
+        'push',
+      ),
     onConnectGmail: () => void handleConnectGmail(),
     onContinueToFinalReview: () => goToStep('final-review'),
     onEditEmailWording: () => goToStep('request-review'),
