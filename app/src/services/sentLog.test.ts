@@ -97,7 +97,7 @@ describe('getMergedSentLog', () => {
       {
         ...logEntry('a', 'REF-A'),
         recipientMode: 'app_review_test',
-        recipientEmail: 'app-review-redacted-03@example.invalid',
+        recipientEmail: 'app-review-test+broker-a@example.invalid',
       },
     ])
     mockGetQueue.mockResolvedValue([])
@@ -105,6 +105,6 @@ describe('getMergedSentLog', () => {
     const result = await getMergedSentLog()
 
     expect(result[0].recipientMode).toBe('app_review_test')
-    expect(result[0].recipientEmail).toBe('app-review-redacted-03@example.invalid')
+    expect(result[0].recipientEmail).toBe('app-review-test+broker-a@example.invalid')
   })
 })

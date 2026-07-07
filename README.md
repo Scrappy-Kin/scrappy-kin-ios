@@ -139,9 +139,17 @@ For the bend/hold line between local QA, TestFlight, and release, see
 The safe default for physical-device QA is `QADevice`. It uses the production
 bundle ID, production OAuth, production StoreKit product ID, and real broker
 names/counts/order. Safe sends use the same App Review demo profile email as
-production-config TestFlight: enter `app-review-redacted-02@example.invalid` as the local
-profile email to route broker emails to Scrappy Kin test inboxes. `QADevice`
-blocks non-demo recipients before Gmail send.
+production-config TestFlight: use a configured App Review local profile email
+to route broker emails to Scrappy Kin test inboxes. `QADevice` blocks non-demo
+recipients before Gmail send.
+
+App Review test-recipient routing is configured from the git-ignored local file
+`app/src/config/appReviewTestRecipients.local.ts`. Copy
+`app/src/config/appReviewTestRecipients.local.example.ts` to that path and fill
+the real profile trigger emails and sink inboxes from the secure launch/App
+Review handoff before running tests, builds, Fastlane lanes, or TestFlight
+archives. The build/test scripts fail early when this local file is missing or
+still contains placeholder values.
 
 | Job | Command | Safe to Send? |
 | --- | --- | --- |

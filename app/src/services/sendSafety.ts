@@ -1,10 +1,13 @@
 import {
+  getAppReviewProfileEmailLabel,
   isAppReviewProfileEmail,
   isAppReviewSinkEmail,
 } from '../config/appReviewTestRecipients'
 import type { ExecutionLane } from '../config/buildInfo'
 
 export type SendSafetyMode = 'live' | 'demo_recipients' | 'qa_blocked'
+
+const appReviewProfileEmailLabel = getAppReviewProfileEmailLabel()
 
 export const SEND_SAFETY_NOTICES: Partial<Record<SendSafetyMode, {
   title: string
@@ -20,7 +23,7 @@ export const SEND_SAFETY_NOTICES: Partial<Record<SendSafetyMode, {
   qa_blocked: {
     title: 'DEMO PROFILE REQUIRED',
     body: [
-      'This QA build only sends when the local profile email is app-review-redacted-02@example.invalid.',
+      `This QA build only sends when the local profile email is ${appReviewProfileEmailLabel}.`,
       'Use that profile to send to Scrappy Kin test inboxes. Otherwise no emails are sent.',
     ],
   },
@@ -30,7 +33,7 @@ export const APP_REVIEW_TEST_RECIPIENT_ERROR =
   'App Review test-recipient mode blocked a non-test broker recipient before Gmail send.'
 
 export const QA_DEVICE_BLOCKED_SEND_MESSAGE =
-  'This QA build only sends when the local profile email is app-review-redacted-02@example.invalid. No emails were sent.'
+  `This QA build only sends when the local profile email is ${appReviewProfileEmailLabel}. No emails were sent.`
 
 type SendSafetyInput = {
   executionLane: ExecutionLane

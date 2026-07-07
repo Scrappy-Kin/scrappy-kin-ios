@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   APP_REVIEW_PROFILE_EMAIL,
+  APP_REVIEW_PROFILE_EMAILS,
   APP_REVIEW_TEST_RECIPIENT_EMAILS,
 } from '../config/appReviewTestRecipients'
 import {
@@ -21,13 +22,15 @@ describe('deriveSendSafetyMode', () => {
     ).toBe('live')
   })
 
-  it('uses demo recipients for the App Review profile email in production', () => {
-    expect(
-      deriveSendSafetyMode({
-        executionLane: 'production',
-        profileEmail: APP_REVIEW_PROFILE_EMAIL,
-      }),
-    ).toBe('demo_recipients')
+  it('uses demo recipients for every App Review local profile email in production', () => {
+    APP_REVIEW_PROFILE_EMAILS.forEach((profileEmail) => {
+      expect(
+        deriveSendSafetyMode({
+          executionLane: 'production',
+          profileEmail,
+        }),
+      ).toBe('demo_recipients')
+    })
   })
 
   it('uses demo recipients for the App Review profile email in QADevice', () => {

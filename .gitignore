@@ -20,6 +20,7 @@ tmp/
 # Env
 .env
 .env.*
+app/src/config/appReviewTestRecipients.local.ts
 
 # OS
 .DS_Store
