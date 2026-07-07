@@ -22,8 +22,8 @@ export default function GmailAccessExplainer({
     <section className="app-section-shell">
       {showAccountBoundaryCopy ? (
         <AppText intent="body">
-          Opt-out emails go from your Gmail account, not ours. You approve each round, and your
-          data doesn&apos;t pass through Scrappy Kin servers.
+          Opt-out emails go from your Gmail account. You approve each round, and your data
+          doesn&apos;t pass through Scrappy Kin servers.
         </AppText>
       ) : null}
       <AppSectionLabel>What Gmail access does</AppSectionLabel>

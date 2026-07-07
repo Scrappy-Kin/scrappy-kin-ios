@@ -1,7 +1,7 @@
 import {
   checkmarkCircle,
 } from 'ionicons/icons'
-import type { ReactElement, ReactNode } from 'react'
+import type { ReactElement, ReactNode, RefObject } from 'react'
 import onboardingSuccessIllustration from '../../assets/illustrations/onboarding-success.svg'
 import { getExecutionLane } from '../../config/buildInfo'
 import { buildDeletionSubject } from '../../services/emailTemplate'
@@ -19,6 +19,7 @@ import AppForm from '../../ui/primitives/AppForm'
 import AppIcon from '../../ui/primitives/AppIcon'
 import AppNotice from '../../ui/primitives/AppNotice'
 import AppSegmentedCard, { AppSegmentedCardSection } from '../../ui/primitives/AppSegmentedCard'
+import AppSectionLabel from '../../ui/primitives/AppSectionLabel'
 import AppText from '../../ui/primitives/AppText'
 import GmailAccessExplainer, { GMAIL_CONNECTED_DESCRIPTION } from '../../ui/patterns/GmailAccessExplainer'
 import GmailConnectionStatusCard from '../../ui/patterns/GmailConnectionStatusCard'
@@ -62,6 +63,7 @@ type BuildFlowStepsInput = {
   previewBodyBottomText: string
   gmailConnected: boolean
   oauthError: string | null
+  oauthErrorRef: RefObject<HTMLDivElement | null>
   oauthInFlight: boolean
   sendError: string | null
   sendInFlight: boolean
@@ -123,6 +125,7 @@ export function buildFlowSteps({
   previewBodyBottomText,
   gmailConnected,
   oauthError,
+  oauthErrorRef,
   oauthInFlight,
   sendError,
   sendInFlight,
@@ -178,12 +181,10 @@ export function buildFlowSteps({
       subtitle: 'Your first round is free. No card, no auto-renew, no clock running. If you want more later, you can decide then.',
       render: () => (
         <section className="app-section-shell">
+          <AppSectionLabel>Included in this round</AppSectionLabel>
           <AppSegmentedCard>
-            <AppSegmentedCardSection accessibilityLabel="Included in this round">
+            <AppSegmentedCardSection>
               <div className="app-stack">
-                <AppText intent="label" accessibilityHidden>
-                  Included in this round
-                </AppText>
                 {starterBrokers.map((broker) => (
                   <div className="flow-access-row" key={broker.id}>
                     <AppIcon icon={checkmarkCircle} size="sm" tone="primary" />
@@ -324,9 +325,11 @@ export function buildFlowSteps({
           <section className="app-section-shell">
             <GmailAccessExplainer showGooglePermissionHint />
             {oauthError ? (
-              <AppNotice variant="error" title="Gmail connection didn’t finish">
-                {oauthError}
-              </AppNotice>
+              <div ref={oauthErrorRef} tabIndex={-1}>
+                <AppNotice variant="error" title="Gmail connection didn’t finish">
+                  {oauthError}
+                </AppNotice>
+              </div>
             ) : null}
             <AppButton onClick={onConnectGmail} disabled={oauthInFlight}>
               {oauthError ? 'Retry Google sign-in' : 'Continue to Google'}

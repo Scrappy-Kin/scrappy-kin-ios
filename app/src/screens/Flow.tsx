@@ -99,6 +99,7 @@ export default function Flow({ stepId }: FlowProps) {
   const location = useLocation()
   const contentRef = useRef<HTMLIonContentElement | null>(null)
   const headingRef = useRef<HTMLHeadingElement | null>(null)
+  const oauthErrorRef = useRef<HTMLDivElement | null>(null)
   const nextDescriptionId = 'flow-next-description'
   const currentRoute = getCurrentRoute(location)
   const successTo = readSuccessTo(location.search)
@@ -216,7 +217,10 @@ export default function Flow({ stepId }: FlowProps) {
     })
   }, [currentRoute, flowRedirect, ionRouter, isReady, stepId])
 
-  useRouteFocus(stepId, shouldFocusCurrentStep, headingRef)
+  const routeFocusRef = stepId === 'gmail-send' && oauthError ? oauthErrorRef : headingRef
+  const routeFocusKey = stepId === 'gmail-send' && oauthError ? `${stepId}:oauth-error:${oauthError}` : stepId
+
+  useRouteFocus(routeFocusKey, shouldFocusCurrentStep, routeFocusRef)
 
   function updateProfile(next: Partial<UserProfile>) {
     setProfileDraft((current) => {
@@ -429,6 +433,7 @@ export default function Flow({ stepId }: FlowProps) {
     previewBodyBottomText,
     gmailConnected,
     oauthError,
+    oauthErrorRef,
     oauthInFlight,
     sendError,
     sendInFlight,
