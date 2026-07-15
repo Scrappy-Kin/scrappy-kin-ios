@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { shouldCompleteGmailRepairInPlace } from './taskRoutes'
+import { readBackTo, readReturnTo } from './navigation'
+import {
+  deriveNextBatchTaskTarget,
+  shouldCompleteGmailRepairInPlace,
+} from './taskRoutes'
 
 describe('shouldCompleteGmailRepairInPlace', () => {
   it('keeps Settings-origin Gmail repairs on the Gmail connection page', () => {
@@ -25,5 +29,33 @@ describe('shouldCompleteGmailRepairInPlace', () => {
     expect(shouldCompleteGmailRepairInPlace('/onboarding/gmail-send', '/onboarding/review')).toBe(
       false,
     )
+  })
+})
+
+describe('next batch task route', () => {
+  it('sends fresh dashboard setup from profile to Gmail, with back/cancel to Home', () => {
+    const href = deriveNextBatchTaskTarget({
+      gmailConnected: false,
+      hasProfile: false,
+    }, '/home')
+    const search = new URL(`https://example.test${href}`).search
+
+    expect(href).toContain('/settings?')
+    expect(href).toContain('view=profile')
+    expect(readReturnTo(search)).toBe(
+      '/gmail?returnTo=%2Fhome&successTo=%2Freview-batch%3FreturnTo%3D%252Fhome',
+    )
+    expect(readBackTo(search)).toBe('/home')
+  })
+
+  it('continues from profile directly to review when Gmail is already connected', () => {
+    const href = deriveNextBatchTaskTarget({
+      gmailConnected: true,
+      hasProfile: false,
+    }, '/home')
+    const search = new URL(`https://example.test${href}`).search
+
+    expect(readReturnTo(search)).toBe('/review-batch?returnTo=%2Fhome')
+    expect(readBackTo(search)).toBe('/home')
   })
 })

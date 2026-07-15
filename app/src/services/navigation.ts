@@ -22,6 +22,11 @@ export function readReturnTo(search: string) {
   return value || null
 }
 
+export function readBackTo(search: string) {
+  const value = new URLSearchParams(search).get('backTo')
+  return value || null
+}
+
 export function readSettingsNotice(search: string) {
   const value = new URLSearchParams(search).get('notice')
   return settingsNoticeSet.has(value as SettingsNotice) ? (value as SettingsNotice) : null
@@ -66,8 +71,9 @@ export function buildSettingsHref(
   view?: SettingsView,
   returnTo?: string | null,
   notice?: SettingsNotice | null,
+  backTo?: string | null,
 ) {
-  return withParams('/settings', { view, returnTo, notice })
+  return withParams('/settings', { view, returnTo, notice, backTo })
 }
 
 export function withSettingsNotice(href: string, notice: SettingsNotice) {

@@ -60,7 +60,7 @@ const TASK_ROUTES: Record<TaskIntent, TaskRouteDefinition> = {
     editBehavior: 'explicit_save',
   },
   edit_profile_for_batch: {
-    href: ({ returnTo }) => buildSettingsHref('profile', returnTo ?? '/home'),
+    href: ({ returnTo }) => buildSettingsHref('profile', returnTo ?? '/home', null, '/home'),
     successHref: ({ returnTo }) => returnTo ?? '/home',
     editBehavior: 'explicit_save',
   },
@@ -92,7 +92,10 @@ export function deriveNextBatchTaskTarget(
   const reviewBatchHref = buildTaskHref('review_next_batch', { returnTo })
 
   if (!input.hasProfile) {
-    return buildTaskHref('edit_profile_for_batch', { returnTo: reviewBatchHref })
+    const profileSuccessHref = input.gmailConnected
+      ? reviewBatchHref
+      : buildTaskHref('repair_gmail', { returnTo, successTo: reviewBatchHref })
+    return buildTaskHref('edit_profile_for_batch', { returnTo: profileSuccessHref })
   }
 
   if (!input.gmailConnected) {

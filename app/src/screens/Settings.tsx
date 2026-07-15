@@ -14,6 +14,7 @@ import {
   buildBatchSizeHref,
   buildTemplateHref,
   buildOnboardingHref,
+  readBackTo,
   readReturnTo,
   readSettingsNotice,
 } from '../services/navigation'
@@ -124,9 +125,10 @@ export default function Settings() {
   const location = useLocation()
   const view = getSettingsView(location.search)
   const returnTo = readReturnTo(location.search)
+  const backTo = readBackTo(location.search)
   const settingsNotice = readSettingsNotice(location.search)
-  const settingsHomeHref = buildSettingsHref(undefined, returnTo)
-  const settingsExitHref = returnTo ?? '/home'
+  const settingsHomeHref = buildSettingsHref(undefined, returnTo, null, backTo)
+  const settingsExitHref = backTo ?? returnTo ?? '/home'
   const headingRef = useRef<HTMLHeadingElement | null>(null)
   const contentRef = useRef<HTMLIonContentElement | null>(null)
   const [logOptIn, setOptIn] = useState(false)
@@ -238,7 +240,7 @@ export default function Settings() {
     if (nextView === 'diagnostics') {
       void refreshLogOptIn()
     }
-    history.push(buildSettingsHref(nextView, returnTo))
+    history.push(buildSettingsHref(nextView, returnTo, null, backTo))
   }
 
   function updateProfile(next: Partial<UserProfile>) {
@@ -303,7 +305,7 @@ export default function Settings() {
       history.replace(returnTo)
       return
     }
-    history.replace(buildSettingsHref(undefined, returnTo, 'profile-saved'))
+    history.replace(buildSettingsHref(undefined, returnTo, 'profile-saved', backTo))
   }
 
   const logOptInRemaining = useMemo(() => {
@@ -845,7 +847,7 @@ export default function Settings() {
       <IonContent ref={contentRef} className="page-content">
         <div className="app-screen-shell">
           <AppTopNav
-            backHref={view === 'home' ? settingsExitHref : settingsHomeHref}
+            backHref={view === 'home' ? settingsExitHref : backTo ?? settingsHomeHref}
             onBack={localDataDeleted ? handlePostDeleteBack : undefined}
           />
           <AppHeading intent="section" level={1} ref={headingRef} tabIndex={-1}>
