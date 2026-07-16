@@ -253,7 +253,7 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
                         serializedStatus["expiresAt"] = Self.iso8601String(expirationDate)
                     }
                     if case .verified(let renewalInfo) = status.renewalInfo {
-                        serializedStatus["willAutoRenew"] = renewalInfo.autoRenewPreference != nil
+                        serializedStatus["willAutoRenew"] = renewalInfo.willAutoRenew
                     }
                     subscriptionStatuses.append(serializedStatus)
 
