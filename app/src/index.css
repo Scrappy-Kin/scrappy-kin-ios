@@ -61,6 +61,30 @@ body {
   margin-bottom: var(--space-3);
 }
 
+.startup-shell {
+  min-height: calc(100svh - var(--ion-safe-area-top, 0px) - var(--ion-safe-area-bottom, 0px));
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.startup-shell__logo {
+  display: block;
+  width: min(56vw, 220px);
+  height: auto;
+}
+
+.startup-shell p {
+  margin: 0;
+  color: var(--neutral-900);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  font-weight: 700;
+}
+
 .execution-lane-badge {
   position: fixed;
   right: calc(var(--ion-safe-area-right, 0px) + var(--space-2));

@@ -40,6 +40,7 @@ import { getQueue } from './services/queueStore'
 import { getSubscriptionSnapshot } from './services/subscription'
 import { getUserProfile } from './services/userProfile'
 import { buildOnboardingHref } from './services/navigation'
+import scrappyKinLogo from './assets/brand/scrappy-kin-logo.svg'
 
 const DEV_SURFACES_ENABLED =
   import.meta.env.VITE_EXECUTION_LANE === 'dev' ||
@@ -85,6 +86,19 @@ function OfflineShell() {
             Connect to the internet and try again. Settings are still available for
             disconnecting Gmail or deleting local data.
           </p>
+        </div>
+      </IonContent>
+    </IonPage>
+  )
+}
+
+function StartupShell() {
+  return (
+    <IonPage>
+      <IonContent className="page-content">
+        <div className="startup-shell" role="status" aria-label="Starting Scrappy Kin">
+          <img className="startup-shell__logo" src={scrappyKinLogo} alt="" aria-hidden="true" />
+          <p>Starting...</p>
         </div>
       </IonContent>
     </IonPage>
@@ -161,7 +175,7 @@ function EntryGate() {
   }
 
   if (!target) {
-    return null
+    return <StartupShell />
   }
 
   return <Redirect to={target} />
