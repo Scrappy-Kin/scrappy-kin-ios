@@ -2,7 +2,7 @@ import { App } from '@capacitor/app'
 import { Browser } from '@capacitor/browser'
 import { Capacitor, type PluginListenerHandle } from '@capacitor/core'
 import { getEncrypted, removeEncrypted, setEncrypted } from './secureStore'
-import { OAUTH_TIMEOUT_MS } from '../config/constants'
+import { OAUTH_PENDING_STATE_TTL_MS, OAUTH_TIMEOUT_MS } from '../config/constants'
 import { generateCodeChallenge, generateCodeVerifier, generateState } from './pkce'
 import { getGoogleOAuthConfig } from '../config/oauth'
 import { logEvent } from './logStore'
@@ -14,7 +14,6 @@ const SCOPE = 'https://www.googleapis.com/auth/gmail.send'
 
 const TOKEN_KEY = 'gmail_tokens'
 const OAUTH_PENDING_KEY = 'gmail_oauth_pending'
-const OAUTH_PENDING_TTL_MS = 10 * 60 * 1000
 let oauthInFlight = false
 let oauthBrowserOpen = false
 const oauthBrowserListeners = new Set<() => void>()
@@ -71,7 +70,7 @@ function classifyOAuthFailure(error: unknown) {
 export async function clearStaleOAuthState() {
   const pending = await getEncrypted<PendingOAuthPayload>(OAUTH_PENDING_KEY)
   if (!pending) return
-  if (!pending.createdAt || Date.now() - pending.createdAt > OAUTH_PENDING_TTL_MS) {
+  if (!pending.createdAt || Date.now() - pending.createdAt > OAUTH_PENDING_STATE_TTL_MS) {
     await removeEncrypted(OAUTH_PENDING_KEY)
   }
 }
