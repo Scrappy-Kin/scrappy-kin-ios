@@ -244,6 +244,13 @@ const captureScenarios: Record<string, CaptureScenarioDefinition> = {
       await setDevSubscriptionEntitled(true)
     },
   },
+  'review-batch-unsubscribed': {
+    route: '/review-batch?returnTo=%2Fhome',
+    seed: async () => {
+      await seedPostSendState(null)
+      await setDevSubscriptionEntitled(false)
+    },
+  },
   'batch-size': {
     route: '/batch-size?returnTo=%2Freview-batch',
     seed: async () => {

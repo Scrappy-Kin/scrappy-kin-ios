@@ -17,6 +17,7 @@ import { getCurrentRoute, readReturnTo } from '../services/navigation'
 import { computeBrokerEligibility, getEligibleBrokerIds } from '../services/roundState'
 import { deriveSendSafetyMode, isSendBlockedBySafetyMode } from '../services/sendSafety'
 import { getMergedSentLog } from '../services/sentLog'
+import { getSubscriptionSnapshot } from '../services/subscription'
 import {
   buildTaskHref,
   deriveReviewBatchTaskRedirect,
@@ -46,6 +47,7 @@ export default function ReviewBatch() {
   const returnTo = readReturnTo(location.search) ?? '/home'
   const headingRef = useRef<HTMLHeadingElement | null>(null)
   const [isReady, setIsReady] = useState(false)
+  const [subscriptionActive, setSubscriptionActive] = useState(false)
   const [gmailConnected, setGmailConnected] = useState(false)
   const [profileDraft, setProfileDraft] = useState<UserProfile>(emptyProfile)
   const [selectedBrokerIds, setSelectedBrokerIds] = useState<string[]>([])
@@ -60,13 +62,25 @@ export default function ReviewBatch() {
 
   async function refreshState() {
     const nextBrokers = await loadBrokers()
-    const [status, profile, selectedIds, selectedRoundSize, sentLog] = await Promise.all([
+    const [status, profile, selectedIds, selectedRoundSize, sentLog, subscriptionSnapshot] = await Promise.all([
       getGmailStatus(),
       getActiveUserProfile(),
       getSelectedBrokerIds(),
       getSelectedRoundSize(),
       getMergedSentLog(nextBrokers),
+      getSubscriptionSnapshot(),
     ])
+
+    setSubscriptionActive(subscriptionSnapshot.active)
+    setGmailConnected(status.connected)
+    setProfileDraft(profile ?? emptyProfile)
+
+    if (!subscriptionSnapshot.active) {
+      setSelectedBrokerIds([])
+      setSelectedBrokers([])
+      setIsReady(true)
+      return
+    }
 
     const eligibility = computeBrokerEligibility(nextBrokers, sentLog)
     const eligibleIds = getEligibleBrokerIds(eligibility)
@@ -86,8 +100,6 @@ export default function ReviewBatch() {
       await persistSelectedBrokerIds(nextSelectedIds)
     }
 
-    setGmailConnected(status.connected)
-    setProfileDraft(profile ?? emptyProfile)
     setSelectedBrokerIds(nextSelectedIds)
     setSelectedBrokers(selectableBrokers.filter((broker) => nextSelectedIds.includes(broker.id)))
     setIsReady(true)
@@ -109,6 +121,7 @@ export default function ReviewBatch() {
         {
           gmailConnected,
           hasProfile: profileComplete,
+          subscriptionActive,
         },
         currentRoute,
         returnTo,
@@ -128,6 +141,11 @@ export default function ReviewBatch() {
     try {
       setSendError(null)
       setSendInFlight(true)
+      const subscriptionSnapshot = await getSubscriptionSnapshot()
+      if (!subscriptionSnapshot.active) {
+        setSubscriptionActive(false)
+        return
+      }
       const result = await executeBatchSend(profileDraft, selectedBrokerIds)
       if (result.sentCount === 0) {
         setSendError(result.failureMessage ?? 'Emails didn’t send.')

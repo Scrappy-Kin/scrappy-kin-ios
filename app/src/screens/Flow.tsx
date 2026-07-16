@@ -458,7 +458,8 @@ export default function Flow({ stepId }: FlowProps) {
       ),
     onConnectGmail: () => void handleConnectGmail(),
     onContinueToFinalReview: () => goToStep('final-review'),
-    onEditEmailWording: () => goToStep('request-review'),
+    onEditEmailWording: () =>
+      ionRouter.push(buildTemplateHref(currentRoute), 'forward', 'push'),
     onSendStarterRound: () => void handleSendStarterRound(),
     onContinueToSubscribe: () => goToStep('beat-subscribe'),
     onSubscribe: () => void handleSubscribe(),

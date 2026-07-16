@@ -37,6 +37,14 @@ export type SubscriptionDiagnostics = {
 
 type NativeEntitlementResponse = {
   activeProductIds: string[]
+  subscriptionStatuses?: NativeSubscriptionStatus[]
+}
+
+type NativeSubscriptionStatus = {
+  productId: string
+  state?: string
+  expiresAt?: string
+  willAutoRenew?: boolean
 }
 
 type NativePurchaseResponse = {
@@ -72,10 +80,25 @@ export type SubscriptionProduct = {
 export type SubscriptionSnapshot = {
   product: SubscriptionProduct
   active: boolean
+  access: SubscriptionAccessDetails | null
   isAvailable: boolean
   isConfigured: boolean
   loadError: string | null
   diagnostics: SubscriptionDiagnostics | null
+}
+
+export type SubscriptionAccessState =
+  | 'subscribed'
+  | 'inGracePeriod'
+  | 'expired'
+  | 'inBillingRetryPeriod'
+  | 'revoked'
+  | 'unknown'
+
+export type SubscriptionAccessDetails = {
+  state: SubscriptionAccessState
+  expiresAt: string | null
+  willAutoRenew: boolean | null
 }
 
 export type SubscriptionPurchaseResult =
@@ -190,6 +213,7 @@ function buildAnnualButtonPriceLabel(displayPrice: string) {
 
 function normalizeSnapshot(input: {
   active: boolean
+  access?: SubscriptionAccessDetails | null
   product?: NativeSubscriptionProduct | null
   isAvailable: boolean
   loadError: string | null
@@ -203,6 +227,7 @@ function normalizeSnapshot(input: {
 
   return {
     active: input.active,
+    access: input.access ?? null,
     isAvailable: input.isAvailable && Boolean(displayPrice),
     isConfigured: isSubscriptionProductConfigured(),
     loadError: input.loadError,
@@ -215,6 +240,41 @@ function normalizeSnapshot(input: {
       buttonPriceLabel,
       priceSubtext: fallbackProduct.priceSubtext,
     },
+  }
+}
+
+const subscriptionAccessStateSet = new Set<SubscriptionAccessState>([
+  'subscribed',
+  'inGracePeriod',
+  'expired',
+  'inBillingRetryPeriod',
+  'revoked',
+  'unknown',
+])
+
+function normalizeSubscriptionAccess(
+  response: NativeEntitlementResponse,
+): SubscriptionAccessDetails | null {
+  const matchingStatuses = (response.subscriptionStatuses ?? [])
+    .filter((status) => status.productId === SUBSCRIPTION_PRODUCT_ID)
+    .sort((a, b) => {
+      const aActive = a.state === 'subscribed' || a.state === 'inGracePeriod'
+      const bActive = b.state === 'subscribed' || b.state === 'inGracePeriod'
+      if (aActive !== bActive) return aActive ? -1 : 1
+      return Date.parse(b.expiresAt ?? '') - Date.parse(a.expiresAt ?? '')
+    })
+  const status = matchingStatuses[0]
+  if (!status) return null
+
+  const state = subscriptionAccessStateSet.has(status.state as SubscriptionAccessState)
+    ? (status.state as SubscriptionAccessState)
+    : 'unknown'
+
+  return {
+    state,
+    expiresAt: status.expiresAt?.trim() || null,
+    willAutoRenew:
+      typeof status.willAutoRenew === 'boolean' ? status.willAutoRenew : null,
   }
 }
 
@@ -237,8 +297,16 @@ async function readDevSubscriptionActive() {
 }
 
 async function getDevSnapshot() {
+  const active = await readDevSubscriptionActive()
   return normalizeSnapshot({
-    active: await readDevSubscriptionActive(),
+    active,
+    access: active
+      ? {
+          state: 'subscribed',
+          expiresAt: null,
+          willAutoRenew: null,
+        }
+      : null,
     isAvailable: true,
     loadError: null,
   })
@@ -345,6 +413,7 @@ async function readNativeSnapshot(): Promise<SubscriptionSnapshot> {
 
     const snapshot = normalizeSnapshot({
       active,
+      access: normalizeSubscriptionAccess(entitlementResponse),
       product,
       isAvailable: Boolean(product),
       loadError: product ? null : PRICE_LOAD_FAILED_MESSAGE,

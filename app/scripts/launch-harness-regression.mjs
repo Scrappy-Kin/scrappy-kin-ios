@@ -338,7 +338,7 @@ async function openScenario(page, scenario) {
 }
 
 async function clickButtonByName(page, name) {
-  await page.getByRole('button', { name }).first().click()
+  await page.getByRole('button', { name }).filter({ visible: true }).first().click()
   await page.waitForLoadState('networkidle')
   await page.waitForTimeout(250)
 }
@@ -397,7 +397,7 @@ const checks = [
         page,
         'home-active-no-local-history',
         [
-          'Your subscription is active',
+          'Your subscription access is active',
           '0 opt-out emails sent',
           'This is a fresh install',
           'Set up a round',
@@ -472,6 +472,26 @@ const checks = [
     },
   },
   {
+    id: 'onboarding-final-review-template-return',
+    run: async (page) => {
+      await openScenario(page, 'flow-final-review')
+      await clickButtonByName(page, 'Edit email template')
+      await assertVisibleText(page, 'Edit email wording')
+      const editorUrl = new URL(page.url())
+      if (
+        editorUrl.pathname !== '/template' ||
+        editorUrl.searchParams.get('returnTo') !== '/onboarding/final-review'
+      ) {
+        throw new Error(
+          `Template editor return route is ${editorUrl.pathname}${editorUrl.search}; expected /template?returnTo=/onboarding/final-review`,
+        )
+      }
+      await clickButtonByName(page, 'Save wording')
+      await assertVisibleText(page, 'Final review')
+      await assertVisibleText(page, 'Step 4 of 4')
+    },
+  },
+  {
     id: 'post-send-flow-updates-dashboard',
     run: async (page) => {
       await openScenario(page, 'flow-beat-sent')
@@ -485,6 +505,10 @@ const checks = [
       await assertVisibleText(page, `${launchStarterCount} opt-out emails sent`)
       await assertVisibleText(page, new RegExp(`${paidBrokerCount} (?:more )?brokers are available`, 'i'))
       await assertVisibleText(page, /Subscribe/i)
+
+      await openScenario(page, 'review-batch-unsubscribed')
+      await assertVisibleText(page, /Subscribe/i)
+      await assertAbsentText(page, 'Send your next round of opt-out emails')
     },
   },
   {

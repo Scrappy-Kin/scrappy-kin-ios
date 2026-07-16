@@ -32,6 +32,10 @@ export type TaskRouteStateInput = {
   hasProfile: boolean
 }
 
+type ReviewBatchRouteStateInput = TaskRouteStateInput & {
+  subscriptionActive: boolean
+}
+
 type TaskRouteDefinition = {
   href: (input: TaskRouteInput) => string
   successHref?: (input: TaskRouteInput) => string
@@ -106,10 +110,14 @@ export function deriveNextBatchTaskTarget(
 }
 
 export function deriveReviewBatchTaskRedirect(
-  input: TaskRouteStateInput,
+  input: ReviewBatchRouteStateInput,
   currentRoute: string,
   returnTo: string | null = '/home',
 ) {
+  if (!input.subscriptionActive) {
+    return returnTo ?? '/home'
+  }
+
   if (!input.hasProfile) {
     return buildTaskHref('edit_profile_for_batch', { returnTo: currentRoute })
   }

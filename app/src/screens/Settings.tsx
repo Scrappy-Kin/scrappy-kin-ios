@@ -43,6 +43,7 @@ import {
   restoreSubscriptionPurchases,
   type SubscriptionSnapshot,
 } from '../services/subscription'
+import { buildSubscriptionAccessCopy } from '../services/subscriptionDisplay'
 import {
   clearUserProfileDraft,
   getUserProfile,
@@ -462,8 +463,9 @@ export default function Settings() {
     const gmailRow = gmailConnected
       ? SETTINGS_HOME_ROWS.gmailConnected
       : SETTINGS_HOME_ROWS.gmailDisconnected
-    const subscriptionDescription = subscriptionSnapshot?.active
-      ? 'Active on this device. Apple handles billing and renewals.'
+    const subscriptionAccessCopy = buildSubscriptionAccessCopy(subscriptionSnapshot)
+    const subscriptionDescription = subscriptionSnapshot
+      ? subscriptionAccessCopy.description
       : SETTINGS_DESTINATIONS.subscription.description
 
     return (
@@ -546,20 +548,18 @@ export default function Settings() {
   }
 
   function renderSubscription() {
+    const subscriptionAccessCopy = buildSubscriptionAccessCopy(subscriptionSnapshot)
+
     return (
       <section className="app-section-shell">
         <AppList header="Status">
           <AppListRow
             title="Subscription access"
-            description={
-              subscriptionSnapshot?.active
-                ? 'Active on this device.'
-                : 'Not active on this device.'
-            }
+            description={subscriptionAccessCopy.description}
             right={
               <span aria-hidden="true">
                 <AppText intent="caption">
-                  {subscriptionSnapshot?.active ? 'Active' : 'Inactive'}
+                  {subscriptionAccessCopy.statusLabel}
                 </AppText>
               </span>
             }
@@ -589,7 +589,7 @@ export default function Settings() {
         <div className="app-action-stack">
           {subscriptionSnapshot?.active ? (
             <AppButton fullWidth disabled>
-              Subscribed
+              Access active
             </AppButton>
           ) : (
             <AppButton

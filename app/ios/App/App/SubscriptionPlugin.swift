@@ -95,8 +95,11 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
         let productIds = call.getArray("productIds", String.self) ?? []
 
         Task {
-            let activeProductIds = await currentSubscriptionProductIds(productIds: productIds)
-            call.resolve(["activeProductIds": activeProductIds])
+            let lookup = await currentSubscriptionLookup(productIds: productIds)
+            call.resolve([
+                "activeProductIds": lookup.activeProductIds,
+                "subscriptionStatuses": lookup.subscriptionStatuses
+            ])
         }
     }
 
@@ -120,10 +123,11 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
                     switch verificationResult {
                     case .verified(let transaction):
                         await transaction.finish()
-                        let activeProductIds = await currentSubscriptionProductIds(productIds: [productId])
+                        let lookup = await currentSubscriptionLookup(productIds: [productId])
                         call.resolve([
                             "status": "purchased",
-                            "activeProductIds": activeProductIds
+                            "activeProductIds": lookup.activeProductIds,
+                            "subscriptionStatuses": lookup.subscriptionStatuses
                         ])
                     case .unverified(_, let error):
                         call.reject(error.localizedDescription, "UNVERIFIED_TRANSACTION")
@@ -153,12 +157,18 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
         Task {
             do {
                 try await AppStore.sync()
-                let activeProductIds = await currentSubscriptionProductIds(productIds: productIds)
-                call.resolve(["activeProductIds": activeProductIds])
+                let lookup = await currentSubscriptionLookup(productIds: productIds)
+                call.resolve([
+                    "activeProductIds": lookup.activeProductIds,
+                    "subscriptionStatuses": lookup.subscriptionStatuses
+                ])
             } catch {
-                let activeProductIds = await currentSubscriptionProductIds(productIds: productIds)
-                if !activeProductIds.isEmpty {
-                    call.resolve(["activeProductIds": activeProductIds])
+                let lookup = await currentSubscriptionLookup(productIds: productIds)
+                if !lookup.activeProductIds.isEmpty {
+                    call.resolve([
+                        "activeProductIds": lookup.activeProductIds,
+                        "subscriptionStatuses": lookup.subscriptionStatuses
+                    ])
                     return
                 }
 
@@ -196,23 +206,32 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
                     await transaction.finish()
                 }
 
-                let activeProductIds = await self.currentSubscriptionProductIds(productIds: updatedProductIds)
+                let lookup = await self.currentSubscriptionLookup(productIds: updatedProductIds)
                 self.notifyListeners("entitlementUpdated", data: [
-                    "activeProductIds": activeProductIds
+                    "activeProductIds": lookup.activeProductIds,
+                    "subscriptionStatuses": lookup.subscriptionStatuses
                 ])
             }
         }
     }
 
     private func currentSubscriptionProductIds(productIds: [String]) async -> [String] {
+        await currentSubscriptionLookup(productIds: productIds).activeProductIds
+    }
+
+    private func currentSubscriptionLookup(productIds: [String]) async -> (
+        activeProductIds: [String],
+        subscriptionStatuses: [[String: Any]]
+    ) {
         let requestedProductIds = Array(Set(productIds.filter { !$0.isEmpty }))
         if requestedProductIds.isEmpty {
-            return []
+            return ([], [])
         }
 
         do {
             let products = try await Product.products(for: requestedProductIds)
             var activeProductIds = Set<String>()
+            var subscriptionStatuses: [[String: Any]] = []
 
             for product in products where product.type == .autoRenewable {
                 guard requestedProductIds.contains(product.id),
@@ -221,23 +240,35 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
                 }
 
                 for status in statuses {
-                    guard Self.isEntitledSubscriptionStatus(status) else {
-                        continue
-                    }
-
                     guard case .verified(let transaction) = status.transaction,
                           transaction.productID == product.id else {
                         continue
                     }
 
-                    activeProductIds.insert(product.id)
-                    break
+                    var serializedStatus: [String: Any] = [
+                        "productId": product.id,
+                        "state": Self.subscriptionStateName(status)
+                    ]
+                    if let expirationDate = transaction.expirationDate {
+                        serializedStatus["expiresAt"] = Self.iso8601String(expirationDate)
+                    }
+                    if case .verified(let renewalInfo) = status.renewalInfo {
+                        serializedStatus["willAutoRenew"] = renewalInfo.autoRenewPreference != nil
+                    }
+                    subscriptionStatuses.append(serializedStatus)
+
+                    if Self.isEntitledSubscriptionStatus(status) {
+                        activeProductIds.insert(product.id)
+                    }
                 }
             }
 
-            return requestedProductIds.filter { activeProductIds.contains($0) }
+            return (
+                requestedProductIds.filter { activeProductIds.contains($0) },
+                subscriptionStatuses
+            )
         } catch {
-            return []
+            return ([], [])
         }
     }
 
@@ -303,6 +334,10 @@ public class SubscriptionPlugin: CAPPlugin, CAPBridgedPlugin {
             "description": product.description,
             "displayPrice": product.displayPrice
         ]
+    }
+
+    private static func iso8601String(_ date: Date) -> String {
+        ISO8601DateFormatter().string(from: date)
     }
 
     private static func baseProductDiagnostics(productIds: [String]) -> [String: Any] {

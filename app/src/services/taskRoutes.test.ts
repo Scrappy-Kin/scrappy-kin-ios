@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { readBackTo, readReturnTo } from './navigation'
 import {
   deriveNextBatchTaskTarget,
+  deriveReviewBatchTaskRedirect,
   shouldCompleteGmailRepairInPlace,
 } from './taskRoutes'
 
@@ -57,5 +58,35 @@ describe('next batch task route', () => {
 
     expect(readReturnTo(search)).toBe('/review-batch?returnTo=%2Fhome')
     expect(readBackTo(search)).toBe('/home')
+  })
+})
+
+describe('review batch task route', () => {
+  it('returns unpaid users to the subscription-gated dashboard', () => {
+    expect(
+      deriveReviewBatchTaskRedirect(
+        {
+          gmailConnected: true,
+          hasProfile: true,
+          subscriptionActive: false,
+        },
+        '/review-batch?returnTo=%2Fhome',
+        '/home',
+      ),
+    ).toBe('/home')
+  })
+
+  it('keeps an entitled, fully configured round on the review screen', () => {
+    expect(
+      deriveReviewBatchTaskRedirect(
+        {
+          gmailConnected: true,
+          hasProfile: true,
+          subscriptionActive: true,
+        },
+        '/review-batch?returnTo=%2Fhome',
+        '/home',
+      ),
+    ).toBeNull()
   })
 })

@@ -140,7 +140,7 @@ export function deriveRoundState(input: RoundStateInput): DashboardCopy {
   if (!hasAnySent) {
     return {
       stateId: 'active_no_local_history',
-      hero: 'Your subscription is active',
+      hero: 'Your subscription access is active',
       metricValue: 0,
       metricLabel: formatSentMetricLabel(0),
       bodyText:
@@ -299,7 +299,7 @@ function buildQaOverrideState(
     case 'active_no_local_history':
       return {
         stateId,
-        hero: 'Your subscription is active',
+        hero: 'Your subscription access is active',
         metricValue: 0,
         metricLabel: formatSentMetricLabel(0),
         bodyText:
