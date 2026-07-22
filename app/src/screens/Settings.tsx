@@ -567,7 +567,7 @@ export default function Settings() {
           />
         </AppList>
 
-        <AppSectionLabel>Included with your subscription</AppSectionLabel>
+        <AppSectionLabel>Annual plan</AppSectionLabel>
 
         <SubscriptionOfferCard
           product={subscriptionSnapshot?.product}

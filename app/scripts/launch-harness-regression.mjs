@@ -529,6 +529,11 @@ const checks = [
 
       for (const scenario of scenarios) {
         await openScenario(page, scenario)
+
+        if (scenario === 'settings-subscription') {
+          await assertVisibleText(page, 'Annual plan')
+          await assertAbsentText(page, 'Included with your subscription')
+        }
       }
     },
   },
