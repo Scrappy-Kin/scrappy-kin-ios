@@ -23,6 +23,32 @@ describe('deriveEntryTarget', () => {
     expect(target).toBe('/onboarding/intro')
   })
 
+  it('advances past intro only after the flow was explicitly started', () => {
+    const target = deriveEntryTarget(
+      {
+        ...cleanLocalState,
+        subscriptionActive: false,
+      },
+      'intro',
+      true,
+    )
+
+    expect(target).toBe('/onboarding/starter-set')
+  })
+
+  it('advances past the starter set only after its action was completed', () => {
+    const target = deriveEntryTarget(
+      {
+        ...cleanLocalState,
+        subscriptionActive: false,
+      },
+      'starter-set',
+      true,
+    )
+
+    expect(target).toBe('/onboarding/request-review')
+  })
+
   it('lets active subscriptions with no local history land on Home', () => {
     const target = deriveEntryTarget(
       {

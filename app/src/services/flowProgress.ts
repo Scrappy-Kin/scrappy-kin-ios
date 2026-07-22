@@ -32,6 +32,14 @@ export async function setSavedFlowStep(step: FlowStepId) {
   await Preferences.set({ key: FLOW_LAST_STEP_KEY, value: step })
 }
 
+export async function persistViewedFlowStep(step: FlowStepId, flowStarted: boolean) {
+  if (step === 'starter-set' || (step === 'intro' && !flowStarted)) {
+    return
+  }
+
+  await setSavedFlowStep(step)
+}
+
 export async function hasStartedFlow() {
   const stored = await Preferences.get({ key: FLOW_STARTED_KEY })
   return stored.value === 'true'

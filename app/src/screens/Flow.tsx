@@ -12,6 +12,7 @@ import {
   FLOW_STEP_IDS,
   getOnboardingSentCount,
   hasStartedFlow,
+  persistViewedFlowStep,
   setSavedFlowStep,
   clearFlowProgress,
   type FlowStepId,
@@ -212,11 +213,11 @@ export default function Flow({ stepId }: FlowProps) {
       return
     }
 
-    void setSavedFlowStep(stepId)
+    void persistViewedFlowStep(stepId, flowStarted)
     requestAnimationFrame(() => {
       void contentRef.current?.scrollToTop(0)
     })
-  }, [currentRoute, flowRedirect, ionRouter, isReady, stepId])
+  }, [currentRoute, flowRedirect, flowStarted, ionRouter, isReady, stepId])
 
   const routeFocusRef = stepId === 'gmail-send' && oauthError ? oauthErrorRef : headingRef
   const routeFocusKey = stepId === 'gmail-send' && oauthError ? `${stepId}:oauth-error:${oauthError}` : stepId
@@ -383,6 +384,11 @@ export default function Flow({ stepId }: FlowProps) {
   }
 
   async function goNext() {
+    if (stepId === 'intro' || stepId === 'starter-set') {
+      await setSavedFlowStep(stepId)
+      setFlowStarted(true)
+    }
+
     if (stepId === 'request-review') {
       const errors = validateProfile(profileDraft)
       if (Object.keys(errors).length > 0) {
