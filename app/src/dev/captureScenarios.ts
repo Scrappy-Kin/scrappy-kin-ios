@@ -17,6 +17,7 @@ import {
   clearDevSubscriptionState,
   setDevSubscriptionEntitled,
 } from '../services/subscription'
+import { saveDeletionTemplateDraft } from '../services/templateStore'
 import { setUserProfile, type UserProfile } from '../services/userProfile'
 
 type CaptureScenarioDefinition = {
@@ -152,6 +153,23 @@ const captureScenarios: Record<string, CaptureScenarioDefinition> = {
       await setUserProfile(seededProfile)
     },
   },
+  'gmail-connection': {
+    route: '/gmail?returnTo=%2Fsettings',
+    seed: async () => {
+      await seedConnectedState()
+    },
+  },
+  'email-wording': {
+    route: '/template?returnTo=%2Fsettings',
+    seed: async () => {
+      await setUserProfile(seededProfile)
+      await saveDeletionTemplateDraft(seededProfile, {
+        intro: 'Privacy team,',
+        requestBlock: 'Please delete the personal information associated with my profile.',
+        signOff: seededProfile.fullName,
+      })
+    },
+  },
   'flow-intro': { route: '/onboarding/intro' },
   'flow-starter-set': {
     route: '/onboarding/starter-set',
@@ -256,6 +274,12 @@ const captureScenarios: Record<string, CaptureScenarioDefinition> = {
     seed: async () => {
       await seedPostSendState(null)
       await setDevSubscriptionEntitled(true)
+    },
+  },
+  'sent-emails': {
+    route: '/sent-emails?returnTo=%2Fhome',
+    seed: async () => {
+      await seedPostSendState(null)
     },
   },
 }

@@ -91,12 +91,36 @@ const capturePlan = [
     file: '08-review-batch.png',
   },
   {
+    id: 'batch-size',
+    title: 'App: batch size',
+    description: 'Choose how many opt-out emails to send in each group.',
+    group: 'dashboard',
+    route: '/capture/batch-size?qa=1',
+    file: '09-batch-size.png',
+  },
+  {
+    id: 'email-wording',
+    title: 'App: email wording',
+    description: 'Standalone editor for the opt-out email wording.',
+    group: 'settings',
+    route: '/capture/email-wording?qa=1',
+    file: '10-email-wording.png',
+  },
+  {
+    id: 'sent-emails',
+    title: 'App: sent emails',
+    description: 'Local sent email history recorded on this device.',
+    group: 'dashboard',
+    route: '/capture/sent-emails?qa=1',
+    file: '11-sent-emails.png',
+  },
+  {
     id: 'home-unsubscribed',
     title: 'Home: unsubscribed',
     description: 'Dashboard card after the free taster when subscription is inactive.',
     group: 'dashboard',
     route: '/capture/home-unsubscribed?qa=1',
-    file: '09-home-unsubscribed.png',
+    file: '12-home-unsubscribed.png',
   },
   {
     id: 'home-subscribed',
@@ -104,7 +128,7 @@ const capturePlan = [
     description: 'Dashboard card after the free taster when subscription is active.',
     group: 'dashboard',
     route: '/capture/home-subscribed?qa=1',
-    file: '10-home-subscribed.png',
+    file: '13-home-subscribed.png',
   },
   {
     id: 'home-active-no-local-history',
@@ -112,7 +136,7 @@ const capturePlan = [
     description: 'Fresh install or deleted local data with active Apple subscription.',
     group: 'dashboard',
     route: '/capture/home-active-no-local-history?qa=1',
-    file: '11-home-active-no-local-history.png',
+    file: '14-home-active-no-local-history.png',
   },
   {
     id: 'settings',
@@ -120,7 +144,15 @@ const capturePlan = [
     description: 'Top-level Settings entry point for profile, Gmail, subscription, privacy, diagnostics, and support.',
     group: 'settings',
     route: '/capture/settings?qa=1',
-    file: '12-settings-home.png',
+    file: '15-settings-home.png',
+  },
+  {
+    id: 'gmail-connection',
+    title: 'Settings: Gmail connection',
+    description: 'Standalone Gmail connection management screen.',
+    group: 'settings',
+    route: '/capture/gmail-connection?qa=1',
+    file: '16-gmail-connection.png',
   },
   {
     id: 'settings-subscription',
@@ -128,7 +160,7 @@ const capturePlan = [
     description: 'Top-level subscription management with restore and Apple billing copy.',
     group: 'settings',
     route: '/capture/settings-subscription?qa=1',
-    file: '13-settings-subscription.png',
+    file: '17-settings-subscription.png',
   },
   {
     id: 'settings-profile',
@@ -136,7 +168,7 @@ const capturePlan = [
     description: 'Editable personal details used in broker opt-out emails.',
     group: 'settings',
     route: '/capture/settings-profile?qa=1',
-    file: '14-settings-profile.png',
+    file: '18-settings-profile.png',
   },
   {
     id: 'settings-privacy',
@@ -144,7 +176,7 @@ const capturePlan = [
     description: 'On-device data and deletion controls.',
     group: 'settings',
     route: '/capture/settings-privacy?qa=1',
-    file: '15-settings-privacy.png',
+    file: '19-settings-privacy.png',
   },
   {
     id: 'settings-diagnostics',
@@ -152,7 +184,7 @@ const capturePlan = [
     description: 'Local diagnostics capture, export, and wipe actions.',
     group: 'settings',
     route: '/capture/settings-diagnostics?qa=1',
-    file: '16-settings-diagnostics.png',
+    file: '20-settings-diagnostics.png',
   },
   {
     id: 'settings-support',
@@ -160,7 +192,7 @@ const capturePlan = [
     description: 'Help, legal links, support email, and build metadata on one surface.',
     group: 'settings',
     route: '/capture/settings-support?qa=1',
-    file: '17-settings-support.png',
+    file: '21-settings-support.png',
   },
 ]
 

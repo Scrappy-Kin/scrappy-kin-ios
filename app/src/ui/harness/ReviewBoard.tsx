@@ -73,6 +73,27 @@ const reviewStates: ReviewState[] = [
     seedsLocalState: true,
   },
   {
+    id: 'batch-size',
+    title: 'App: batch size',
+    route: '/capture/batch-size?qa=1',
+    description: 'Choose how many opt-out emails to send in each group.',
+    seedsLocalState: true,
+  },
+  {
+    id: 'email-wording',
+    title: 'App: email wording',
+    route: '/capture/email-wording?qa=1',
+    description: 'Standalone editor for the opt-out email wording.',
+    seedsLocalState: true,
+  },
+  {
+    id: 'sent-emails',
+    title: 'App: sent emails',
+    route: '/capture/sent-emails?qa=1',
+    description: 'Local sent email history recorded on this device.',
+    seedsLocalState: true,
+  },
+  {
     id: 'home-unsubscribed',
     title: 'Home: unsubscribed',
     route: '/capture/home-unsubscribed?qa=1',
@@ -98,6 +119,13 @@ const reviewStates: ReviewState[] = [
     title: 'Settings',
     route: '/capture/settings?qa=1',
     description: 'Top-level Settings entry point for profile, Gmail, subscription, privacy, diagnostics, and support.',
+    seedsLocalState: true,
+  },
+  {
+    id: 'gmail-connection',
+    title: 'Settings: Gmail connection',
+    route: '/capture/gmail-connection?qa=1',
+    description: 'Standalone Gmail connection management screen.',
     seedsLocalState: true,
   },
   {
