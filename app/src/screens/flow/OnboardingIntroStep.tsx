@@ -115,17 +115,15 @@ export default function OnboardingIntroStep() {
           phone and sent only in requests you approve. They never touch Scrappy Kin&apos;s servers.
         </AppText>
         <AppText intent="body">
-          Gmail access is send-only. When you connect Gmail, Scrappy Kin requests one specific
-          permission — gmail.send — that lets it send emails from your Gmail account. Scrappy
-          Kin cannot read your inbox, search your existing emails, see broker replies, or
-          modify anything in your account. You can revoke the permission from your Google
-          account settings any time.
+          Gmail access has one job: send the requests you approve from your Gmail account, without
+          routing your personal information through our servers. Scrappy Kin asks for Google&apos;s
+          gmail.send permission. It does not let us read or search your mail, see broker replies,
+          or edit or delete messages. Revoke access any time in your Google account settings.
         </AppText>
         <AppText intent="body">
-          Apple handles payment. Subscription payments run through Apple&apos;s In-App Purchase
-          system. Apple sees your card details; Scrappy Kin doesn&apos;t. The most Scrappy Kin
-          ever sees is a receipt confirming you subscribed, with no personal information
-          attached.
+          Apple handles payment. Your card and billing details never reach Scrappy Kin.
+          Apple&apos;s system tells the app only what it needs to know: whether your subscription is
+          active, when it ends, and whether it will renew.
         </AppText>
         <AppText intent="body">
           No usage tracking. No analytics, no third-party trackers, no automatic crash
