@@ -159,7 +159,7 @@ still contains placeholder values.
 | Simulator accessibility audit | `cd app && npm run ios:test:a11y` | Yes |
 | Production archive | `cd app && npm run ios:fastlane:prod-archive` | No |
 | Production TestFlight | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight` | No |
-| Production TestFlight, auto-next build | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight-next` | No |
+| Production TestFlight, auto-next build (single-machine workflow) | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight-next` | No |
 | Upload signed IPA to TestFlight | `cd app && IPA_PATH=/path/to/ScrappyKin.ipa SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:upload-testflight-ipa` | No |
 
 Production TestFlight uses `Release` and can send real broker emails. Use it only
@@ -193,17 +193,28 @@ The production TestFlight lane uses the same App Store Connect lookup before
 archiving and refuses to upload when the checked-in build number is not newer
 than the latest TestFlight build for the current marketing version.
 
-For the normal release-candidate path, use the auto-next lane instead of
-manually copying build numbers:
+For the normal split VM-to-host release-candidate path, select and commit the
+next build number on the VM before handing the release to the host:
 
 ```bash
 cd app
-SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight-next
+npm run ios:testflight:build-status
+npm run ios:version:set -- --build <next-build-number>
 ```
 
-That lane queries App Store Connect, sets `CURRENT_PROJECT_VERSION` to the next
-build number, builds Release, and uploads to TestFlight. Commit the resulting
-Xcode project build-number change after a successful upload.
+Commit and push the source change and Xcode build-number change together. On the
+host release machine, pull that commit and run:
+
+```bash
+cd app
+SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight
+```
+
+The fixed-number lane rechecks App Store Connect and refuses to upload unless
+the committed build number is newer. This leaves no host-only version change.
+Use `prod-testflight-next` only when one machine and worktree own both the source
+commit and TestFlight upload; that lane mutates the Xcode project before
+building, so its build-number change must be committed after upload.
 
 Local QA scripts choose Xcode/Fastlane cache roots dynamically:
 

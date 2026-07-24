@@ -61,7 +61,7 @@ Build the production Release archive and upload it to TestFlight. Requires SCRAP
 [bundle exec] fastlane ios prod_testflight_next
 ```
 
-Set the checked-in build to the next TestFlight number, then build and upload Release. Requires SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1.
+Single-machine workflow: set the current worktree to the next TestFlight number, then build and upload Release. Requires SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1.
 
 ### ios upload_testflight_ipa
 

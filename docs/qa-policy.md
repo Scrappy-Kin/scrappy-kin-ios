@@ -48,7 +48,7 @@ TestFlight.
 | Simulator accessibility audit | `cd app && npm run ios:test:a11y` | Yes | Runs XCTest accessibility audits against launch-critical screens in `QADevice`; complements, but does not replace, manual VoiceOver QA. |
 | Production archive | `cd app && npm run ios:fastlane:prod-archive` | No | Builds `Release`; use for archive verification only. |
 | Production TestFlight | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight` | No | Builds/exports `Release`, then uploads; release-candidate only; can email real brokers. |
-| Production TestFlight, auto-next build | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight-next` | No | Queries App Store Connect, sets the next checked-in build number, builds/exports `Release`, then uploads. |
+| Production TestFlight, auto-next build (single-machine workflow) | `cd app && SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight-next` | No | Queries App Store Connect, sets the next build number in the current worktree, builds/exports `Release`, then uploads. |
 | Upload signed IPA to TestFlight | `cd app && IPA_PATH=/path/to/ScrappyKin.ipa SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:upload-testflight-ipa` | No | Uploads an already-signed IPA; does not build or export. |
 
 Apple marketing versions use semver shape (`MAJOR.MINOR.PATCH`) in
@@ -75,15 +75,27 @@ npm run ios:testflight:build-status
 The production TestFlight lane uses the same App Store Connect lookup before
 archiving and fails fast if the checked-in build number is stale.
 
-For the usual release-candidate path, prefer the auto-next lane:
+For the usual split VM-to-host release-candidate path, query App Store Connect
+and commit the next build number on the VM before handoff:
 
 ```bash
 cd app
-SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight-next
+npm run ios:testflight:build-status
+npm run ios:version:set -- --build <next-build-number>
 ```
 
-After a successful upload, commit the resulting Xcode project build-number
-change so the repo stays aligned with TestFlight.
+Commit and push the source and Xcode build-number changes. The host release
+machine then pulls that commit and runs:
+
+```bash
+cd app
+SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight
+```
+
+The fixed-number lane rechecks App Store Connect before archiving and refuses a
+stale build number. Use `prod-testflight-next` only when the same machine and
+worktree own both the source commit and upload; its generated build-number
+change must be committed after a successful upload.
 
 Local QA scripts resolve DerivedData/cache roots in this order:
 

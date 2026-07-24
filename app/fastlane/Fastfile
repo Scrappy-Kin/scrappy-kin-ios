@@ -31,7 +31,7 @@ platform :ios do
     perform_testflight_upload(Actions.lane_context[SharedValues::IPA_OUTPUT_PATH], api_key)
   end
 
-  desc "Set the checked-in build to the next TestFlight number, then build and upload Release. Requires SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1."
+  desc "Single-machine workflow: set the current worktree to the next TestFlight number, then build and upload Release. Requires SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1."
   lane :prod_testflight_next do
     ensure_prod_testflight_allowed!
     api_key = app_store_connect_api_key_from_env(required: true)
@@ -160,8 +160,8 @@ def print_testflight_build_status!(api_key)
   UI.message("Latest TestFlight build: #{latest}")
   UI.message("Next TestFlight build number: #{next_build}")
   if build_number <= latest
-    UI.message("Checked-in build is stale. For the normal release-candidate path, run: SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight-next")
-    UI.message("For a manual build-only bump, run: npm run ios:version:set -- --build #{next_build}")
+    UI.message("Checked-in build is stale. For the split VM-to-host workflow, set and commit the next build before handoff: npm run ios:version:set -- --build #{next_build}")
+    UI.message("For a single-machine build and upload, run: SCRAPPY_KIN_ALLOW_PROD_TESTFLIGHT=1 npm run ios:fastlane:prod-testflight-next")
   else
     UI.message("Checked-in build is upload-ready for TestFlight.")
   end
