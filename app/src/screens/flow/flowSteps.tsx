@@ -182,6 +182,10 @@ export function buildFlowSteps({
       render: () => (
         <section className="app-section-shell">
           <AppSectionLabel>Included in this round</AppSectionLabel>
+          <AppText intent="supporting">
+            This first group includes people search sites, marketing-list vendors, and recruiting
+            databases.
+          </AppText>
           <AppSegmentedCard>
             <AppSegmentedCardSection>
               <div className="app-stack">

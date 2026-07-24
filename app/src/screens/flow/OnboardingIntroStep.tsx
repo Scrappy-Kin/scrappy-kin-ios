@@ -111,8 +111,8 @@ export default function OnboardingIntroStep() {
           Scrappy Kin is built to need as little from you as possible.
         </AppText>
         <AppText intent="body">
-          No Scrappy Kin account. There&apos;s no sign-up, no profile, no password. The app runs
-          without any identity tied to it.
+          No Scrappy Kin account. No login, no password. The details you enter are stored on your
+          phone and sent only in requests you approve. They never touch Scrappy Kin&apos;s servers.
         </AppText>
         <AppText intent="body">
           Gmail access is send-only. When you connect Gmail, Scrappy Kin requests one specific
@@ -158,9 +158,13 @@ export default function OnboardingIntroStep() {
         </AppText>
       </DisclosureRow>
 
-      <AppText intent="body">Your first five removals are free.</AppText>
+      <AppText intent="body">
+        Your first five broker requests are free. No card, no trial clock.
+      </AppText>
 
-      <AppText intent="body">No sign-up required.</AppText>
+      <AppText intent="body">
+        After that, an annual subscription opens the full list and covers resends.
+      </AppText>
     </section>
   )
 }
