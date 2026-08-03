@@ -53,3 +53,5 @@ CLAUDE.md
 deliverables/reviews/*.log
 
 deliverables/reviews/**/*.log
+
+/.local/post-run-distillation/
