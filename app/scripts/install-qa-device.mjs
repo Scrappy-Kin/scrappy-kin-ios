@@ -1,5 +1,4 @@
 import fs from 'node:fs/promises'
-import os from 'node:os'
 import path from 'node:path'
 import { execFile as execFileCallback } from 'node:child_process'
 import { promisify } from 'node:util'
@@ -20,6 +19,7 @@ const deviceUdid = process.env.IOS_DEVICE_UDID
 const deviceName = process.env.IOS_DEVICE_NAME
 const derivedDataPath = await resolveXcodeDerivedDataPath('ScrappyKinQaDevice')
 const webOnly = process.env.SCRAPPY_KIN_QA_WEB_ONLY === '1'
+const iosDeployPath = path.join(appRoot, 'node_modules', '.bin', 'ios-deploy')
 
 let builtAppPathCache = null
 
@@ -36,52 +36,52 @@ async function run(command, args, options = {}) {
   })
 }
 
-async function readJsonFile(filePath) {
-  return JSON.parse(await fs.readFile(filePath, 'utf8'))
-}
-
-async function findPhysicalDeviceUdid() {
-  if (deviceUdid) {
-    return deviceUdid
-  }
-
-  const outputPath = path.join(
-    await fs.mkdtemp(path.join(os.tmpdir(), 'scrappy-kin-devices-')),
-    'devices.json',
-  )
-  await run('xcrun', ['devicectl', 'list', 'devices', '--json-output', outputPath, '--timeout', '10'])
-  const payload = await readJsonFile(outputPath)
-
-  const candidates = payload.result.devices
-    .filter((device) => device.hardwareProperties?.reality === 'physical')
-    .filter((device) => device.deviceProperties?.developerModeStatus === 'enabled')
-    .filter((device) => !deviceName || device.deviceProperties?.name === deviceName)
+async function findPhysicalDevice() {
+  const { stdout } = await run('xcrun', ['xcdevice', 'list', '--timeout', '10'])
+  const candidates = JSON.parse(stdout)
+    .filter((device) => device.simulator === false)
+    .filter((device) => device.platform === 'com.apple.platform.iphoneos')
+    .filter((device) => device.available === true && device.ignored !== true)
+    .filter((device) => !deviceUdid || device.identifier === deviceUdid)
+    .filter((device) => !deviceName || device.name === deviceName)
     .map((device) => ({
-      name: device.deviceProperties?.name ?? 'Unknown device',
-      udid: device.hardwareProperties?.udid,
-      transport: device.connectionProperties?.transportType ?? 'unknown',
-      bootState: device.deviceProperties?.bootState ?? 'unknown',
+      name: device.name ?? 'Unknown device',
+      udid: device.identifier,
+      transport: device.interface ?? 'unknown',
+      installMethod: Number.parseInt(device.operatingSystemVersion, 10) >= 17
+        ? 'devicectl'
+        : 'ios-deploy',
     }))
     .filter((device) => device.udid)
 
-  const wiredCandidates = candidates.filter((device) => device.transport === 'wired')
+  const wiredCandidates = candidates.filter((device) => device.transport === 'usb')
   const matches = wiredCandidates.length > 0 ? wiredCandidates : candidates
 
-  if (matches.length === 1) {
-    console.log(`Using physical QA device: ${matches[0].name} (${matches[0].udid})`)
-    return matches[0].udid
-  }
+  if (matches.length === 1) return matches[0]
 
   if (matches.length === 0) {
     throw new Error(
       deviceName
-        ? `No developer-mode physical iOS device matched IOS_DEVICE_NAME="${deviceName}".`
-        : 'No developer-mode physical iOS device found. Set IOS_DEVICE_UDID if the device is connected.',
+        ? `No connected and unlocked iOS device matched IOS_DEVICE_NAME="${deviceName}".`
+        : 'No connected and unlocked physical iOS device found.',
     )
   }
 
   const options = matches.map((device) => `${device.name}: ${device.udid}`).join('\n')
   throw new Error(`Multiple physical devices matched. Set IOS_DEVICE_UDID.\n${options}`)
+}
+
+async function runIosDeploy(args) {
+  try {
+    return await run(iosDeployPath, args)
+  } catch (error) {
+    const output = `${String(error?.stdout ?? '')} ${String(error?.stderr ?? '')}`
+    if (output.includes('InstallComplete') && output.includes('(lldb)     run\nsuccess\n')) {
+      console.log('ios-deploy installed and launched the app successfully.')
+      return
+    }
+    throw error
+  }
 }
 
 async function buildNativeApp(udid) {
@@ -176,30 +176,35 @@ async function verifyBuiltApp() {
   console.log(`Verified QADevice app at ${builtAppPathCache}`)
 }
 
-async function installAndLaunch(udid) {
+async function installAndLaunch(device) {
   if (!builtAppPathCache) {
     throw new Error('Native app has not been built yet.')
   }
 
   await fs.access(builtAppPathCache)
-  await run('xcrun', ['devicectl', 'device', 'install', 'app', '--device', udid, builtAppPathCache])
+
+  if (device.installMethod === 'ios-deploy') {
+    await runIosDeploy([
+      '--id', device.udid, '--bundle', builtAppPathCache, '--justlaunch', '--no-wifi',
+    ])
+    return
+  }
+
   await run('xcrun', [
-    'devicectl',
-    'device',
-    'process',
-    'launch',
-    '--terminate-existing',
-    '--device',
-    udid,
-    bundleId,
+    'devicectl', 'device', 'install', 'app', '--device', device.udid, builtAppPathCache,
+  ])
+  await run('xcrun', [
+    'devicectl', 'device', 'process', 'launch', '--terminate-existing', '--device',
+    device.udid, bundleId,
   ])
 }
 
 async function main() {
-  const udid = await findPhysicalDeviceUdid()
-  await buildNativeApp(udid)
+  const device = await findPhysicalDevice()
+  console.log(`Using physical QA device: ${device.name} (${device.udid}, ${device.installMethod})`)
+  await buildNativeApp(device.udid)
   await verifyBuiltApp()
-  await installAndLaunch(udid)
+  await installAndLaunch(device)
 }
 
 main().catch((error) => {
