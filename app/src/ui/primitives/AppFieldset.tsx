@@ -21,11 +21,12 @@ export default function AppFieldset({
 
   return (
     <fieldset className={classes} aria-describedby={descriptionId}>
-      <legend className="app-fieldset__legend">
-        <AppText intent="label">
+      <legend className="app-sr-only">{legend}</legend>
+      <div className="app-fieldset__label" aria-hidden="true">
+        <AppText intent="label" accessibilityHidden>
           {legend}
         </AppText>
-      </legend>
+      </div>
       {description ? (
         <>
           <span className="app-sr-only" id={descriptionId}>

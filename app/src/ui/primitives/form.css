@@ -13,18 +13,10 @@
   border: 0;
 }
 
-.app-fieldset__legend {
+.app-fieldset__label {
   display: flex;
   align-items: center;
-  float: left;
-  width: 100%;
   min-height: var(--touch-target-nav);
-  margin: 0;
-  padding: 0;
-}
-
-.app-fieldset__legend + .app-fieldset__description {
-  clear: both;
 }
 
 .app-fieldset__description {
