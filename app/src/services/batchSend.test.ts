@@ -14,6 +14,11 @@ vi.mock('./flowProgress', () => ({
   setOnboardingSentCount: vi.fn(),
 }))
 
+vi.mock('./reviewPrompt', () => ({
+  beginReviewRound: vi.fn(() => 1),
+  completeReviewRound: vi.fn(),
+}))
+
 vi.mock('./roundState', () => ({
   computeBrokerEligibility: vi.fn(() => []),
   getEligibleBrokerIds: vi.fn(() => []),
@@ -45,6 +50,7 @@ import { getExecutionLane } from '../config/buildInfo'
 import { getSelectedBrokerIds, loadBrokers, setSelectedBrokerIds } from './brokerStore'
 import { sendAll } from './sendQueue'
 import { executeBatchSend } from './batchSend'
+import { completeReviewRound } from './reviewPrompt'
 import { QA_DEVICE_BLOCKED_SEND_MESSAGE } from './sendSafety'
 import { logEvent } from './logStore'
 import type { UserProfile } from './userProfile'
@@ -76,6 +82,13 @@ beforeEach(() => {
 })
 
 describe('executeBatchSend empty-selection guard', () => {
+  it('passes the complete queue result to the review gate', async () => {
+    const summary = { sent: 1, failed: 0, pending: 0, total: 1, newlySent: 1 }
+    mockSendAll.mockResolvedValue(summary)
+    await executeBatchSend(PROFILE, ['b1'])
+    expect(completeReviewRound).toHaveBeenCalledWith(1, summary)
+  })
+
   it('fails closed when explicit target list is empty and no stored selection exists', async () => {
     mockGetSelectedBrokerIds.mockResolvedValue([])
 

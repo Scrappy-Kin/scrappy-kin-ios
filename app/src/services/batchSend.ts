@@ -15,6 +15,7 @@ import { deriveSendSafetyMode, QA_DEVICE_BLOCKED_SEND_MESSAGE } from './sendSafe
 import { getMergedSentLog } from './sentLog'
 import { clearUserProfileDraft, setUserProfile, type UserProfile } from './userProfile'
 import { logEvent } from './logStore'
+import { beginReviewRound, completeReviewRound } from './reviewPrompt'
 
 type BatchSendResult = {
   sentCount: number
@@ -25,6 +26,7 @@ export async function executeBatchSend(
   profile: UserProfile,
   targetBrokerIds?: string[],
 ): Promise<BatchSendResult> {
+  const reviewRound = beginReviewRound()
   await setUserProfile(profile)
   await clearUserProfileDraft()
 
@@ -115,6 +117,7 @@ export async function executeBatchSend(
       sendSafetyMode,
     },
   })
+  completeReviewRound(reviewRound, summary)
   return {
     sentCount: summary.sent,
     failureMessage: null,

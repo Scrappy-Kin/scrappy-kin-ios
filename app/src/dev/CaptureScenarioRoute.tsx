@@ -3,7 +3,7 @@ import { Capacitor } from '@capacitor/core'
 import { useEffect, useState } from 'react'
 import { useHistory, useLocation, useParams } from 'react-router-dom'
 import AppText from '../ui/primitives/AppText'
-import { applyCaptureScenario } from './captureScenarios'
+import { applyCaptureScenario, captureNeedsLiveSession } from './captureScenarios'
 
 type CaptureRouteParams = {
   scenario: string
@@ -54,7 +54,9 @@ export function CaptureScenarioRunner({
           setPreparedRoute(preparedTargetRoute)
           return
         }
-        if (Capacitor.isNativePlatform()) {
+        // Review opportunities deliberately disappear on reload; these fixtures
+        // model the live post-send journey instead of restoring pending state.
+        if (Capacitor.isNativePlatform() || captureNeedsLiveSession(scenario)) {
           history.replace(preparedTargetRoute)
           return
         }

@@ -1,4 +1,6 @@
 import { IS_DEV_BUILD, isQaDeviceLane } from '../config/buildInfo'
+import { Preferences } from '@capacitor/preferences'
+import { beginReviewRound, completeReviewRound, discardReviewOpportunity, REVIEW_LAST_ATTEMPTED_VERSION_KEY, setReviewMarketingVersionForQa } from '../services/reviewPrompt'
 import { APP_REVIEW_PROFILE_EMAIL } from '../config/appReviewTestRecipients'
 import {
   loadBrokers,
@@ -22,6 +24,7 @@ import { setUserProfile, type UserProfile } from '../services/userProfile'
 
 type CaptureScenarioDefinition = {
   route: string
+  liveSession?: boolean
   seed?: () => Promise<void>
 }
 
@@ -115,6 +118,13 @@ async function seedPostSendWithoutGmail() {
 }
 
 const captureScenarios: Record<string, CaptureScenarioDefinition> = {
+  'review-prompt-ready': reviewPromptScenario(),
+  'review-prompt-ready-subscribed': reviewPromptScenario('subscribed'),
+  'review-prompt-partial': reviewPromptScenario('partial'),
+  'review-prompt-after-purchase': reviewPromptScenario('purchase'),
+  'review-prompt-already-attempted': reviewPromptScenario('attempted'),
+  'review-prompt-new-version': reviewPromptScenario('new-version'),
+  'review-prompt-post-send': reviewPromptScenario('flow'),
   home: { route: '/home' },
   settings: {
     route: '/settings',
@@ -288,6 +298,32 @@ export function listCaptureScenarios() {
   return Object.keys(captureScenarios)
 }
 
+function reviewPromptScenario(mode?: 'partial' | 'purchase' | 'attempted' | 'flow' | 'subscribed' | 'new-version'): CaptureScenarioDefinition {
+  return {
+    route: mode === 'flow' ? '/onboarding/beat-sent' : '/home',
+    liveSession: true,
+    seed: async () => {
+      await seedPostSendState(mode === 'flow' ? 'beat-sent' : null)
+      await setDevSubscriptionEntitled(mode === 'purchase' || mode === 'subscribed')
+      setReviewMarketingVersionForQa(mode === 'new-version' ? '1.1.0' : '1.0.0')
+      if (mode === 'attempted' || mode === 'new-version') {
+        await Preferences.set({ key: REVIEW_LAST_ATTEMPTED_VERSION_KEY, value: '1.0.0' })
+      }
+      const round = beginReviewRound()
+      completeReviewRound(round, {
+        sent: mode === 'partial' ? 4 : 5,
+        failed: mode === 'partial' ? 1 : 0,
+        pending: 0, total: 5, newlySent: mode === 'partial' ? 4 : 5,
+      })
+      if (mode === 'purchase') discardReviewOpportunity()
+    },
+  }
+}
+
+export function captureNeedsLiveSession(id: string) {
+  return captureScenarios[id]?.liveSession === true
+}
+
 export async function applyCaptureScenario(id: string) {
   if (!IS_DEV_BUILD && !isQaDeviceLane()) {
     throw new Error('Capture scenarios are available in dev and QADevice builds only.')
@@ -299,6 +335,8 @@ export async function applyCaptureScenario(id: string) {
   }
 
   await wipeAllLocalData()
+  discardReviewOpportunity()
+  setReviewMarketingVersionForQa(null)
   await clearDevSubscriptionState()
   if (scenario.seed) {
     await scenario.seed()

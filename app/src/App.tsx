@@ -5,8 +5,9 @@ import {
   IonRouterOutlet,
 } from '@ionic/react'
 import { Capacitor } from '@capacitor/core'
+import { App as NativeApp } from '@capacitor/app'
 import { IonReactRouter } from '@ionic/react-router'
-import { Redirect, Route, useParams } from 'react-router-dom'
+import { Redirect, Route, useLocation, useParams } from 'react-router-dom'
 import { lazy, Suspense, useEffect, useState, useSyncExternalStore, type ComponentType } from 'react'
 import Flow from './screens/Flow'
 import Gmail from './screens/Gmail'
@@ -41,6 +42,7 @@ import { getSubscriptionSnapshot } from './services/subscription'
 import { getUserProfile } from './services/userProfile'
 import { buildOnboardingHref } from './services/navigation'
 import scrappyKinLogo from './assets/brand/scrappy-kin-logo.svg'
+import { discardReviewOpportunity } from './services/reviewPrompt'
 
 const DEV_SURFACES_ENABLED =
   import.meta.env.VITE_EXECUTION_LANE === 'dev' ||
@@ -249,6 +251,35 @@ export default function App() {
   )
 }
 
+function ReviewOpportunityLifecycle({ blocked }: { blocked: boolean }) {
+  const location = useLocation()
+  useEffect(() => {
+    if (blocked || ![
+      '/home', '/onboarding/beat-sent', '/onboarding/beat-subscribe',
+    ].includes(location.pathname)) {
+      discardReviewOpportunity()
+    }
+  }, [location.pathname, blocked])
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.hidden) discardReviewOpportunity()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    const listener = Capacitor.isNativePlatform()
+      ? NativeApp.addListener('appStateChange', ({ isActive }) => {
+          if (!isActive) discardReviewOpportunity()
+        }).catch(() => null)
+      : null
+    return () => {
+      discardReviewOpportunity()
+      document.removeEventListener('visibilitychange', onVisibility)
+      if (listener) void listener.then((handle) => handle?.remove()).catch(() => undefined)
+    }
+  }, [])
+  return null
+}
+
 function AppShell() {
   const [showDevLaneUi, setShowDevLaneUi] = useState(
     () => DEV_SURFACES_ENABLED && !Capacitor.isNativePlatform(),
@@ -351,6 +382,7 @@ function AppShell() {
 
   return (
     <>
+      <ReviewOpportunityLifecycle blocked={nativeBrowserOpen || qaSheetOpen} />
       <A11yTextScaleProbe enabled={showCaptureRoutes} />
       {showCaptureRoutes ? renderLazyDevComponent(DevAppUrlBridge) : null}
       <div

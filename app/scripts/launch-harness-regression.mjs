@@ -355,6 +355,53 @@ async function assertDashboardState(page, scenario, expected, absent = []) {
 
 const checks = [
   {
+    id: 'review-prompt-full-send-later-dashboard-once',
+    run: async (page) => {
+      await openScenario(page, 'review-prompt-post-send')
+      await assertAbsentText(page, 'Browser preview: review request')
+      await clickButtonByName(page, 'Next')
+      await clickButtonByName(page, 'Later')
+      await page.getByText('Browser preview: review request', { exact: true }).waitFor()
+      await page.reload({ waitUntil: 'networkidle' })
+      await page.waitForTimeout(2500)
+      await assertAbsentText(page, 'Browser preview: review request')
+      await openScenario(page, 'review-prompt-ready-subscribed')
+      await page.getByText('Browser preview: review request', { exact: true }).waitFor()
+    },
+  },
+  {
+    id: 'review-prompt-suppression',
+    run: async (page) => {
+      // Exercise the real shared purchase service, not just a suppressed fixture.
+      await openScenario(page, 'review-prompt-post-send')
+      await clickButtonByName(page, 'Next')
+      await clickButtonByName(page, /^Subscribe/)
+      await page.waitForURL('**/home')
+      await page.waitForTimeout(2500)
+      await assertAbsentText(page, 'Browser preview: review request')
+      await openScenario(page, 'review-prompt-post-send')
+      await clickButtonByName(page, 'Next')
+      await clickButtonByName(page, 'Restore Purchases')
+      await clickButtonByName(page, 'Later')
+      await page.waitForTimeout(2500)
+      await assertAbsentText(page, 'Browser preview: review request')
+      for (const scenario of ['review-prompt-partial', 'review-prompt-after-purchase', 'review-prompt-already-attempted']) {
+        await openScenario(page, scenario)
+        await page.waitForTimeout(2500)
+        await assertAbsentText(page, 'Browser preview: review request')
+      }
+      await openScenario(page, 'review-prompt-ready')
+      await page.getByRole('heading').filter({ visible: true }).first().click()
+      await page.getByText('Browser preview: review request', { exact: true }).waitFor()
+      await openScenario(page, 'review-prompt-new-version')
+      await page.getByText('Browser preview: review request', { exact: true }).waitFor()
+      await openScenario(page, 'review-prompt-ready')
+      await page.reload({ waitUntil: 'networkidle' })
+      await page.waitForTimeout(2500)
+      await assertAbsentText(page, 'Browser preview: review request')
+    },
+  },
+  {
     id: 'home-free-round-complete-subscription-needed',
     run: (page) =>
       assertDashboardState(page, 'home-unsubscribed', [

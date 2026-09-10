@@ -31,6 +31,7 @@ import SettingsShortcut from '../ui/patterns/SettingsShortcut'
 import SubscriptionBillingClaim from '../ui/patterns/SubscriptionBillingClaim'
 import SubscriptionDiagnosticsNotice from '../ui/patterns/SubscriptionDiagnosticsNotice'
 import { useRouteFocus } from '../ui/patterns/useRouteFocus'
+import { useDashboardReview } from '../ui/patterns/useDashboardReview'
 
 const IS_QA_LANE = isQaDeviceLane() || IS_DEV_BUILD
 
@@ -167,6 +168,7 @@ export default function Home() {
   const heroAccessibilityLabel = copy != null ? `${copy.metricValue} ${copy.metricLabel}` : undefined
   const heroFocusKey = heroAccessibilityLabel ?? 'home-hero-loading'
   useRouteFocus(`${currentRoute}:${homeFocusRevision}:${heroFocusKey}`, copy != null, heroHeadingRef)
+  const reviewPreview = useDashboardReview(copy != null && !purchaseInFlight && !subscriptionError)
 
   return (
     <IonPage>
@@ -253,6 +255,12 @@ export default function Home() {
           ) : null}
 
           <SubscriptionDiagnosticsNotice snapshot={subscriptionSnapshot} />
+          {IS_DEV_BUILD && reviewPreview ? (
+            <AppNotice variant="info" title="Browser preview: review request">
+              Apple&apos;s native rating sheet would be requested here. This is a QA notice,
+              not the Apple dialog. No rating was submitted.
+            </AppNotice>
+          ) : null}
         </div>
       </IonContent>
     </IonPage>

@@ -1,5 +1,6 @@
 import { Capacitor, registerPlugin, type PluginListenerHandle } from '@capacitor/core'
 import { Preferences } from '@capacitor/preferences'
+import { discardReviewOpportunity } from './reviewPrompt'
 import {
   SUBSCRIPTION_PRICE_SUBTEXT,
   SUBSCRIPTION_PRODUCT_ID,
@@ -299,6 +300,11 @@ async function readDevSubscriptionActive() {
 async function getDevSnapshot() {
   const active = await readDevSubscriptionActive()
   return normalizeSnapshot({
+    // Fixture price only: native production/QA snapshots must come from StoreKit.
+    product: {
+      id: SUBSCRIPTION_PRODUCT_ID || 'com.scrappykin.subscription.dev',
+      displayPrice: '$4.99',
+    },
     active,
     access: active
       ? {
@@ -458,6 +464,7 @@ export async function getSubscriptionSnapshot() {
 }
 
 export async function purchaseSubscription(): Promise<SubscriptionPurchaseResult> {
+  discardReviewOpportunity()
   await logEvent('subscription_purchase_started')
   if (await shouldUseDevMock()) {
     await Preferences.set({ key: DEV_SUBSCRIPTION_ACTIVE_KEY, value: 'true' })
@@ -574,6 +581,7 @@ export async function purchaseSubscription(): Promise<SubscriptionPurchaseResult
 }
 
 export async function restoreSubscriptionPurchases(): Promise<SubscriptionRestoreResult> {
+  discardReviewOpportunity()
   await logEvent('subscription_restore_started')
   if (await shouldUseDevMock()) {
     const snapshot = await getDevSnapshot()
@@ -641,6 +649,7 @@ export async function restoreSubscriptionPurchases(): Promise<SubscriptionRestor
 }
 
 export async function manageSubscriptionSettings(): Promise<SubscriptionManageResult> {
+  discardReviewOpportunity()
   if (await shouldUseDevMock()) {
     return {
       status: 'opened',

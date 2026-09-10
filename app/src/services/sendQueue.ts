@@ -77,6 +77,7 @@ export async function sendAll(brokers: Broker[], brokerIds: string[], onProgress
   await initializeQueue(brokerIds)
   const queue = await resetFailedToPending()
   let summary = summarizeQueue(queue)
+  const previouslySent = summary.sent
   onProgress?.(summary)
 
   for (const [brokerIndex, item] of queue.entries()) {
@@ -151,7 +152,7 @@ export async function sendAll(brokers: Broker[], brokerIds: string[], onProgress
     await delay(SEND_DELAY_MS)
   }
 
-  return summary
+  return { ...summary, newlySent: summary.sent - previouslySent }
 }
 
 export async function retryFailed(brokers: Broker[], brokerIds: string[], onProgress?: (summary: ReturnType<typeof summarizeQueue>) => void) {

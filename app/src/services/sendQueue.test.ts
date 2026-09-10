@@ -21,13 +21,19 @@ vi.mock('./gmailSend', () => ({
   sendEmail: vi.fn(),
 }))
 
+vi.mock('./metricsStore', () => ({ incrementTotalSentCount: vi.fn() }))
+vi.mock('./sentLog', () => ({ appendSentLogEntries: vi.fn() }))
+vi.mock('../config/constants', async (importOriginal) => ({
+  ...await importOriginal<typeof import('../config/constants')>(), SEND_DELAY_MS: 0,
+}))
+
 vi.mock('./templateStore', () => ({
   getDeletionTemplateDraft: vi.fn(),
   resolveDeletionTemplate: vi.fn(() => ''),
 }))
 
 import { getUserProfile, type UserProfile } from './userProfile'
-import { initializeQueue } from './queueStore'
+import { initializeQueue, resetFailedToPending, summarizeQueue, updateQueueItem } from './queueStore'
 import { sendEmail } from './gmailSend'
 import { sendAll } from './sendQueue'
 
@@ -44,6 +50,26 @@ beforeEach(() => {
 })
 
 describe('sendAll profile validation guard', () => {
+  it('reports zero fresh sends when an already-complete queue is reused', async () => {
+    mockGetUserProfile.mockResolvedValue({ fullName: 'Test User', email: 'me@example.com', city: 'Townsville', state: 'CA', partialZip: '900' })
+    vi.mocked(resetFailedToPending).mockResolvedValueOnce([{ brokerId: 'b1', referenceId: 'REF-1', status: 'sent' }])
+    vi.mocked(summarizeQueue).mockReturnValueOnce({ sent: 1, failed: 0, pending: 0, total: 1 })
+    expect(await sendAll(BROKERS as never, ['b1'])).toMatchObject({ sent: 1, newlySent: 0 })
+    expect(mockSendEmail).not.toHaveBeenCalled()
+  })
+
+  it('reports fresh sends separately from historical queue successes', async () => {
+    mockGetUserProfile.mockResolvedValue({ fullName: 'Test User', email: 'me@example.com', city: 'Townsville', state: 'CA', partialZip: '900' })
+    const item = { brokerId: 'b1', referenceId: 'REF-1', status: 'pending' as const }
+    vi.mocked(resetFailedToPending).mockResolvedValueOnce([item])
+    vi.mocked(summarizeQueue)
+      .mockReturnValueOnce({ sent: 0, failed: 0, pending: 1, total: 1 })
+      .mockReturnValueOnce({ sent: 1, failed: 0, pending: 0, total: 1 })
+    vi.mocked(updateQueueItem).mockResolvedValueOnce([{ ...item, status: 'sent' }])
+    mockSendEmail.mockResolvedValueOnce({ id: 'test-message', threadId: 'test-thread' })
+    expect(await sendAll(BROKERS as never, ['b1'])).toMatchObject({ sent: 1, newlySent: 1 })
+  })
+
   it('throws when no profile is set, before queue init or send', async () => {
     mockGetUserProfile.mockResolvedValue(null)
 
