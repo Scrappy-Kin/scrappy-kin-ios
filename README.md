@@ -216,6 +216,25 @@ Use `prod-testflight-next` only when one machine and worktree own both the sourc
 commit and TestFlight upload; that lane mutates the Xcode project before
 building, so its build-number change must be committed after upload.
 
+### Release provenance
+
+Every App Store-bound build must map to one clean, pushed commit containing its
+source, dependency lockfile, marketing version, and Apple build number. The host
+pulls that commit without local edits and Fastlane builds it. After App Store
+Connect confirms the upload, create and push an annotated tag on the exact commit:
+
+```bash
+git tag -a ios-v<marketing-version>-build-<build-number> <commit-sha> \
+  -m "Scrappy Kin iOS <marketing-version> (<build-number>)"
+git push origin ios-v<marketing-version>-build-<build-number>
+```
+
+Example: `ios-v1.1.0-build-39`. The tag is the public source-to-build record; do
+not put commit metadata in the App Store description. If the build ships, a
+GitHub Release may be created from the same tag for readable public release
+notes. Failed or superseded uploads keep their tag as an honest record but do not
+get a GitHub Release.
+
 Local QA scripts choose Xcode/Fastlane cache roots dynamically:
 
 1. explicit `IOS_DERIVED_DATA_PATH` or `XCODE_DERIVED_DATA_ROOT`
