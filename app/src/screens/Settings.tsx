@@ -30,8 +30,7 @@ import {
   wipeLogs,
 } from '../services/logStore'
 import { getDiagnosticCaptureDescriptions } from '../services/logSchema'
-import { disconnectGmail, getGmailStatus } from '../services/googleAuth'
-import { wipeAllLocalData } from '../services/secureStore'
+import { deleteAllLocalData, getGmailStatus } from '../services/googleAuth'
 import {
   buildRestoreSubscriptionNotice,
   buildSubscriptionButtonAccessibilityLabel,
@@ -153,6 +152,7 @@ export default function Settings() {
     body: string
   } | null>(null)
   const [localDataDeleted, setLocalDataDeleted] = useState(false)
+  const [localDataNotice, setLocalDataNotice] = useState<string | null>(null)
   const [showDeleteAllAlert, setShowDeleteAllAlert] = useState(false)
   const shouldContinueAfterProfileSave = returnTo?.startsWith('/review-batch') ?? false
   const subscribeButtonLabel =
@@ -377,12 +377,20 @@ export default function Settings() {
   }
 
   async function handleWipeAll() {
-    await disconnectGmail()
-    await wipeAllLocalData()
-    setGmailConnected(false)
-    setProfileDraft(emptyProfile)
-    setLocalDataDeleted(true)
-    history.replace(buildSettingsHref('privacy', buildOnboardingHref('intro')))
+    setLocalDataNotice(null)
+    setLocalDataDeleted(false)
+    try {
+      const revocation = await deleteAllLocalData()
+      setGmailConnected(false)
+      setProfileDraft(emptyProfile)
+      setLocalDataDeleted(true)
+      if (revocation === 'unconfirmed') {
+        setLocalDataNotice('Your saved app data was deleted. Google permission removal could not be confirmed. You can revoke Scrappy Kin access in your Google account settings.')
+      }
+      history.replace(buildSettingsHref('privacy', buildOnboardingHref('intro')))
+    } catch {
+      setLocalDataNotice('Some saved app data could not be deleted. Please try Delete all local data again.')
+    }
   }
 
   function handlePostDeleteBack() {
@@ -686,6 +694,11 @@ export default function Settings() {
           >
             This device is reset. Scrappy Kin will start fresh the next time you begin setup.
           </AppActionNotice>
+        ) : null}
+        {localDataNotice ? (
+          <AppNotice variant={localDataDeleted ? 'info' : 'error'} title={localDataDeleted ? 'Google permission' : 'Deletion did not finish'}>
+            {localDataNotice}
+          </AppNotice>
         ) : null}
         <AppList header="Local data controls">
           <AppListRow

@@ -57,15 +57,6 @@ async function setStoredMasterKey(value: string) {
   await Preferences.set({ key: WEB_KEY_STORAGE, value })
 }
 
-async function removeStoredMasterKey() {
-  if (Capacitor.isNativePlatform()) {
-    await SecureStoragePlugin.remove({ key: KEY_NAME })
-    return
-  }
-
-  await Preferences.remove({ key: WEB_KEY_STORAGE })
-}
-
 async function getOrCreateKeyBytes() {
   try {
     const existing = await getStoredMasterKey()
@@ -171,10 +162,21 @@ export async function removeEncrypted(key: string) {
 }
 
 export async function wipeAllLocalData() {
-  await Preferences.clear()
-  if (Capacitor.isNativePlatform()) {
-    await SecureStoragePlugin.clear()
-    return
+  const results = await Promise.allSettled([
+    Preferences.clear().then(async () => {
+      if ((await Preferences.keys()).keys.length) {
+        throw new Error('Local preferences could not be fully deleted.')
+      }
+    }),
+    Capacitor.isNativePlatform()
+      ? SecureStoragePlugin.clear().then(async (result) => {
+          if (!result.value || (await SecureStoragePlugin.keys()).value.length) {
+            throw new Error('Secure storage could not be fully deleted.')
+          }
+        })
+      : Promise.resolve(),
+  ])
+  for (const result of results) {
+    if (result.status === 'rejected') throw result.reason
   }
-  await removeStoredMasterKey()
 }

@@ -1,7 +1,7 @@
 import { App } from '@capacitor/app'
 import { Browser } from '@capacitor/browser'
 import { Capacitor, type PluginListenerHandle } from '@capacitor/core'
-import { getEncrypted, removeEncrypted, setEncrypted } from './secureStore'
+import { getEncrypted, removeEncrypted, setEncrypted, wipeAllLocalData } from './secureStore'
 import { OAUTH_PENDING_STATE_TTL_MS, OAUTH_TIMEOUT_MS } from '../config/constants'
 import { generateCodeChallenge, generateCodeVerifier, generateState } from './pkce'
 import { getGoogleOAuthConfig } from '../config/oauth'
@@ -14,6 +14,7 @@ const SCOPE = 'https://www.googleapis.com/auth/gmail.send'
 
 const TOKEN_KEY = 'gmail_tokens'
 const OAUTH_PENDING_KEY = 'gmail_oauth_pending'
+const REVOCATION_TIMEOUT_MS = 5000
 let oauthInFlight = false
 let oauthBrowserOpen = false
 const oauthBrowserListeners = new Set<() => void>()
@@ -122,18 +123,14 @@ async function waitForOAuthRedirect(state: string, redirectUri: string) {
         if (url.protocol !== expectedUrl.protocol || url.pathname !== expectedUrl.pathname) {
           return
         }
+        if (url.searchParams.get('state') !== state) return
         const oauthError = url.searchParams.get('error')
         if (oauthError) {
           fail(new Error('Google sign-in didn’t finish. Please try again.'))
           return
         }
         const code = url.searchParams.get('code')
-        const returnedState = url.searchParams.get('state')
-        if (!code || !returnedState) return
-        if (returnedState !== state) {
-          fail(new Error('Google sign-in could not be verified. Please try again.'))
-          return
-        }
+        if (!code) return
         Browser.close().catch(() => undefined)
         succeed(code)
       })
@@ -239,21 +236,53 @@ export async function connectGmail() {
   }
 }
 
-export async function disconnectGmail() {
-  const tokens = await getEncrypted<TokenPayload>(TOKEN_KEY)
-  const token = tokens?.refreshToken || tokens?.accessToken
+export type GmailRevocationResult = 'revoked' | 'not-needed' | 'unconfirmed'
+
+async function revokeGoogleToken(token?: string): Promise<GmailRevocationResult> {
+  if (!token) return 'not-needed'
+  const controller = new AbortController()
+  let timeout: ReturnType<typeof setTimeout> | undefined
   try {
-    if (token) {
-      await fetch(REVOKE_URL, {
+    const response = await Promise.race([
+      fetch(REVOKE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({ token }).toString(),
-      })
-    }
+        signal: controller.signal,
+      }),
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(() => {
+          controller.abort()
+          reject(new Error('Google revocation timed out.'))
+        }, REVOCATION_TIMEOUT_MS)
+      }),
+    ])
+    return response.ok ? 'revoked' : 'unconfirmed'
+  } catch {
+    return 'unconfirmed'
   } finally {
-    await removeEncrypted(TOKEN_KEY)
-    await logEvent('gmail_disconnected')
+    clearTimeout(timeout)
   }
+}
+
+export async function disconnectGmail() {
+  const tokens = await getEncrypted<TokenPayload>(TOKEN_KEY)
+  await removeEncrypted(TOKEN_KEY)
+  await logEvent('gmail_disconnected')
+  return revokeGoogleToken(tokens?.refreshToken || tokens?.accessToken)
+}
+
+export async function deleteAllLocalData(): Promise<GmailRevocationResult> {
+  let tokens: TokenPayload | null = null
+  let tokenReadFailed = false
+  try {
+    tokens = await getEncrypted<TokenPayload>(TOKEN_KEY)
+  } catch {
+    tokenReadFailed = true
+  }
+  await wipeAllLocalData()
+  if (tokenReadFailed) return 'unconfirmed'
+  return revokeGoogleToken(tokens?.refreshToken || tokens?.accessToken)
 }
 
 async function refreshAccessToken(refreshToken: string) {

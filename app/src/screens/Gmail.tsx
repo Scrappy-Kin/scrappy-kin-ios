@@ -80,9 +80,11 @@ export default function Gmail() {
   }
 
   async function handleDisconnect() {
-    await disconnectGmail()
+    const revocation = await disconnectGmail()
     setGmailConnected(false)
-    setGmailStatusMessage('Gmail successfully disconnected.')
+    setGmailStatusMessage(revocation === 'unconfirmed'
+      ? 'Gmail is disconnected on this device. Google permission removal could not be confirmed. You can revoke Scrappy Kin access in your Google account settings.'
+      : 'Gmail successfully disconnected.')
     focusHeading()
   }
 
