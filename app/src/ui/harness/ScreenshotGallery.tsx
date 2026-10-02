@@ -1,5 +1,5 @@
 import { IonContent, IonPage } from '@ionic/react'
-import { crop, folderOpenOutline } from 'ionicons/icons'
+import { crop } from 'ionicons/icons'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AppCard from '../primitives/AppCard'
@@ -31,7 +31,6 @@ type GallerySize = (typeof sizeOptions)[number]
 export default function ScreenshotGallery() {
   const [manifest, setManifest] = useState<CaptureManifest | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [revealError, setRevealError] = useState<string | null>(null)
   const [selectedGroup, setSelectedGroup] = useState('all')
   const [selectedSize, setSelectedSize] = useState<GallerySize>('25%')
   const [cropTallScreens, setCropTallScreens] = useState(true)
@@ -109,23 +108,6 @@ export default function ScreenshotGallery() {
   const screenshotCardClassName = `screenshot-gallery-card screenshot-gallery-card--link${cropTallScreens ? ' screenshot-gallery-card--cropped' : ''}`
   const captureVersion = encodeURIComponent(manifest?.generatedAt ?? 'current')
 
-  const revealCaptureFolder = async () => {
-    if (!manifest?.outputDir) {
-      return
-    }
-
-    setRevealError(null)
-
-    try {
-      const response = await fetch(`/__local/reveal?path=${encodeURIComponent(manifest.outputDir)}`)
-      if (!response.ok) {
-        throw new Error('Could not open the capture folder.')
-      }
-    } catch (cause) {
-      setRevealError((cause as Error).message)
-    }
-  }
-
   return (
     <IonPage>
       <IonContent className="app-content screenshot-gallery-content">
@@ -171,15 +153,6 @@ export default function ScreenshotGallery() {
                     <AppIcon icon={crop} size="sm" />
                   </button>
                 </div>
-                <button
-                  type="button"
-                  className="screenshot-gallery-toolbar__icon-action"
-                  onClick={() => void revealCaptureFolder()}
-                  aria-label="Open capture folder"
-                  title="Open capture folder"
-                >
-                  <AppIcon icon={folderOpenOutline} size="sm" />
-                </button>
               </>
             ) : null}
             {generatedLabel ? (
@@ -204,12 +177,6 @@ export default function ScreenshotGallery() {
                   Open review board
                 </Link>
               </div>
-            </AppCard>
-          ) : null}
-
-          {revealError ? (
-            <AppCard title="Folder unavailable">
-              <AppText intent="body">{revealError}</AppText>
             </AppCard>
           ) : null}
 
